@@ -124,9 +124,7 @@ class Logger:
         self.current_step_start_time = self.elapsed_time
         self.simulation_time_in_hours += self.time_step_in_hours
         if self.echo:
-            print(f"{self.simulation_time_in_hours} hours | step took {
-                round(self.current_step_start_time - self.previous_step_start_time, 1)} s | {
-                    self.elapsed_time} s of simulation until now")
+            print(f"{self.simulation_time_in_hours} hours | step took {round(self.current_step_start_time - self.previous_step_start_time, 1)} s | {self.elapsed_time} s of simulation until now")
             
         if self.simulation_time_in_hours % self.logging_period_in_hours == 0:
             if self.recording_sums:
