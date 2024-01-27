@@ -1,17 +1,25 @@
 import os
 import sys
+import time
 import pickle
 import timeit
 import xarray as xr
 import pandas as pd
 from dataclasses import fields
 
+import openalea.plantgl.all as pgl
+from data_utility.visualize import plot_mtg
+
+
 class Logger:
     def __init__(self, model_instance, outputs_dirpath="", 
                  output_variables={}, scenario={"default":1}, time_step_in_hours=1, 
                  logging_period_in_hours=1, 
-                 recording_sums=True, recording_raw=True, recording_mtg=True, recording_images=True, echo=True):
+                 recording_sums=True, recording_raw=True, recording_mtg=True, recording_images=True, recording_performance=True, 
+                 echo=True):
         self.g = model_instance.g
+        self.props = self.g.properties()
+        
         self.models = model_instance.models
         self.outputs_dirpath = outputs_dirpath
         self.output_variables = output_variables
@@ -23,15 +31,18 @@ class Logger:
         self.recording_raw = recording_raw
         self.recording_mtg = recording_mtg
         self.recording_images = recording_images
+        self.recording_performance = recording_performance
         self.echo = echo
         # TODO : add a scenario named folder
         self.root_images_dirpath = os.path.join(self.outputs_dirpath, "root_images")
         self.MTG_files_dirpath = os.path.join(self.outputs_dirpath, "MTG_files")
+        self.MTG_properties_dirpath = os.path.join(self.outputs_dirpath, "MTG_properties")
         self.MTG_properties_summed_dirpath = os.path.join(self.outputs_dirpath, "MTG_properties/MTG_properties_summed")
         self.MTG_properties_raw_dirpath = os.path.join(self.outputs_dirpath, "MTG_properties/MTG_properties_raw")
         self.create_or_empty_directory(self.outputs_dirpath)
         self.create_or_empty_directory(self.root_images_dirpath)
         self.create_or_empty_directory(self.MTG_files_dirpath)
+        self.create_or_empty_directory(self.MTG_properties_dirpath)
         self.create_or_empty_directory(self.MTG_properties_summed_dirpath)
         self.create_or_empty_directory(self.MTG_properties_raw_dirpath)
 
@@ -40,8 +51,14 @@ class Logger:
                 self.summable_output_variables += model.extensive_variables
                 self.output_variables.update({f.name:f.metadata for f in fields(model) if f.name in model.state_variables})
 
-        self.summed_variables = pd.DataFrame(columns=self.summable_output_variables)
-        self.log_xarray =  []
+        if self.recording_sums:
+            self.summed_variables = pd.DataFrame(columns=self.summable_output_variables)
+
+        if self.recording_raw:
+            self.log_xarray =  []
+        
+        if self.recording_performance:
+            self.simulation_performance = pd.DataFrame(columns=["time_step_duration"])
 
         self.start_time = timeit.default_timer()
         self.previous_step_start_time = self.start_time
@@ -57,13 +74,46 @@ class Logger:
                 for file in files:
                     os.remove(os.path.join(root, file))
 
+    @property
+    def elapsed_time(self):
+        return timeit.default_timer() - self.start_time
+    
+    def __call__(self):
+        self.current_step_start_time = self.elapsed_time
+        
+        if self.echo:
+            print(f"{self.simulation_time_in_hours} hours | step took {round(self.current_step_start_time - self.previous_step_start_time, 1)} s | {int(self.elapsed_time)} s of simulation until now", end='\r', flush=True)
+
+        if self.recording_performance:
+            self.recording_step_performance()
+        
+        if self.simulation_time_in_hours % self.logging_period_in_hours == 0:
+            if self.recording_sums:
+                self.recording_summed_MTG_properties_to_csv()
+            if self.recording_raw:
+                self.recording_raw_MTG_properties_in_xarray()
+            if self.recording_mtg:
+                self.recording_mtg_files()
+            if self.recording_images:
+                self.recording_images_from_plantgl()
+        
+        self.simulation_time_in_hours += self.time_step_in_hours
+        self.previous_step_start_time = self.current_step_start_time
+    
+    def recording_step_performance(self):
+        step_elapsed = pd.DataFrame({"time_step_duration":self.current_step_start_time - self.previous_step_start_time}, columns=["time_step_duration"], 
+                                    index=[self.simulation_time_in_hours])
+        self.simulation_performance = pd.concat([self.simulation_performance, step_elapsed])
+
     def recording_summed_MTG_properties_to_csv(self):
-        step_sum = pd.DataFrame({var:sum(self.g[var].values()) for var in self.summable_output_variables})
-        self.summed_variables = self.summed_variables.append(step_sum)
+        step_sum = pd.DataFrame({var:sum(self.props[var].values()) for var in self.summable_output_variables}, columns=self.summable_output_variables, 
+                                index=[self.simulation_time_in_hours])
+        self.summed_variables = pd.concat([self.summed_variables, step_sum])
 
     def recording_raw_MTG_properties_in_xarray(self):
-        self.log_xarray += [self.mtg_to_dataset(self.g, variables=self.output_variables, time=self.simulation_time_in_hours)]
-        if sys.getsizeof(self.log_xarray) > 2000:
+        self.log_xarray += [self.mtg_to_dataset(variables=self.output_variables, time=self.simulation_time_in_hours)]
+        if sys.getsizeof(self.log_xarray) > 10000:
+            print("[INFO] Merging stored properties data in one xarray dataset...", flush=True)
             self.write_to_disk(self.log_xarray)
             # Check save maybe
             self.log_xarray = []
@@ -75,7 +125,8 @@ class Logger:
                        time=0):
         # convert dict to dataframe with index corresponding to coordinates in topology space
         # (not just x, y, z, t thanks to MTG structure)
-        props_df = pd.DataFrame.from_dict(self.g.properties())
+        props_dict = {k:v for k, v in self.props.items() if type(v)==dict}
+        props_df = pd.DataFrame.from_dict(props_dict)
         props_df["vid"] = props_df.index
         props_df["t"] = [time for k in range(props_df.shape[0])]
         props_df = props_df.set_index(list(coordinates.keys()))
@@ -94,7 +145,6 @@ class Logger:
 
         # Dataset global attributes
         props_ds.attrs["description"] = description
-
         # Dataset coordinates' attribute metadata
         for k, v in coordinates.items():
             getattr(props_ds, k).attrs.update(v)
@@ -106,53 +156,46 @@ class Logger:
         return props_ds
     
     def recording_mtg_files(self):
-        with open(self.MTG_files_dirpath, "wb") as f:
+        with open(os.path.join(self.MTG_files_dirpath, f'root_{self.simulation_time_in_hours}.pckl'), "wb") as f:
             pickle.dump(self.g, f)
 
-    def recording_images(self):
-        pass
-    
+
+    def recording_images_from_plantgl(self):
+        # TODO : step back according to max(||x2-x1||, ||y2-y1||, ||z2-z1||)
+        pgl.Viewer.display(plot_mtg(self.g))
+            # If needed, we wait for a few seconds so that the graph is well positioned:
+        time.sleep(0.1)
+        image_name = os.path.join(self.root_images_dirpath, f'root_{self.simulation_time_in_hours}.png')
+        pgl.Viewer.saveSnapshot(image_name)
+
     def write_to_disk(self, xarray_list):
         interstitial_dataset = xr.concat(xarray_list, dim="t")
         interstitial_dataset.to_netcdf(os.path.join(self.MTG_properties_raw_dirpath, f't={self.simulation_time_in_hours}.nc'))
-
-    @property
-    def elapsed_time(self):
-        return round(timeit.default_timer() - self.start_time, 1)
-    
-    def __call__(self):
-        self.current_step_start_time = self.elapsed_time
-        self.simulation_time_in_hours += self.time_step_in_hours
-        if self.echo:
-            print(f"{self.simulation_time_in_hours} hours | step took {round(self.current_step_start_time - self.previous_step_start_time, 1)} s | {self.elapsed_time} s of simulation until now")
-            
-        if self.simulation_time_in_hours % self.logging_period_in_hours == 0:
-            if self.recording_sums:
-                self.recording_summed_MTG_properties_to_csv()
-            if self.recording_raw:
-                self.recording_raw_MTG_properties_in_xarray()
-            if self.recording_mtg:
-                self.recording_mtg_files()
-            if self.recording_images:
-                self.recording_images()
-
-        self.previous_step_start_time = self.current_step_start_time
     
     def terminate(self):
-        # For saved xarray datasets
-        if len(self.log_xarray) > 0:
-            self.write_to_disk(self.log_xarray)
-            del self.log_xarray
-        time_step_files = [self.MTG_properties_raw_dirpath + '/' + name for name in os.listdir(self.MTG_properties_raw_dirpath)]
-        time_dataset = xr.open_mfdataset(time_step_files)
-        time_dataset = time_dataset.assign_coords(coords=self.scenario).expand_dims(dim=dict(zip(list(self.scenario.keys()), [1 for k in self.scenario])))
-        time_dataset.to_netcdf(self.MTG_properties_raw_dirpath + '/merged.nc')
-        del time_dataset
-        for file in os.listdir(self.MTG_properties_raw_dirpath):
-            if '.nc' in file and file != "merged.nc":
-                os.remove(self.MTG_properties_raw_dirpath + '/' + file)
+        if self.recording_sums:
+            # Saving in memory summed properties
+            self.summed_variables.to_csv(os.path.join(self.MTG_properties_summed_dirpath, "summed_properties.csv"))
+
+        if self.recording_raw:
+            # For saved xarray datasets
+            if len(self.log_xarray) > 0:
+                print("[INFO] Merging stored properties data in one xarray dataset...", end="\r")
+                self.write_to_disk(self.log_xarray)
+                del self.log_xarray
+                
+            time_step_files = [os.path.join(self.MTG_properties_raw_dirpath, name) for name in os.listdir(self.MTG_properties_raw_dirpath)]
+            time_dataset = xr.open_mfdataset(time_step_files)
+            print(time_dataset)
+            time_dataset = time_dataset.assign_coords(coords=self.scenario).expand_dims(dim=dict(zip(list(self.scenario.keys()), [1 for k in self.scenario])))
+            time_dataset.to_netcdf(self.MTG_properties_raw_dirpath + '/merged.nc')
+            del time_dataset
+            for file in os.listdir(self.MTG_properties_raw_dirpath):
+                if '.nc' in file and file != "merged.nc":
+                    os.remove(self.MTG_properties_raw_dirpath + '/' + file)
         
-        # eventually also merge images into video
+        # Sistematically log performance
+        self.simulation_performance.to_csv(os.path.join(self.outputs_dirpath, "simulation_performance.csv"))
 
 
 def test_logger():
