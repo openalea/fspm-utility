@@ -63,7 +63,7 @@ class Logger:
         self.start_time = timeit.default_timer()
         self.previous_step_start_time = self.start_time
         self.simulation_time_in_hours = 0
-
+        
     def create_or_empty_directory(self, directory=""):
         if not os.path.exists(directory):
         # We create it:
@@ -113,6 +113,7 @@ class Logger:
     def recording_raw_MTG_properties_in_xarray(self):
         self.log_xarray += [self.mtg_to_dataset(variables=self.output_variables, time=self.simulation_time_in_hours)]
         if sys.getsizeof(self.log_xarray) > 10000:
+            print("")
             print("[INFO] Merging stored properties data in one xarray dataset...", flush=True)
             self.write_to_disk(self.log_xarray)
             # Check save maybe
@@ -173,6 +174,12 @@ class Logger:
         interstitial_dataset.to_netcdf(os.path.join(self.MTG_properties_raw_dirpath, f't={self.simulation_time_in_hours}.nc'))
     
     def terminate(self):
+        if self.echo:
+            elapsed_at_simulation_end = self.elapsed_time
+            print("") # to receive the flush
+            print(f"[INFO] Simulation ended after {round(elapsed_at_simulation_end/60, 1)} min without error")
+            print("[INFO] Now proceeding to data writing on disk...")
+
         if self.recording_sums:
             # Saving in memory summed properties
             self.summed_variables.to_csv(os.path.join(self.MTG_properties_summed_dirpath, "summed_properties.csv"))
@@ -180,13 +187,13 @@ class Logger:
         if self.recording_raw:
             # For saved xarray datasets
             if len(self.log_xarray) > 0:
+                print("")
                 print("[INFO] Merging stored properties data in one xarray dataset...", end="\r")
                 self.write_to_disk(self.log_xarray)
                 del self.log_xarray
-                
+            
             time_step_files = [os.path.join(self.MTG_properties_raw_dirpath, name) for name in os.listdir(self.MTG_properties_raw_dirpath)]
             time_dataset = xr.open_mfdataset(time_step_files)
-            print(time_dataset)
             time_dataset = time_dataset.assign_coords(coords=self.scenario).expand_dims(dim=dict(zip(list(self.scenario.keys()), [1 for k in self.scenario])))
             time_dataset.to_netcdf(self.MTG_properties_raw_dirpath + '/merged.nc')
             del time_dataset
@@ -194,8 +201,12 @@ class Logger:
                 if '.nc' in file and file != "merged.nc":
                     os.remove(self.MTG_properties_raw_dirpath + '/' + file)
         
-        # Sistematically log performance
-        self.simulation_performance.to_csv(os.path.join(self.outputs_dirpath, "simulation_performance.csv"))
+        if self.recording_performance:
+            self.simulation_performance.to_csv(os.path.join(self.outputs_dirpath, "simulation_performance.csv"))
+
+        if self.echo:
+            time_writing_on_disk = self.elapsed_time - elapsed_at_simulation_end
+            print(f"[INFO] Successfully wrote data on disk after {round(time_writing_on_disk/60, 1)} minutes")
 
 
 def test_logger():

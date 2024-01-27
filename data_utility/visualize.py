@@ -142,6 +142,7 @@ def plot_mtg(g, prop_cmap='C_hexose_root', cmap='brg', lognorm=True, vmin=1e-6, 
              width=1200, height=910,
              x_center=0., y_center=0., z_center=-1.,
              x_cam=2., y_cam=0., z_cam=1):
+    
     """
     This function creates a graph on PlantGL that displays a MTG and color it according to a specified property.
     :param g: the investigated MTG
