@@ -15,7 +15,8 @@ class Logger:
     def __init__(self, model_instance, outputs_dirpath="", 
                  output_variables={}, scenario={"default":1}, time_step_in_hours=1, 
                  logging_period_in_hours=1, 
-                 recording_sums=True, recording_raw=True, recording_mtg=True, recording_images=True, recording_performance=True, 
+                 recording_sums=True, recording_raw=True, recording_mtg=True, recording_images=True, recording_performance=True,
+                 plotted_property="struct_mass",
                  echo=True):
         self.g = model_instance.g
         self.props = self.g.properties()
@@ -31,6 +32,7 @@ class Logger:
         self.recording_raw = recording_raw
         self.recording_mtg = recording_mtg
         self.recording_images = recording_images
+        self.plotted_property = plotted_property
         self.recording_performance = recording_performance
         self.echo = echo
         # TODO : add a scenario named folder
@@ -49,7 +51,8 @@ class Logger:
         if self.output_variables == {}:
             for model in self.models:
                 self.summable_output_variables += model.extensive_variables
-                self.output_variables.update({f.name:f.metadata for f in fields(model) if f.name in model.state_variables})
+                available_inputs = [i for i in model.inputs if i in self.props.keys()] # To prevent getting inputs that are not proveided neither from another model nor mtg
+                self.output_variables.update({f.name:f.metadata for f in fields(model) if f.name in model.state_variables + available_inputs})
 
         if self.recording_sums:
             self.summed_variables = pd.DataFrame(columns=self.summable_output_variables)
@@ -82,7 +85,7 @@ class Logger:
         self.current_step_start_time = self.elapsed_time
         
         if self.echo:
-            print(f"{self.simulation_time_in_hours} hours | step took {round(self.current_step_start_time - self.previous_step_start_time, 1)} s | {int(self.elapsed_time)} s of simulation until now", end='\r', flush=True)
+            print(f"[RUNNING] {self.simulation_time_in_hours} hours | step took {round(self.current_step_start_time - self.previous_step_start_time, 1)} s | {int(self.elapsed_time)} s of simulation until now", end='\r', flush=True)
 
         if self.recording_performance:
             self.recording_step_performance()
@@ -163,7 +166,7 @@ class Logger:
 
     def recording_images_from_plantgl(self):
         # TODO : step back according to max(||x2-x1||, ||y2-y1||, ||z2-z1||)
-        pgl.Viewer.display(plot_mtg(self.g))
+        pgl.Viewer.display(plot_mtg(self.g, prop_cmap=self.plotted_property))
             # If needed, we wait for a few seconds so that the graph is well positioned:
         time.sleep(0.1)
         image_name = os.path.join(self.root_images_dirpath, f'root_{self.simulation_time_in_hours}.png')
@@ -173,7 +176,7 @@ class Logger:
         interstitial_dataset = xr.concat(xarray_list, dim="t")
         interstitial_dataset.to_netcdf(os.path.join(self.MTG_properties_raw_dirpath, f't={self.simulation_time_in_hours}.nc'))
     
-    def terminate(self):
+    def stop(self):
         if self.echo:
             elapsed_at_simulation_end = self.elapsed_time
             print("") # to receive the flush
@@ -187,8 +190,7 @@ class Logger:
         if self.recording_raw:
             # For saved xarray datasets
             if len(self.log_xarray) > 0:
-                print("")
-                print("[INFO] Merging stored properties data in one xarray dataset...", end="\r")
+                print("[INFO] Merging stored properties data in one xarray dataset...")
                 self.write_to_disk(self.log_xarray)
                 del self.log_xarray
             
@@ -207,7 +209,7 @@ class Logger:
         if self.echo:
             time_writing_on_disk = self.elapsed_time - elapsed_at_simulation_end
             print(f"[INFO] Successfully wrote data on disk after {round(time_writing_on_disk/60, 1)} minutes")
-
+            print("[LOGGER CLOSES]")
 
 def test_logger():
     return Logger()
