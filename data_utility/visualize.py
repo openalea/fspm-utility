@@ -4,6 +4,8 @@ import numpy as np
 from openalea.mtg.plantframe import color
 from openalea.mtg import turtle as turt
 import openalea.plantgl.all as pgl
+import pyvista as pv
+
 from math import cos, sin, floor
 import matplotlib.pyplot as plt
 from matplotlib.backend_bases import MouseButton
@@ -11,6 +13,7 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolb
 import tkinter as tk
 import numpy as np
 from time import sleep
+from openalea.mtg.traversal import pre_order
 
 
 def get_root_visitor():
@@ -159,8 +162,8 @@ def prepareScene(scene, width=1200, height=1200, scale=0.8, x_center=0., y_cente
 def plot_mtg(g, prop_cmap='C_hexose_root', cmap='brg', lognorm=True, vmin=1e-6, vmax=1e-0,
              root_hairs_display=True,
              width=1200, height=910,
-             x_center=0., y_center=0., z_center=-1.,
-             x_cam=2., y_cam=0., z_cam=1):
+             x_center=0., y_center=0., z_center=-0.1,
+             x_cam=0.2, y_cam=0., z_cam=-0.2):
     
     """
     This function creates a graph on PlantGL that displays a MTG and color it according to a specified property.
@@ -491,3 +494,32 @@ def plot_xr(datasets, vertice=[], summing=0, selection=[], supplementary_legend=
     # Finally show figure
     root.update()
 
+def plot_mtg_alt(g, cmap_property):
+    props = g.properties()
+    root_gen = g.component_roots_at_scale_iter(g.root, scale=1)
+    root = next(root_gen)
+
+    plotted_vids = []
+    tubes = []
+    for vid in pre_order(g, root):
+        if vid not in plotted_vids:
+            root = g.Axis(vid)
+            plotted_vids += root
+            if vid != 1:
+                parent = g.Father(vid)
+                grandparent = g.Father(parent)
+                # We need a minimum of two anchors for the new axis
+                root = [grandparent, parent] + root
+
+            points = np.array([[props["x2"][v], props["y2"][v], props["z2"][v]] for v in root])
+            spline = pv.Spline(points)
+            spline[cmap_property] = [props[cmap_property][v] for v in root]
+            # Adjust radius of each element
+            spline["radius"] = [props["radius"][v] for v in root]
+            tubes += [spline.tube(scalars="radius", absolute=True)]
+    
+    root_system = pv.MultiBlock(tubes)
+    return root_system
+
+
+    

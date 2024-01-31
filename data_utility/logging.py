@@ -6,9 +6,10 @@ import timeit
 import xarray as xr
 import pandas as pd
 from dataclasses import fields
+import pyvista as pv
 
 import openalea.plantgl.all as pgl
-from data_utility.visualize import plot_mtg
+from data_utility.visualize import plot_mtg, plot_mtg_alt
 
 
 class Logger:
@@ -16,7 +17,7 @@ class Logger:
                  output_variables={}, scenario={"default":1}, time_step_in_hours=1, 
                  logging_period_in_hours=1, 
                  recording_sums=True, recording_raw=True, recording_mtg=True, recording_images=True, recording_performance=True,
-                 plotted_property="struct_mass",
+                 plotted_property="hexose_exudation",
                  echo=True):
         self.g = model_instance.g
         self.props = self.g.properties()
@@ -62,6 +63,15 @@ class Logger:
         
         if self.recording_performance:
             self.simulation_performance = pd.DataFrame(columns=["time_step_duration"])
+
+        if recording_images:
+            self.plotter = pv.Plotter(window_size=[1900, 1080])
+            self.plotter.background_color="brown"
+            self.plotter.camera_position = [(0.004467842276440134, 0.004094555545888168, 0.0553663109208036),
+                                            (0.0023111583631502453, 0.002129856559968486, -0.0005881156109317957),
+                                            (-0.7213092954246869, -0.6906543596373063, 0.05205243364074876)]
+            self.plotter.open_movie(os.path.join(self.root_images_dirpath, "root_movie.mp4"))
+            self.plotter.show(interactive_update=True)
 
         self.start_time = timeit.default_timer()
         self.previous_step_start_time = self.start_time
@@ -166,11 +176,23 @@ class Logger:
 
     def recording_images_from_plantgl(self):
         # TODO : step back according to max(||x2-x1||, ||y2-y1||, ||z2-z1||)
-        pgl.Viewer.display(plot_mtg(self.g, prop_cmap=self.plotted_property))
-            # If needed, we wait for a few seconds so that the graph is well positioned:
-        time.sleep(0.1)
-        image_name = os.path.join(self.root_images_dirpath, f'root_{self.simulation_time_in_hours}.png')
-        pgl.Viewer.saveSnapshot(image_name)
+        #Updates positions with turtle
+        plot_mtg(self.g, prop_cmap=self.plotted_property)
+
+        root_system_mesh = plot_mtg_alt(self.g, cmap_property=self.plotted_property)
+
+        self.plotter.clear()
+        self.plotter.add_mesh(root_system_mesh, cmap="jet")
+        self.plotter.update()
+        self.plotter.write_frame()
+        # Usefull to set new camera angle
+        #print(self.plotter.camera_position)
+
+        #pgl.Viewer.display()
+        # If needed, we wait for a few seconds so that the graph is well positioned:
+        #time.sleep(0.1)
+        #image_name = os.path.join(self.root_images_dirpath, f'root_{self.simulation_time_in_hours}.png')
+        #pgl.Viewer.saveSnapshot(image_name)
 
     def write_to_disk(self, xarray_list):
         interstitial_dataset = xr.concat(xarray_list, dim="t")
