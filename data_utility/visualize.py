@@ -194,116 +194,116 @@ def plot_mtg(g, prop_cmap='C_hexose_root', cmap='brg', lognorm=True, vmin=1e-6, 
     # We initialize the scene with the MTG g:
     scene = turt.TurtleFrame(g, visitor=visitor, turtle=turtle, gc=False)
     # We update the scene with the specified position of the center of the graph and the camera:
-    prepareScene(scene, width=width, height=height,
-                 x_center=x_center, y_center=y_center, z_center=z_center, x_cam=x_cam, y_cam=y_cam, z_cam=z_cam)
+    #prepareScene(scene, width=width, height=height,
+    #             x_center=x_center, y_center=y_center, z_center=z_center, x_cam=x_cam, y_cam=y_cam, z_cam=z_cam)
     # We compute the colors of the graph:
-    my_colormap(g, prop_cmap, cmap=cmap, vmin=vmin, vmax=vmax, lognorm=lognorm)
-    # We get a list of all shapes in the scene:
-    shapes = dict((sh.id, sh) for sh in scene)
-    # We use the property 'color' of the MTG calculated by the function 'my_colormap':
-    colors = g.property('color')
-    # We cover each node of the MTG:
-    for vid in colors:
-        if vid in shapes:
-            n = g.node(vid)
-            # If the element is not dead:
-            if n.type != "Dead":
-                # We color it according to the property cmap defined by the user:
-                shapes[vid].appearance = pgl.Material(colors[vid], transparency=0.0)
-            else:
-                # Otherwise, we print it in black in a semi-transparent way:
-                shapes[vid].appearance = pgl.Material([0, 0, 0], transparency=0.8)
-            # property=g.property(prop_cmap)
-            # if n.property <=0:
-            #     shapes[vid].appearance = pgl.Material([0, 0, 200])
+    # my_colormap(g, prop_cmap, cmap=cmap, vmin=vmin, vmax=vmax, lognorm=lognorm)
+    # # We get a list of all shapes in the scene:
+    # shapes = dict((sh.id, sh) for sh in scene)
+    # # We use the property 'color' of the MTG calculated by the function 'my_colormap':
+    # colors = g.property('color')
+    # # We cover each node of the MTG:
+    # for vid in colors:
+    #     if vid in shapes:
+    #         n = g.node(vid)
+    #         # If the element is not dead:
+    #         if n.type != "Dead":
+    #             # We color it according to the property cmap defined by the user:
+    #             shapes[vid].appearance = pgl.Material(colors[vid], transparency=0.0)
+    #         else:
+    #             # Otherwise, we print it in black in a semi-transparent way:
+    #             shapes[vid].appearance = pgl.Material([0, 0, 0], transparency=0.8)
+    #         # property=g.property(prop_cmap)
+    #         # if n.property <=0:
+    #         #     shapes[vid].appearance = pgl.Material([0, 0, 200])
 
-            # SPECIAL CASE: If the element is a nodule, we transform the cylinder into a sphere:
-            if n.type == "Root_nodule":
-                # We create a sphere corresponding to the radius of the element:
-                s = pgl.Sphere(n.radius * 1.)
-                # We transform the cylinder into the sphere:
-                shapes[vid].geometry.geometry = pgl.Shape(s).geometry
-                # We select the parent element supporting the nodule:
-                index_parent = g.Father(vid, EdgeType='+')
-                parent = g.node(index_parent)
-                # We move the center of the sphere on the circle corresponding to the external envelop of the
-                # parent:
-                angle = parent.angle_roll
-                circle_x = parent.radius * cos(angle)
-                circle_y = parent.radius * sin(angle)
-                circle_z = 0
-                shapes[vid].geometry.translation += (circle_x, circle_y, circle_z)
+    #         # SPECIAL CASE: If the element is a nodule, we transform the cylinder into a sphere:
+    #         if n.type == "Root_nodule":
+    #             # We create a sphere corresponding to the radius of the element:
+    #             s = pgl.Sphere(n.radius * 1.)
+    #             # We transform the cylinder into the sphere:
+    #             shapes[vid].geometry.geometry = pgl.Shape(s).geometry
+    #             # We select the parent element supporting the nodule:
+    #             index_parent = g.Father(vid, EdgeType='+')
+    #             parent = g.node(index_parent)
+    #             # We move the center of the sphere on the circle corresponding to the external envelop of the
+    #             # parent:
+    #             angle = parent.angle_roll
+    #             circle_x = parent.radius * cos(angle)
+    #             circle_y = parent.radius * sin(angle)
+    #             circle_z = 0
+    #             shapes[vid].geometry.translation += (circle_x, circle_y, circle_z)
 
-    # DISPLAYING ROOT HAIRS:
-    #-----------------------
-    if root_hairs_display:
-        visitor_for_hair = get_root_visitor()
-        # We initialize a turtle in PlantGL:
-        turtle_for_hair = turt.PglTurtle()
-        # We make the graph upside down:
-        turtle_for_hair.down(180)
-        # We initialize the scene with the MTG g:
-        # scene_for_hair = turt.TurtleFrame(g, visitor=visitor_for_hair, turtle=turtle_for_hair, gc=False)
-        scene_for_hair = turt.TurtleFrame(g, visitor=visitor, turtle=turtle_for_hair, gc=False)
-        # We update the scene with the specified position of the center of the graph and the camera:
-        prepareScene(scene_for_hair, width=width, height=height,
-                     x_center=x_center, y_center=y_center, z_center=z_center, x_cam=x_cam, y_cam=y_cam, z_cam=z_cam)
-        # We get a list of all shapes in the scene:
-        shapes_for_hair = dict((sh.id, sh) for sh in scene_for_hair)
+    # # DISPLAYING ROOT HAIRS:
+    # #-----------------------
+    # if root_hairs_display:
+    #     visitor_for_hair = get_root_visitor()
+    #     # We initialize a turtle in PlantGL:
+    #     turtle_for_hair = turt.PglTurtle()
+    #     # We make the graph upside down:
+    #     turtle_for_hair.down(180)
+    #     # We initialize the scene with the MTG g:
+    #     # scene_for_hair = turt.TurtleFrame(g, visitor=visitor_for_hair, turtle=turtle_for_hair, gc=False)
+    #     scene_for_hair = turt.TurtleFrame(g, visitor=visitor, turtle=turtle_for_hair, gc=False)
+    #     # We update the scene with the specified position of the center of the graph and the camera:
+    #     prepareScene(scene_for_hair, width=width, height=height,
+    #                  x_center=x_center, y_center=y_center, z_center=z_center, x_cam=x_cam, y_cam=y_cam, z_cam=z_cam)
+    #     # We get a list of all shapes in the scene:
+    #     shapes_for_hair = dict((sh.id, sh) for sh in scene_for_hair)
 
-        # We cover each node of the MTG:
-        for vid in colors:
-            if vid in shapes_for_hair:
-                n = g.node(vid)
-                # If the element has no detectable root hairs:
-                if n.root_hair_length<=0.:
-                    # Then the element is set to be transparent:
-                    shapes_for_hair[vid].appearance = pgl.Material(colors[vid], transparency=1)
-                else:
-                    # We color the root hairs according to the proportion of living and dead root hairs:
-                    dead_transparency = 0.9
-                    dead_color_vector=[0,0,0]
-                    dead_color_vector_Red=dead_color_vector[0]
-                    dead_color_vector_Green=dead_color_vector[1]
-                    dead_color_vector_Blue=dead_color_vector[2]
+    #     # We cover each node of the MTG:
+    #     for vid in colors:
+    #         if vid in shapes_for_hair:
+    #             n = g.node(vid)
+    #             # If the element has no detectable root hairs:
+    #             if n.root_hair_length<=0.:
+    #                 # Then the element is set to be transparent:
+    #                 shapes_for_hair[vid].appearance = pgl.Material(colors[vid], transparency=1)
+    #             else:
+    #                 # We color the root hairs according to the proportion of living and dead root hairs:
+    #                 dead_transparency = 0.9
+    #                 dead_color_vector=[0,0,0]
+    #                 dead_color_vector_Red=dead_color_vector[0]
+    #                 dead_color_vector_Green=dead_color_vector[1]
+    #                 dead_color_vector_Blue=dead_color_vector[2]
 
-                    living_transparency = 0.8
-                    living_color_vector=colors[vid]
-                    living_color_vector_Red = colors[vid][0]
-                    living_color_vector_Green = colors[vid][1]
-                    living_color_vector_Blue = colors[vid][2]
+    #                 living_transparency = 0.8
+    #                 living_color_vector=colors[vid]
+    #                 living_color_vector_Red = colors[vid][0]
+    #                 living_color_vector_Green = colors[vid][1]
+    #                 living_color_vector_Blue = colors[vid][2]
 
-                    living_fraction = n.living_root_hairs_number/n.total_root_hairs_number
-                    # print("Living fraction is", living_fraction)
+    #                 living_fraction = n.living_root_hairs_number/n.total_root_hairs_number
+    #                 # print("Living fraction is", living_fraction)
 
-                    transparency = dead_transparency + (living_transparency - dead_transparency) * living_fraction
-                    color_vector_Red = floor(dead_color_vector_Red
-                                             + (living_color_vector_Red - dead_color_vector_Red) * living_fraction)
-                    color_vector_Green = floor(dead_color_vector_Green
-                                               + (living_color_vector_Green - dead_color_vector_Green) * living_fraction)
-                    color_vector_Blue = floor(dead_color_vector_Blue
-                                              + (living_color_vector_Blue - dead_color_vector_Blue) * living_fraction)
-                    color_vector = [color_vector_Red,color_vector_Green,color_vector_Blue]
+    #                 transparency = dead_transparency + (living_transparency - dead_transparency) * living_fraction
+    #                 color_vector_Red = floor(dead_color_vector_Red
+    #                                          + (living_color_vector_Red - dead_color_vector_Red) * living_fraction)
+    #                 color_vector_Green = floor(dead_color_vector_Green
+    #                                            + (living_color_vector_Green - dead_color_vector_Green) * living_fraction)
+    #                 color_vector_Blue = floor(dead_color_vector_Blue
+    #                                           + (living_color_vector_Blue - dead_color_vector_Blue) * living_fraction)
+    #                 color_vector = [color_vector_Red,color_vector_Green,color_vector_Blue]
 
-                    shapes_for_hair[vid].appearance = pgl.Material(color_vector, transparency=transparency)
+    #                 shapes_for_hair[vid].appearance = pgl.Material(color_vector, transparency=transparency)
 
-                    # We finally transform the radius of the cylinder:
-                    if vid > 1:
-                        # For normal cases:
-                        shapes_for_hair[vid].geometry.geometry.geometry.radius = n.radius + n.root_hair_length
-                    else:
-                        # For the base of the root system [don't ask why this has not the same formalism..!]:
-                        shapes_for_hair[vid].geometry.geometry.radius = n.radius + n.root_hair_length
+    #                 # We finally transform the radius of the cylinder:
+    #                 if vid > 1:
+    #                     # For normal cases:
+    #                     shapes_for_hair[vid].geometry.geometry.geometry.radius = n.radius + n.root_hair_length
+    #                 else:
+    #                     # For the base of the root system [don't ask why this has not the same formalism..!]:
+    #                     shapes_for_hair[vid].geometry.geometry.radius = n.radius + n.root_hair_length
 
-    # CREATING THE ACTUAL SCENE:
-    #---------------------------
-    # Finally, we update the scene with shapes from roots and, if specified, shapes from root hairs:
-    new_scene = pgl.Scene()
-    for vid in shapes:
-        new_scene += shapes[vid]
-    if root_hairs_display:
-        for vid in shapes_for_hair:
-            new_scene += shapes_for_hair[vid]
+    # # CREATING THE ACTUAL SCENE:
+    # #---------------------------
+    # # Finally, we update the scene with shapes from roots and, if specified, shapes from root hairs:
+    # new_scene = pgl.Scene()
+    # for vid in shapes:
+    #     new_scene += shapes[vid]
+    # if root_hairs_display:
+    #     for vid in shapes_for_hair:
+    #         new_scene += shapes_for_hair[vid]
 
     #return new_scene
 
