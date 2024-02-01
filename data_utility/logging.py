@@ -70,7 +70,8 @@ class Logger:
             self.plotter.camera_position = [(0.004467842276440134, 0.004094555545888168, 0.0553663109208036),
                                             (0.0023111583631502453, 0.002129856559968486, -0.0005881156109317957),
                                             (-0.7213092954246869, -0.6906543596373063, 0.05205243364074876)]
-            self.plotter.open_movie(os.path.join(self.root_images_dirpath, "root_movie.mp4"))
+            framerate = 30
+            self.plotter.open_movie(os.path.join(self.root_images_dirpath, "root_movie.mp4"), framerate)
             self.plotter.show(interactive_update=True)
 
         self.start_time = timeit.default_timer()
@@ -178,11 +179,11 @@ class Logger:
         # TODO : step back according to max(||x2-x1||, ||y2-y1||, ||z2-z1||)
         #Updates positions with turtle
         plot_mtg(self.g, prop_cmap=self.plotted_property)
-
         root_system_mesh = plot_mtg_alt(self.g, cmap_property=self.plotted_property)
 
         self.plotter.clear()
         self.plotter.add_mesh(root_system_mesh, cmap="jet")
+        self.plotter.add_text(f" t = {self.simulation_time_in_hours} h", position="upper_left")
         self.plotter.update()
         self.plotter.write_frame()
         # Usefull to set new camera angle

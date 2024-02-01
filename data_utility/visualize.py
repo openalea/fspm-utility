@@ -305,7 +305,7 @@ def plot_mtg(g, prop_cmap='C_hexose_root', cmap='brg', lognorm=True, vmin=1e-6, 
         for vid in shapes_for_hair:
             new_scene += shapes_for_hair[vid]
 
-    return new_scene
+    #return new_scene
 
 def plot_xr(datasets, vertice=[], summing=0, selection=[], supplementary_legend=[""]):
     # TODO : convert to class
