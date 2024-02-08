@@ -5,10 +5,14 @@ import pickle
 import timeit
 import xarray as xr
 import pandas as pd
+import numpy as np
 from dataclasses import fields
 import pyvista as pv
+import matplotlib.pyplot as plt
+#from gudhi import bottleneck_distance
 
 import openalea.plantgl.all as pgl
+from openalea.mtg.traversal import pre_order, post_order
 from data_utility.visualize import plot_mtg, plot_mtg_alt
 
 
@@ -204,6 +208,62 @@ class Logger:
         interstitial_dataset = xr.concat(xarray_list, dim="t")
         interstitial_dataset.to_netcdf(os.path.join(self.MTG_properties_raw_dirpath, f't={self.simulation_time_in_hours}.nc'))
     
+    def mtg_persistent_homology(self, g):
+        props = g.properties()
+        root_gen = g.component_roots_at_scale_iter(self.g.root, scale=1)
+        root = next(root_gen)
+
+        # We travel in the MTG from the root collar to the tips:
+        for vid in pre_order(g, root):
+            if vid == 1:
+                g.node(vid).dist_to_collar = 0
+                g.node(vid).order = 1
+            else:
+                parent = g.parent(vid)
+                g.node(vid).dist_to_collar = g.node(parent).dist_to_collar + g.node(parent).length
+                if self.props["edge_type"][vid] == "+":
+                    g.node(vid).order = g.node(parent).order + 1
+                else:
+                    g.node(vid).order = g.node(parent).order
+        
+        prop = "order"
+
+        geodesic_sorting = sorted(props["dist_to_collar"], key=props["dist_to_collar"].get, reverse=True)
+
+        captured_vertices = []
+        homology_barcode = []
+        colored_prop = []
+        for vid in geodesic_sorting[1:]:
+            captured = False
+            if len(captured_vertices) > 0:
+                for axis in captured_vertices:
+                    if vid in axis:
+                        captured = True
+            if not captured:
+                new_group = g.Ancestors(vid, RestrictedTo="SameAxis")
+                if len(new_group) > 1:
+                    captured_vertices += [new_group]
+                    homology_barcode += [[props["dist_to_collar"][v] for v in new_group]]
+                    colored_prop += [plt.cm.cool(np.mean([props[prop][v] for v in new_group])/5)]
+
+        persitent_diagram = np.array([[min(axs), max(axs)] for axs in homology_barcode])
+
+        fig, ax = plt.subplots(2)
+        
+        for k in range(len(homology_barcode)):
+            line = [-k for i in range(len(homology_barcode[k]))]
+            ax[0].plot(homology_barcode[k], line, c=colored_prop[k], linewidth=2)
+        
+        ax[1].scatter(persitent_diagram[:,0], persitent_diagram[:,1], c=colored_prop)
+
+        # TODO move out
+        #print(bottleneck_distance(persitent_diagram, persitent_diagram, 0.))
+
+        plt.show()
+
+        return persitent_diagram
+
+
     def stop(self):
         if self.echo:
             elapsed_at_simulation_end = self.elapsed_time
@@ -238,6 +298,8 @@ class Logger:
             time_writing_on_disk = self.elapsed_time - elapsed_at_simulation_end
             print(f"[INFO] Successfully wrote data on disk after {round(time_writing_on_disk/60, 1)} minutes")
             print("[LOGGER CLOSES]")
+
+        self.mtg_persistent_homology(g=self.g)
 
 def test_logger():
     return Logger()
