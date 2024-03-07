@@ -5,8 +5,8 @@ from keras.models import Model, load_model
 import umap
 import hdbscan
 
-import src.analysis.time_series_projection
-from src.analysis.time_series_projection import Preprocessing, DCAE
+import data_utility.workflow.STM_analysis.time_series_projection
+from data_utility.workflow.STM_analysis.time_series_projection import Preprocessing, DCAE
 
 '''SCRIPT'''
 input_type = "mtg"

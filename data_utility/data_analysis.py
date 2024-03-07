@@ -5,7 +5,6 @@ from PIL import Image, ImageDraw, ImageFont
 import numpy as np
 # from pygifsicle import optimize
 from openalea.mtg.plantframe import color
-from path import Path
 from math import floor, ceil, trunc, log10
 
 from data_utility.visualize import plot_mtg, plot_xr, custom_colorbar
@@ -278,7 +277,7 @@ def resizing_and_film_making(outputs_path='outputs',
     resized_images_directory = os.path.join(outputs_path, resized_images_folder)
 
     # Getting a list of the names of the images found in the directory "video":
-    filenames = Path(images_directory).glob('*.png')
+    filenames = [f for f in os.listdir(images_directory) if ".png" in f]
     filenames = sorted(filenames)
 
     # We define the final number of images that will be considered, based on the "sampling_frequency" variable:
@@ -409,11 +408,11 @@ def resizing_and_film_making(outputs_path='outputs',
 
         with imageio.get_writer(os.path.join(outputs_path, film_name), mode='I', fps=fps) as writer:
             if image_transforming:
-                filenames = Path(resized_images_directory).glob('*.png')
+                filenames = [f for f in os.listdir(images_directory) if ".png" in f]
                 filenames = sorted(filenames)
                 sampling_frequency = 1
             else:
-                filenames = Path(images_directory).glob('*.png')
+                filenames = [f for f in os.listdir(images_directory) if ".png" in f]
                 filenames = sorted(filenames)
                 sampling_frequency = sampling_frequency
             remaining_images = floor(len(filenames) / float(sampling_frequency)) + 1
