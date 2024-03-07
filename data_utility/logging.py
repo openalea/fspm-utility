@@ -31,6 +31,7 @@ class Logger:
         self.output_variables = output_variables
         self.scenario = scenario
         self.summable_output_variables = []
+        self.meanable_output_variables = []
         self.time_step_in_hours = time_step_in_hours
         self.logging_period_in_hours = logging_period_in_hours
         self.recording_sums = recording_sums
@@ -56,14 +57,15 @@ class Logger:
         if self.output_variables == {}:
             for model in self.models:
                 self.summable_output_variables += model.extensive_variables
+                self.meanable_output_variables += model.intensive_variables
                 available_inputs = [i for i in model.inputs if i in self.props.keys()] # To prevent getting inputs that are not proveided neither from another model nor mtg
                 self.output_variables.update({f.name:f.metadata for f in fields(model) if f.name in model.state_variables + available_inputs})
 
         if self.recording_sums:
-            self.summed_variables = pd.DataFrame(columns=self.summable_output_variables)
+            self.plant_scale_properties = pd.DataFrame(columns=self.summable_output_variables + self.meanable_output_variables)
 
         if self.recording_raw:
-            self.log_xarray =  []
+            self.log_xarray = []
         
         if self.recording_performance:
             self.simulation_performance = pd.DataFrame(columns=["time_step_duration"])
@@ -128,9 +130,14 @@ class Logger:
         self.simulation_performance = pd.concat([self.simulation_performance, step_elapsed])
 
     def recording_summed_MTG_properties_to_csv(self):
-        step_sum = pd.DataFrame({var:sum(self.props[var].values()) for var in self.summable_output_variables}, columns=self.summable_output_variables, 
+        step_plant_scale = {}
+        for var in self.summable_output_variables:
+            step_plant_scale.update({var:sum(self.props[var].values())})
+        for var in self.meanable_output_variables:
+            step_plant_scale.update({var:np.mean(list(self.props[var].values()))})
+        step_sum = pd.DataFrame(step_plant_scale, columns=self.summable_output_variables + self.meanable_output_variables, 
                                 index=[self.simulation_time_in_hours])
-        self.summed_variables = pd.concat([self.summed_variables, step_sum])
+        self.plant_scale_properties = pd.concat([self.plant_scale_properties, step_sum])
 
     def recording_raw_MTG_properties_in_xarray(self):
         self.log_xarray += [self.mtg_to_dataset(variables=self.output_variables, time=self.simulation_time_in_hours)]
@@ -273,7 +280,7 @@ class Logger:
 
         if self.recording_sums:
             # Saving in memory summed properties
-            self.summed_variables.to_csv(os.path.join(self.MTG_properties_summed_dirpath, "summed_properties.csv"))
+            self.plant_scale_properties.to_csv(os.path.join(self.MTG_properties_summed_dirpath, "plant_scale_properties.csv"))
 
         if self.recording_raw:
             # For saved xarray datasets
@@ -299,7 +306,7 @@ class Logger:
             print(f"[INFO] Successfully wrote data on disk after {round(time_writing_on_disk/60, 1)} minutes")
             print("[LOGGER CLOSES]")
 
-        self.mtg_persistent_homology(g=self.g)
+        # self.mtg_persistent_homology(g=self.g)
 
 def test_logger():
     return Logger()

@@ -6,16 +6,18 @@ import numpy as np
 # from pygifsicle import optimize
 from openalea.mtg.plantframe import color
 from math import floor, ceil, trunc, log10
+import pandas as pd
+import matplotlib.pyplot as plt
 
 from data_utility.visualize import plot_mtg, plot_xr, custom_colorbar
 import openalea.plantgl.all as pgl
 from data_utility.workflow.STM_analysis.main_workflow import run_analysis
 from data_utility.workflow.global_sensivity.run_global_sensitivity import regression_analysis
 
-def analyze_data(outputs_dirpath, on_sums=False, on_recorded_images=False, on_raw_logs=False, on_performance=False):
+def analyze_data(outputs_dirpath, on_sums=False, on_recorded_images=False, on_raw_logs=False, on_performance=False, target_properties=[]):
     # TODO if not available, return not performed
     if on_sums:
-        plot_csv()
+        plot_csv(csv_dirpath=os.path.join(outputs_dirpath, "MTG_properties/MTG_properties_summed"), properties=target_properties)
     if on_recorded_images:
         make_video()
     if on_raw_logs:
@@ -23,16 +25,26 @@ def analyze_data(outputs_dirpath, on_sums=False, on_recorded_images=False, on_ra
     if on_performance:
         plot_csv()
 
-
-def plot_totals(csv_dirpath, properties):
-    # TODO also log plant_scale_properties!!
-    return
-
 def plot_performance(csv_dirpath):
     return
 
 def plot_csv(csv_dirpath, properties):
-    return
+    # TODO also log plant_scale_properties!!
+    log = pd.read_csv(os.path.join(csv_dirpath, "plant_scale_properties.csv"))
+
+    plot_path = os.path.join(csv_dirpath, "plots")
+    if not os.path.isdir(plot_path):
+        os.mkdir(plot_path)
+    if properties == []:
+        properties = log.columns
+    for prop in properties:
+        if prop in log.columns:
+            fig, ax = plt.subplots()
+            ax.plot(log.index, log[prop], label=prop)
+            ax.set_xlabel("t (h)")
+            ax.legend()
+            fig.savefig(os.path.join(plot_path, prop + ".png"))
+            plt.close()
 
 def make_video(png_dirpath, property):
     # TODO transfer to visualize for clarity
