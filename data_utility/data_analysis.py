@@ -1,5 +1,6 @@
 
 import os
+import shutil
 import imageio
 from PIL import Image, ImageDraw, ImageFont
 import numpy as np
@@ -11,30 +12,32 @@ import matplotlib.pyplot as plt
 
 from data_utility.visualize import plot_mtg, plot_xr, custom_colorbar
 import openalea.plantgl.all as pgl
-from data_utility.workflow.STM_analysis.main_workflow import run_analysis
-from data_utility.workflow.global_sensivity.run_global_sensitivity import regression_analysis
 
-def analyze_data(outputs_dirpath, on_sums=False, on_recorded_images=False, on_raw_logs=False, on_performance=False, target_properties=[]):
+def analyze_data(outputs_dirpath, on_sums=False, on_raw_logs=False, on_performance=False, target_properties=[]):
     # TODO if not available, return not performed
     if on_sums:
-        plot_csv(csv_dirpath=os.path.join(outputs_dirpath, "MTG_properties/MTG_properties_summed"), properties=target_properties)
-    if on_recorded_images:
-        make_video()
+        plot_csv(csv_dirpath=os.path.join(outputs_dirpath, "MTG_properties/MTG_properties_summed"), csv_name= "plant_scale_properties.csv", properties=target_properties)
     if on_raw_logs:
+        from data_utility.workflow.STM_analysis.main_workflow import run_analysis
+        from data_utility.workflow.global_sensivity.run_global_sensitivity import regression_analysis
         xarray_deep_learning()
     if on_performance:
-        plot_csv()
+        plot_csv(csv_dirpath=outputs_dirpath, csv_name="simulation_performance.csv", properties=["time_step_duration"])
 
 def plot_performance(csv_dirpath):
     return
 
-def plot_csv(csv_dirpath, properties):
+def plot_csv(csv_dirpath, csv_name, properties):
     # TODO also log plant_scale_properties!!
-    log = pd.read_csv(os.path.join(csv_dirpath, "plant_scale_properties.csv"))
+    log = pd.read_csv(os.path.join(csv_dirpath, csv_name))
 
     plot_path = os.path.join(csv_dirpath, "plots")
-    if not os.path.isdir(plot_path):
-        os.mkdir(plot_path)
+
+    if os.path.isdir(plot_path):
+        shutil.rmtree(plot_path)
+
+    os.mkdir(plot_path)
+
     if properties == []:
         properties = log.columns
     for prop in properties:
@@ -45,10 +48,6 @@ def plot_csv(csv_dirpath, properties):
             ax.legend()
             fig.savefig(os.path.join(plot_path, prop + ".png"))
             plt.close()
-
-def make_video(png_dirpath, property):
-    # TODO transfer to visualize for clarity
-    return
 
 
 # Define function for string formatting of scientific notation
@@ -512,6 +511,7 @@ def resizing_and_film_making_for_scenarios(general_outputs_folder='outputs',
 
 def xarray_deep_learning(dataset, mtg, global_state_extracts, global_flow_extracts, state_extracts, flow_extracts,
                     output_dir="", global_sensitivity=True, global_plots=True, plot_architecture=True, STM_clustering=True):
+    
     if global_sensitivity:
         # TERMINAL SENSITIVITY ANALYSIS
         # TODO : general sensitivity analysis on time-series data, but issue of post simulation Sensitivity Methods not existing
