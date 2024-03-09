@@ -73,9 +73,9 @@ class Logger:
         if recording_images:
             self.plotter = pv.Plotter(off_screen=not self.echo, window_size=[1900, 1080], lighting="three lights")
             self.plotter.set_background("brown")
-            self.plotter.camera_position = [(0.004467842276440134, 0.004094555545888168, 0.0553663109208036),
-                                            (0.0023111583631502453, 0.002129856559968486, -0.0005881156109317957),
-                                            (-0.7213092954246869, -0.6906543596373063, 0.05205243364074876)]
+            self.plotter.camera_position = [(0.2771029327675725, 0.26559962985945457, 0.22821718563975485),
+                                            (0.0475656802374161, 0.03795701550406494, -0.09353044576347432),
+                                            (-0.5353537107754003, -0.4607303882419462, 0.7079010620909072)]
             framerate = 30
             self.plotter.open_movie(os.path.join(self.root_images_dirpath, "root_movie.mp4"), framerate)
             self.plotter.show(interactive_update=True)
