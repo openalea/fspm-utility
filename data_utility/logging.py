@@ -91,7 +91,7 @@ class Logger:
     def create_or_empty_directory(self, directory=""):
         if not os.path.exists(directory):
         # We create it:
-            os.mkdir(directory)
+            os.makedirs(directory)
         else:
             # Otherwise, we delete all the files that are already present inside:
             for root, dirs, files in os.walk(directory):
@@ -134,7 +134,11 @@ class Logger:
         for var in self.summable_output_variables:
             step_plant_scale.update({var:sum(self.props[var].values())})
         for var in self.meanable_output_variables:
-            step_plant_scale.update({var:np.mean(list(self.props[var].values()))})
+            emerged_only_list = [v for v in self.props[var].values() if v > 0]
+            if len(emerged_only_list) > 0:
+                step_plant_scale.update({var:np.mean(emerged_only_list)})
+            else:
+                step_plant_scale.update({var:None})
         step_sum = pd.DataFrame(step_plant_scale, columns=self.summable_output_variables + self.meanable_output_variables, 
                                 index=[self.simulation_time_in_hours])
         self.plant_scale_properties = pd.concat([self.plant_scale_properties, step_sum])
