@@ -1,5 +1,5 @@
 Metadata-Version: 2.1
-Name: data-utility
+Name: data_utility
 Version: 0.0.1
 Summary: data_utility is a package for openalea.mtg data logging and analysis
 Home-page: https://github.com/GeraultTr/data_utility.git
