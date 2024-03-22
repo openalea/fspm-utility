@@ -1,0 +1,9 @@
+[submodule "initialize"]
+	path = initialize
+	url = https://github.com/GeraultTr/initialize.git
+[submodule "log"]
+	path = log
+	url = https://github.com/GeraultTr/log.git
+[submodule "analyze"]
+	path = analyze
+	url = https://github.com/GeraultTr/analyze.git
