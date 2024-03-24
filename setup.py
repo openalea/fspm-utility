@@ -37,7 +37,7 @@ if sys.version_info < (3, 8):
 setup(
     name="data_utility",
     version="0.0.1",
-    packages=["data_utility"],
+    packages=[],
     include_package_data=True,
     author="T.Grault, F.Rees, R.Barillot and C.Pradal",
     author_email="tristan.gerault@inrae.fr, frederic.rees@inrae.fr, romain.barillot@inrae.fr, christophe.pradal@cirad.fr",
