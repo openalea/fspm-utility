@@ -1,0 +1,12 @@
+Metadata-Version: 2.1
+Name: data_utility
+Version: 0.0.1
+Summary: data_utility is a package for openalea.mtg data logging and analysis
+Home-page: https://github.com/GeraultTr/data_utility.git
+Download-URL: https://github.com/GeraultTr/data_utility.git
+Author: T.Grault, F.Rees, R.Barillot and C.Pradal
+Author-email: tristan.gerault@inrae.fr, frederic.rees@inrae.fr, romain.barillot@inrae.fr, christophe.pradal@cirad.fr
+License: CeCILL-C
+Keywords: functional-structural plant model,wheat,uptake,rhizodeposition,trophic status,carbon,nitrogen,metabolism,remobilisation,source-sink relation,resource allocation
+
+TODO
