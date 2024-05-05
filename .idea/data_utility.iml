@@ -1,8 +1,43 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <module type="PYTHON_MODULE" version="4">
   <component name="NewModuleRootManager">
+    <content url="file://$MODULE_DIR$/../Wheat-BRIDGES/Root_BRIDGES">
+      <sourceFolder url="file://$MODULE_DIR$/../Wheat-BRIDGES/Root_BRIDGES" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/../Wheat-BRIDGES/Root_BRIDGES/rhizodep/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/../Wheat-BRIDGES/Root_BRIDGES/root_cynaps" isTestSource="false" />
+    </content>
+    <content url="file://$MODULE_DIR$/../Wheat-BRIDGES/Root_BRIDGES/rhizodep/src">
+      <sourceFolder url="file://$MODULE_DIR$/../Wheat-BRIDGES/Root_BRIDGES/rhizodep/src" isTestSource="false" />
+    </content>
+    <content url="file://$MODULE_DIR$/../Wheat-BRIDGES/Root_BRIDGES/root_cynaps">
+      <sourceFolder url="file://$MODULE_DIR$/../Wheat-BRIDGES/Root_BRIDGES/root_cynaps" isTestSource="false" />
+    </content>
+    <content url="file://$MODULE_DIR$/../Wheat-BRIDGES/WheatFspm/adel/src">
+      <sourceFolder url="file://$MODULE_DIR$/../Wheat-BRIDGES/WheatFspm/adel/src" isTestSource="false" />
+    </content>
+    <content url="file://$MODULE_DIR$/../Wheat-BRIDGES/WheatFspm/cn-wheat">
+      <sourceFolder url="file://$MODULE_DIR$/../Wheat-BRIDGES/WheatFspm/cn-wheat" isTestSource="false" />
+    </content>
+    <content url="file://$MODULE_DIR$/../Wheat-BRIDGES/WheatFspm/elong-wheat">
+      <sourceFolder url="file://$MODULE_DIR$/../Wheat-BRIDGES/WheatFspm/elong-wheat" isTestSource="false" />
+    </content>
+    <content url="file://$MODULE_DIR$/../Wheat-BRIDGES/WheatFspm/farquhar-wheat">
+      <sourceFolder url="file://$MODULE_DIR$/../Wheat-BRIDGES/WheatFspm/farquhar-wheat" isTestSource="false" />
+    </content>
+    <content url="file://$MODULE_DIR$/../Wheat-BRIDGES/WheatFspm/fspm-wheat">
+      <sourceFolder url="file://$MODULE_DIR$/../Wheat-BRIDGES/WheatFspm/fspm-wheat" isTestSource="false" />
+    </content>
+    <content url="file://$MODULE_DIR$/../Wheat-BRIDGES/WheatFspm/growth-wheat">
+      <sourceFolder url="file://$MODULE_DIR$/../Wheat-BRIDGES/WheatFspm/growth-wheat" isTestSource="false" />
+    </content>
+    <content url="file://$MODULE_DIR$/../Wheat-BRIDGES/WheatFspm/respi-wheat">
+      <sourceFolder url="file://$MODULE_DIR$/../Wheat-BRIDGES/WheatFspm/respi-wheat" isTestSource="false" />
+    </content>
+    <content url="file://$MODULE_DIR$/../Wheat-BRIDGES/WheatFspm/senesc-wheat">
+      <sourceFolder url="file://$MODULE_DIR$/../Wheat-BRIDGES/WheatFspm/senesc-wheat" isTestSource="false" />
+    </content>
     <content url="file://$MODULE_DIR$" />
-    <orderEntry type="inheritedJdk" />
+    <orderEntry type="jdk" jdkName="wheat-bridges" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>
   <component name="PyDocumentationSettings">
