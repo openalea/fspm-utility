@@ -2,6 +2,17 @@
 <project version="4">
   <component name="VcsDirectoryMappings">
     <mapping directory="" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/../Wheat-BRIDGES/Root_BRIDGES" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/../Wheat-BRIDGES/Root_BRIDGES/rhizodep" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/../Wheat-BRIDGES/Root_BRIDGES/root_cynaps" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/../Wheat-BRIDGES/WheatFspm/adel" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/../Wheat-BRIDGES/WheatFspm/cn-wheat" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/../Wheat-BRIDGES/WheatFspm/elong-wheat" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/../Wheat-BRIDGES/WheatFspm/farquhar-wheat" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/../Wheat-BRIDGES/WheatFspm/fspm-wheat" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/../Wheat-BRIDGES/WheatFspm/growth-wheat" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/../Wheat-BRIDGES/WheatFspm/respi-wheat" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/../Wheat-BRIDGES/WheatFspm/senesc-wheat" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/analyze" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/initialize" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/log" vcs="Git" />
