@@ -16,7 +16,7 @@ include-package-data = false # force explicit declaration of data (disable autom
 [tool.setuptools_scm]
 
 [project]
-name = "openalea.fspm.utility"
+name = "openalea.fspm-utility"
 authors = [
   { name = "Tristan Gérault", email = "tristan.gerault@inrae.fr" },
   { name = "Christophe Pradal", email = "christophe.pradal@fnria.fr" }
