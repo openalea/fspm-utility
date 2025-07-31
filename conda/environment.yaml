@@ -1,9 +1,17 @@
-name: metafspm
+name: fspm-utilities
 channels:
   - openalea3
   - conda-forge
 dependencies:
   - python
-  - pip
-  - pandoc
-  - yaml
+  - pandas
+  - numpy
+  - salib
+  - openalea.mtg
+  - xarray
+  - pyvista
+  - matplotlib
+  - pint
+  - trimesh
+  - openalea.plantgl
+  - scipy
