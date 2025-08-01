@@ -16,7 +16,7 @@ import logging
 
 from openalea.mtg.traversal import pre_order2, post_order
 from openalea.mtg import turtle as turt
-from log.visualize import plot_mtg, plot_mtg_alt, soil_voxels_mesh, shoot_plantgl_to_mesh, VertexPicker, export_scene_to_gltf, custom_colorbar
+from openalea.fspm.utility.writer.visualize import plot_mtg, plot_mtg_alt, soil_voxels_mesh, shoot_plantgl_to_mesh, VertexPicker, export_scene_to_gltf, custom_colorbar
 
 
 # with 24h static strategy
@@ -327,10 +327,7 @@ class Logger:
 
         framerate = 10
         self.plotter.open_movie(os.path.join(self.root_images_dirpath, "root_movie.mp4"), framerate=framerate, quality=10)
-        if self.recording_off_screen:
-            self.plotter.show(screenshot="temp.png")
-        else:
-            self.plotter.show(interactive_update=True)
+        self.plotter.show(interactive_update=True)
 
         # NOTE : Not necessary since voxels provide the scale information :
         # First plot a 1 cm scale bar
