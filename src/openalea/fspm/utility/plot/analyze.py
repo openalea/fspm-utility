@@ -44,7 +44,7 @@ from scipy.stats import pearsonr
 from openalea.fspm.utility.writer.visualize import plot_mtg, plot_xr, custom_colorbar, unit_from_str, expand_compact_units, latex_unit_compact, unit_conversion
 import openalea.plantgl.all as pgl
 
-from analyze.workflow.cnwheat_comparisions import compare_shoot_outputs
+from openalea.fspm.utility.plot.workflow.cnwheat_comparisions import compare_shoot_outputs
 
 
 
