@@ -3,9 +3,9 @@ import time
 import pickle
 import shutil
 import psutil
-import imageio
+# import imageio
 import multiprocessing as mp
-from PIL import Image, ImageDraw, ImageFont
+# from PIL import Image, ImageDraw, ImageFont
 import numpy as np
 # from pygifsicle import optimize
 from openalea.mtg.traversal import post_order2
@@ -201,13 +201,14 @@ def analyze_data(scenarios, outputs_dirpath, inputs_dirpath, target_folder_key=N
                         csv_name="plant_scale_properties.csv", properties=target_properties)
                 figsize=(6.4, 3.)
                 fig, _ = plot_csv(csv_dirpath=sums_folder,
-                    csv_name="plant_scale_properties.csv", properties=["diffusion_AA_phloem", "import_Nm", "AA_catabolism", "AA_synthesis"], stacked=True, ignore_firsts=False, xlim=[1, 24.5], ylim=[1e-13, 2e-9], logscale=True, custom_suffix="_N_inputs", figsize=figsize)
+                    csv_name="plant_scale_properties.csv", properties=["diffusion_AA_phloem", "import_Nm", "AA_catabolism", "AA_synthesis"], stacked=True, ignore_firsts=False, xlim=[1, 24.5], ylim=[1e-13, 2e-9], logscale=True, 
+                    custom_suffix="_N_inputs", figsize=figsize, title="N inputs and transformations in symplasm (mol.plant-1.s-1)")
                 fig, _ = plot_csv(csv_dirpath=sums_folder,
-                    csv_name="plant_scale_properties.csv", properties=["diffusion_AA_soil", "export_AA","amino_acids_consumption_by_growth", "export_Nm", "diffusion_Nm_soil"], stacked=True, ignore_firsts=False, xlim=[1, 24.5], ylim=[1e-13, 2e-9], logscale=True, custom_suffix="_N_outputs", figsize=figsize)
+                    csv_name="plant_scale_properties.csv", properties=["diffusion_AA_soil", "export_AA","amino_acids_consumption_by_growth", "export_Nm", "diffusion_Nm_soil"], stacked=True, ignore_firsts=False, xlim=[1, 24.5], ylim=[1e-13, 2e-9], logscale=True, 
+                    custom_suffix="_N_outputs", figsize=figsize, title="N flows leaving symplasm (mol.plant-1.s-1)")
                 fig, _ = plot_csv(csv_dirpath=sums_folder,
-                    csv_name="plant_scale_properties.csv", properties=["AA_catabolism", "AA_synthesis"], stacked=True, ignore_firsts=False, xlim=[1, 24.5], ylim=[1e-13, 2e-9], logscale=True, custom_suffix="_N_transformations", figsize=figsize)
-                fig, _ = plot_csv(csv_dirpath=sums_folder,
-                    csv_name="plant_scale_properties.csv", properties=["C_Nm_average", "C_AA_average", "C_xylem_Nm_average", "C_xylem_AA_average", "C_phloem_AA_average"], stacked=True, ignore_firsts=False, xlim=[1, 24.5], logscale=True, custom_suffix="_N_concentrations", figsize=figsize)
+                    csv_name="plant_scale_properties.csv", properties=["C_Nm_average", "C_AA_average", "C_xylem_Nm_average", "C_xylem_AA_average", "C_phloem_AA_average"], stacked=True, ignore_firsts=False, xlim=[1, 24.5], logscale=True, 
+                    custom_suffix="_N_concentrations", figsize=figsize, title="N concentrations in root segments (mol.gDW-1)")
                 print("     [INFO] Finished 2d plots")
 
     if on_raw_logs:
@@ -904,7 +905,8 @@ def scientific_formatter(x, pos):
         return rf"${base:.1f} \cdot 10^{{{exponent}}}$"
 
 
-def plot_csv(csv_dirpath, csv_name, properties=None, ignore_firsts=True, stacked=False, twin=False, custom_suffix="", xlim=None, ylim=None, logscale=False, figsize=(6.4, 4.8)):
+def plot_csv(csv_dirpath, csv_name, properties=None, ignore_firsts=True, stacked=False, twin=False, 
+             custom_suffix="", xlim=None, ylim=None, logscale=False, figsize=(6.4, 4.8), title=None):
     log = pd.read_csv(os.path.join(csv_dirpath, csv_name))
 
     units = log.iloc[0]
@@ -1005,6 +1007,9 @@ def plot_csv(csv_dirpath, csv_name, properties=None, ignore_firsts=True, stacked
             
 
         fig.savefig(os.path.join(plot_path, f"Stack_of_{filename}{custom_suffix}.png"), bbox_inches="tight", dpi=720)
+    
+    if title is not None:
+        fig.suptitle(title)
         
     return fig, ax
 

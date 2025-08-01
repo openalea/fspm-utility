@@ -7,6 +7,7 @@ dependencies:
   - pandas
   - numpy
   - salib
+  - openpyxl
   - openalea.mtg
   - xarray
   - pyvista

@@ -12,7 +12,7 @@ import pyvista as pv
 import matplotlib.pyplot as plt
 import inspect
 import logging
-from gudhi import bottleneck_distance
+# from gudhi import bottleneck_distance
 
 from openalea.mtg.traversal import pre_order2, post_order
 from openalea.mtg import turtle as turt

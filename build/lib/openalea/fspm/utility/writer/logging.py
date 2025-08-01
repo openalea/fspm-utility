@@ -12,7 +12,7 @@ import pyvista as pv
 import matplotlib.pyplot as plt
 import inspect
 import logging
-from gudhi import bottleneck_distance
+# from gudhi import bottleneck_distance
 
 from openalea.mtg.traversal import pre_order2, post_order
 from openalea.mtg import turtle as turt
@@ -327,7 +327,10 @@ class Logger:
 
         framerate = 10
         self.plotter.open_movie(os.path.join(self.root_images_dirpath, "root_movie.mp4"), framerate=framerate, quality=10)
-        self.plotter.show(interactive_update=True)
+        if self.recording_off_screen:
+            self.plotter.show(screenshot="temp.png")
+        else:
+            self.plotter.show(interactive_update=True)
 
         # NOTE : Not necessary since voxels provide the scale information :
         # First plot a 1 cm scale bar
