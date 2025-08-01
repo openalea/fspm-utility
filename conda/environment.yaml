@@ -10,7 +10,9 @@ dependencies:
   - openpyxl
   - openalea.mtg
   - xarray
+  - dask
   - pyvista
+  - imageio
   - matplotlib
   - brokenaxes
   - pint
