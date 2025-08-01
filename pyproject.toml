@@ -58,6 +58,7 @@ dependencies = [
     "pandas",
     "numpy",
     "salib",
+    "openpyxl",
     "openalea.mtg",
     # Writer
     "xarray",

@@ -1,10 +1,7 @@
 Metadata-Version: 2.4
 Name: openalea.fspm-utility
-Version: 0.0.1
+Version: 0.1.dev88+g995b493.d20250801
 Summary: FSPM datamanagement toolkit for OpenAlea
-Home-page: https://github.com/GeraultTr/data_utility.git
-Download-URL: https://github.com/GeraultTr/data_utility.git
-Author: T.Grault, F.Rees, R.Barillot and C.Pradal
 Author-email: Tristan Gérault <tristan.gerault@inrae.fr>, Christophe Pradal <christophe.pradal@fnria.fr>
 License-Expression: CECILL-C
 Project-URL: Repository, https://github.com/openalea/fspm.utility
@@ -39,9 +36,6 @@ Requires-Dist: ipykernel; extra == "doc"
 Requires-Dist: sphinx-copybutton; extra == "doc"
 Requires-Dist: ipython_genutils; extra == "doc"
 Requires-Dist: nbsphinx; extra == "doc"
-Dynamic: author
-Dynamic: download-url
-Dynamic: home-page
 Dynamic: license-file
 
 # Description
