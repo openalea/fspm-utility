@@ -64,6 +64,7 @@ dependencies = [
     "xarray",
     "pyvista",
     "matplotlib",
+    "brokenaxes",
     "pint",
     "trimesh",
     "openalea.plantgl",

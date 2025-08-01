@@ -41,7 +41,7 @@ import warnings
 # Very analysis-specific
 from scipy.stats import pearsonr
 
-from log.visualize import plot_mtg, plot_xr, custom_colorbar, unit_from_str, expand_compact_units, latex_unit_compact, unit_conversion
+from openalea.fspm.utility.writer.visualize import plot_mtg, plot_xr, custom_colorbar, unit_from_str, expand_compact_units, latex_unit_compact, unit_conversion
 import openalea.plantgl.all as pgl
 
 from analyze.workflow.cnwheat_comparisions import compare_shoot_outputs
@@ -2715,7 +2715,7 @@ def log_mtg_coordinates(g):
 
 def post_color_mtg(mtg_file_path, output_dirpath, property, formula, recording_off_screen=False, normalize_by: str=None, background_color="brown", 
                    imposed_min=None, imposed_max=None, log_scale=False, spinning=False, root_hairs=True, gltf=True):
-    from log.visualize import plot_mtg_alt
+    from openalea.fspm.utility.writer.visualize import plot_mtg_alt
     with open(mtg_file_path, "rb") as f:
         g = pickle.load(f)
 
