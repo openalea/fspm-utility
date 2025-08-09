@@ -180,7 +180,7 @@ def has_enough_memory(required_gb):
 ureg = UnitRegistry()
 
 
-def analyze_data(scenarios, outputs_dirpath, inputs_dirpath, target_folder_key=None, on_sums=False, on_raw_logs=False, animate_raw_logs=False, on_shoot_logs=False, on_performance=False,
+def analyze_data(scenarios, outputs_dirpath, inputs_dirpath, target_folder_key=None, on_sums=False, on_raw_logs=False, animate_raw_logs=False, on_soil_logs=False, on_shoot_logs=False, on_performance=False,
                  target_properties=None, subdir_custom_name=None, **kwargs):
     # TODO if not available, return not performed
     print("[INFO] Starting data analysis")
@@ -209,6 +209,23 @@ def analyze_data(scenarios, outputs_dirpath, inputs_dirpath, target_folder_key=N
                 fig, _ = plot_csv(csv_dirpath=sums_folder,
                     csv_name="plant_scale_properties.csv", properties=["C_Nm_average", "C_AA_average", "C_xylem_Nm_average", "C_xylem_AA_average", "C_phloem_AA_average"], stacked=True, ignore_firsts=False, xlim=[1, 24.5], logscale=True, 
                     custom_suffix="_N_concentrations", figsize=figsize, title="N concentrations in root segments (mol.gDW-1)")
+                carbon_flows = True
+                if carbon_flows:
+                    log_scale_carbon = True
+                    fig, _ = plot_csv(csv_dirpath=sums_folder,
+                        csv_name="plant_scale_properties.csv", properties=["hexose_uptake_from_soil", "hexose_diffusion_from_phloem", "hexose_active_production_from_phloem", "hexose_mobilization_from_reserve", "hexose_immobilization_as_reserve", "AA_synthesis", "AA_catabolism"], stacked=True, ignore_firsts=False, xlim=None, ylim=None, logscale=log_scale_carbon, 
+                        custom_suffix="_C_inputs", figsize=figsize, title="C inputs and transformations in symplasm (mol.plant-1.s-1)")
+                    fig, _ = plot_csv(csv_dirpath=sums_folder,
+                        csv_name="plant_scale_properties.csv", properties=["hexose_exudation", "mucilage_secretion","cells_release", "maintenance_respiration", "hexose_consumption_by_growth", "hexose_consumption_by_fungus", "sucrose_loading_in_phloem", "deficit_hexose_root", "N_metabolic_respiration"], stacked=True, ignore_firsts=False, xlim=None, ylim=None, logscale=log_scale_carbon, 
+                        custom_suffix="_C_outputs", figsize=figsize, title="C flows leaving symplasm (mol.plant-1.s-1)")
+
+                    fig, _ = plot_csv(csv_dirpath=sums_folder,
+                        csv_name="plant_scale_properties.csv", properties=["sucrose_loading_in_phloem", "phloem_hexose_uptake_from_soil"], stacked=True, ignore_firsts=False, xlim=None, ylim=None, logscale=log_scale_carbon, 
+                        custom_suffix="_C_inputs_ph", figsize=figsize, title="C inputs and transformations in phloem (mol.plant-1.s-1)")
+                    fig, _ = plot_csv(csv_dirpath=sums_folder,
+                        csv_name="plant_scale_properties.csv", properties=["hexose_diffusion_from_phloem", "hexose_active_production_from_phloem","phloem_hexose_exudation"], stacked=True, ignore_firsts=False, xlim=None, ylim=None, logscale=log_scale_carbon, 
+                        custom_suffix="_C_outputs_ph", figsize=figsize, title="C flows leaving phloem (mol.plant-1.s-1)")
+
                 print("     [INFO] Finished 2d plots")
 
     if on_raw_logs:
@@ -661,18 +678,18 @@ def analyze_data(scenarios, outputs_dirpath, inputs_dirpath, target_folder_key=N
                                     newsimu_dirpath=os.path.join(outputs_dirpath, scenario, "MTG_properties/shoot_properties"),
                                     meteo_data_dirpath=os.path.join(inputs_dirpath, "meteo_Ljutovac2002.csv"))
             else:
-                running = False
+                running = True
 
                 if running:
-                    cnwheat_plot_csv(csv_dirpath=os.path.join(outputs_dirpath, scenario, "MTG_properties/shoot_properties"))
+                    cnwheat_plot_csv(csv_dirpath=os.path.join(outputs_dirpath, scenario, target_folder_key, "MTG_properties/shoot_properties"))
                     print(" [INFO] Finished  CN-Wheat plots")
 
                     print(" [INFO] Starting comparision plots on CN-Wheat outputs...")
                     compare_shoot_outputs(reference_dirpath=os.path.join(inputs_dirpath, "postprocessing"),
-                                        newsimu_dirpath=os.path.join(outputs_dirpath, scenario, "MTG_properties/shoot_properties"),
+                                        newsimu_dirpath=os.path.join(outputs_dirpath, scenario, target_folder_key, "MTG_properties/shoot_properties"),
                                         meteo_data_dirpath=os.path.join(inputs_dirpath, "meteo_Ljutovac2002.csv"))
                 
-                running = True
+                running = False
 
                 if running:
                     
@@ -703,6 +720,28 @@ def analyze_data(scenarios, outputs_dirpath, inputs_dirpath, target_folder_key=N
             
             
             print(" [INFO] Finished comparision plots on CN-Wheat outputs...")
+
+    if on_soil_logs:
+        for scenario in scenarios:
+            numpy_grids_path = os.path.join(outputs_dirpath, scenario, target_folder_key, "MTG_files")
+            voxels_file = os.path.join(numpy_grids_path, os.listdir(numpy_grids_path)[0])
+            if not voxels_file.endswith(".pckl"):
+                raise FileNotFoundError
+            else:
+                with open(voxels_file, 'rb') as f:
+                    voxels = pickle.load(f)
+                    voxels = voxels["soil"]
+
+                    plots_outputpath = os.path.join(numpy_grids_path, "plots")
+                    if not os.path.exists(plots_outputpath):
+                        os.mkdir(plots_outputpath)
+
+                    for name, grid in voxels.items():
+                        SoilFigures.soil_profiles_averages(outputs_dirpath=plots_outputpath,
+                                                            name=name, grid=grid)
+
+
+
 
     if on_performance:
         for scenario in scenarios:
@@ -4355,6 +4394,28 @@ class RootCyNAPSFigures:
 
         plt.close()
         
+
+class SoilFigures:
+
+    def soil_profiles_averages(outputs_dirpath, name, grid):
+        vmin, vmax = grid.min(), grid.max()
+        grid_x_2d = np.mean(grid, axis=2) # Mean on y
+        grid_y_2d = np.mean(grid, axis=0) # Mean on x
+
+        fig, axs = plt.subplots(1, 2)
+
+        axs[0].set_xlabel('X')
+        axs[0].set_ylabel('Depth')
+        im1 = axs[0].imshow(grid_x_2d.T, vmin=vmin, vmax=vmax, aspect='auto', cmap='viridis')
+
+        axs[1].set_xlabel('Y')
+        im2 = axs[1].imshow(grid_y_2d, vmin=vmin, vmax=vmax, aspect='auto', cmap='viridis')
+
+        fig.subplots_adjust(right=0.8)
+        cbar = fig.colorbar(im1, ax=axs.ravel().tolist())
+        cbar.set_label('Value')
+
+        fig.savefig(os.path.join(outputs_dirpath, name), dpi=720)
 
 class Indicators:
 

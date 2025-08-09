@@ -746,6 +746,7 @@ def plot_mtg_alt(g, cmap_property, normalize_by=None, root_hairs=False, vid_filt
 
     if normalize_by is not None:
         # color_property = []
+        print(cmap_property)
         color_property = [props[cmap_property][v] / props[normalize_by][v] if props[normalize_by][v] > 0 else 0 for v in vertices]
         line[cmap_property + " normalized"] = color_property * 2
     else:

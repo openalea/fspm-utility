@@ -44,7 +44,7 @@ from scipy.stats import pearsonr
 from openalea.fspm.utility.writer.visualize import plot_mtg, plot_xr, custom_colorbar, unit_from_str, expand_compact_units, latex_unit_compact, unit_conversion
 import openalea.plantgl.all as pgl
 
-from analyze.workflow.cnwheat_comparisions import compare_shoot_outputs
+from openalea.fspm.utility.plot.workflow.cnwheat_comparisions import compare_shoot_outputs
 
 
 
@@ -209,6 +209,23 @@ def analyze_data(scenarios, outputs_dirpath, inputs_dirpath, target_folder_key=N
                 fig, _ = plot_csv(csv_dirpath=sums_folder,
                     csv_name="plant_scale_properties.csv", properties=["C_Nm_average", "C_AA_average", "C_xylem_Nm_average", "C_xylem_AA_average", "C_phloem_AA_average"], stacked=True, ignore_firsts=False, xlim=[1, 24.5], logscale=True, 
                     custom_suffix="_N_concentrations", figsize=figsize, title="N concentrations in root segments (mol.gDW-1)")
+                carbon_flows = True
+                if carbon_flows:
+                    log_scale_carbon = True
+                    fig, _ = plot_csv(csv_dirpath=sums_folder,
+                        csv_name="plant_scale_properties.csv", properties=["hexose_uptake_from_soil", "hexose_diffusion_from_phloem", "hexose_active_production_from_phloem", "hexose_mobilization_from_reserve", "hexose_immobilization_as_reserve", "AA_synthesis", "AA_catabolism"], stacked=True, ignore_firsts=False, xlim=None, ylim=None, logscale=log_scale_carbon, 
+                        custom_suffix="_C_inputs", figsize=figsize, title="C inputs and transformations in symplasm (mol.plant-1.s-1)")
+                    fig, _ = plot_csv(csv_dirpath=sums_folder,
+                        csv_name="plant_scale_properties.csv", properties=["hexose_exudation", "mucilage_secretion","cells_release", "maintenance_respiration", "hexose_consumption_by_growth", "hexose_consumption_by_fungus", "sucrose_loading_in_phloem", "deficit_hexose_root", "N_metabolic_respiration"], stacked=True, ignore_firsts=False, xlim=None, ylim=None, logscale=log_scale_carbon, 
+                        custom_suffix="_C_outputs", figsize=figsize, title="C flows leaving symplasm (mol.plant-1.s-1)")
+
+                    fig, _ = plot_csv(csv_dirpath=sums_folder,
+                        csv_name="plant_scale_properties.csv", properties=["sucrose_loading_in_phloem", "phloem_hexose_uptake_from_soil"], stacked=True, ignore_firsts=False, xlim=None, ylim=None, logscale=log_scale_carbon, 
+                        custom_suffix="_C_inputs_ph", figsize=figsize, title="C inputs and transformations in phloem (mol.plant-1.s-1)")
+                    fig, _ = plot_csv(csv_dirpath=sums_folder,
+                        csv_name="plant_scale_properties.csv", properties=["hexose_diffusion_from_phloem", "hexose_active_production_from_phloem","phloem_hexose_exudation"], stacked=True, ignore_firsts=False, xlim=None, ylim=None, logscale=log_scale_carbon, 
+                        custom_suffix="_C_outputs_ph", figsize=figsize, title="C flows leaving phloem (mol.plant-1.s-1)")
+
                 print("     [INFO] Finished 2d plots")
 
     if on_raw_logs:

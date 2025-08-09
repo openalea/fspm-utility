@@ -27,10 +27,11 @@ usual_clims = dict(
     AA=               dict(bounds=[1e-5, 1e-3],  show_as_log=True,   normalize_by=None),
     xylem_AA=               dict(bounds=[1e-5, 1e-3],  show_as_log=True,   normalize_by=None),
     phloem_AA=               dict(bounds=[1e-6, 1e-4],  show_as_log=True,   normalize_by=None),
+    C_sucrose_root=               dict(bounds=[1e-6, 1e-3],  show_as_log=True,   normalize_by=None),
     # net_hexose_production_from_phloem=   dict(bounds=None,  show_as_log=False,   normalize_by="length"),
     # import_Nm=                      dict(bounds=[1e-12, 5e-10],  show_as_log=True,   normalize_by="length"),
-    net_N_uptake=                  dict(bounds=[1e-11, 1.5e-10],  show_as_log=False,   normalize_by="length"),
-    net_mineral_N_uptake=                  dict(bounds=[1e-12, 3.7e-10],  show_as_log=True,   normalize_by="length"),
+    # net_N_uptake=                  dict(bounds=[1e-11, 1.5e-10],  show_as_log=False,   normalize_by="length"),
+    # net_mineral_N_uptake=                  dict(bounds=[1e-12, 3.7e-10],  show_as_log=True,   normalize_by="length"),
     # diffusion_Nm_soil=              dict(bounds=None,  show_as_log=True,   normalize_by="length"),
     # diffusion_Nm_xylem=             dict(bounds=None,  show_as_log=False,   normalize_by="length"),
     # export_Nm=                      dict(bounds=[1e-12, 5e-10],  show_as_log=True,   normalize_by="length"),
@@ -39,13 +40,13 @@ usual_clims = dict(
     C_hexose_root=                  dict(bounds=[1e-5, 7e-4],   show_as_log=True,   normalize_by=None), #prev LU
     root_exchange_surface=          dict(bounds=[4e-3, 3.7e-2],           show_as_log=True,   normalize_by="length"), # prev [1e-3, 1e-2]
     # phloem_exchange_surface=          dict(bounds=[1e-6, 1e-3],           show_as_log=True,   normalize_by="length"), # prev [1e-3, 1e-2]
-    tissue_formation_time=          dict(bounds=[0, 50],        show_as_log=False,  normalize_by=None),
+    # tissue_formation_time=          dict(bounds=[0, 50],        show_as_log=False,  normalize_by=None),
     # # kr_symplasmic_water=            dict(bounds=None,           show_as_log=False,   normalize_by="cylinder_surface"),
     # # kr_apoplastic_water=            dict(bounds=None,           show_as_log=False,   normalize_by="cylinder_surface"),
     # # kr=                             dict(bounds=None,           show_as_log=False,   normalize_by="cylinder_surface"),
     # # K=                             dict(bounds=None,           show_as_log=False,   normalize_by="inverse_length"),
     # xylem_Nm=                       dict(bounds=None,           show_as_log=True,   normalize_by=None),
-    # # xylem_pressure_out=             dict(bounds=None,           show_as_log=False,   normalize_by=None),
+    xylem_pressure_in=             dict(bounds=[-0.05e6, 0.1e6],           show_as_log=False,   normalize_by=None),
     # axial_export_water_up=          dict(bounds=None,           show_as_log=False,   normalize_by=None),
     # endodermis_conductance_factor=          dict(bounds=[0, 1],           show_as_log=False,   normalize_by=None),
     # exodermis_conductance_factor=          dict(bounds=[0, 1],           show_as_log=False,   normalize_by=None),
@@ -56,6 +57,7 @@ usual_clims = dict(
     hexose_consumption_by_growth=          dict(bounds=[1e-14, 1e-10],           show_as_log=True,   normalize_by=None),
     amino_acids_consumption_by_growth=          dict(bounds=[1e-14, 1e-10],           show_as_log=True,   normalize_by=None),
 )
+plotted_property_continuous = "C_sucrose_root"
 
 # xarray_focus_variables = []
 xarray_focus_variables = ["struct_mass", "living_struct_mass", "length", "z1", "z2", "axis_type", "root_order", "thermal_time_since_cells_formation",
@@ -80,7 +82,7 @@ class Logger:
                     on_shoot_logs=False)
     
     medium_log_focus_images = dict(recording_images=True, recording_off_screen=True, auto_camera_position=False,
-                    plotted_property="net_Nm_uptake", flow_property=False, show_soil=False, imposed_clim=usual_clims["C_hexose_root"]["bounds"], log_scale=True,
+                    plotted_property=plotted_property_continuous, flow_property=False, show_soil=False, imposed_clim=usual_clims[plotted_property_continuous]["bounds"], log_scale=usual_clims[plotted_property_continuous]["show_as_log"],
                     recording_mtg=False,
                     recording_raw=False,
                     final_snapshots=True,
@@ -108,8 +110,8 @@ class Logger:
                     on_shoot_logs=False)
     
     heavy_log = dict(recording_images=True, recording_off_screen=True, auto_camera_position=False,
-                     plotted_property="deficit_AA", flow_property=False, show_soil=False, imposed_clim=[1e-13, 1e-10], log_scale=True,
-                    recording_mtg=False,
+                     plotted_property=plotted_property_continuous, flow_property=False, show_soil=False, imposed_clim=usual_clims[plotted_property_continuous]["bounds"], log_scale=usual_clims[plotted_property_continuous]["show_as_log"],
+                    recording_mtg=True,
                     recording_raw=True,
                     final_snapshots=True,
                     export_3D_scene=True,
