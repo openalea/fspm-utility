@@ -723,6 +723,7 @@ def analyze_data(scenarios, outputs_dirpath, inputs_dirpath, target_folder_key=N
 
     if on_soil_logs:
         for scenario in scenarios:
+            print(" [INFO] Producing soil plots...")
             numpy_grids_path = os.path.join(outputs_dirpath, scenario, target_folder_key, "MTG_files")
             voxels_file = os.path.join(numpy_grids_path, os.listdir(numpy_grids_path)[0])
             if not voxels_file.endswith(".pckl"):
@@ -736,17 +737,18 @@ def analyze_data(scenarios, outputs_dirpath, inputs_dirpath, target_folder_key=N
                     if not os.path.exists(plots_outputpath):
                         os.mkdir(plots_outputpath)
 
-                    for name, grid in voxels.items():
+                    for name in voxels.keys():
                         SoilFigures.soil_profiles_averages(outputs_dirpath=plots_outputpath,
-                                                            name=name, grid=grid)
+                                                            name=name, grid=voxels)
+            print(" [INFO] Finished soil plots...")
 
 
 
 
     if on_performance:
         for scenario in scenarios:
-            print(" [INFO] Analysing running performances...")
-            plot_csv(csv_dirpath=os.path.join(outputs_dirpath, scenario), csv_name="simulation_performance.csv", stacked=True)
+            
+            plot_csv(csv_dirpath=os.path.join(outputs_dirpath, scenario, target_folder_key), csv_name="simulation_performance.csv", stacked=True)
             print(" [INFO] Finished plotting performances")
 
 
@@ -971,8 +973,8 @@ def plot_csv(csv_dirpath, csv_name, properties=None, ignore_firsts=True, stacked
     if stacked:
         fig, ax = plt.subplots(figsize=figsize)
 
-        log["diffusion_AA_phloem"][0:2] = [4e-11, 1e-10]
-        log["export_Nm"] = log["export_Nm"] - log["diffusion_Nm_xylem"]
+        # log["diffusion_AA_phloem"][0:2] = [4e-11, 1e-10]
+        # log["export_Nm"] = log["export_Nm"] - log["diffusion_Nm_xylem"]
 
     plot_number = 0
     twin_axes = {}
@@ -986,7 +988,8 @@ def plot_csv(csv_dirpath, csv_name, properties=None, ignore_firsts=True, stacked
 
     # Sample the colormap to create the list of custom colors
     # default_colors = [colormap(i) for i in color_indices]
-    default_colors = [c for k, c in enumerate(twenty_palette.values()) if k%2==0]
+    # default_colors = [c for k, c in enumerate(twenty_palette.values()) if k%2==0]
+    default_colors = [c for k, c in enumerate(twenty_palette.values())]
 
     for prop in properties:
         if prop in log.columns and prop != "Unnamed: 0":
@@ -999,7 +1002,7 @@ def plot_csv(csv_dirpath, csv_name, properties=None, ignore_firsts=True, stacked
 
             if stacked:
                 if plot_number == 0 or not twin:
-                    ax.plot(log.index.values, log[prop], label=label, c=default_colors[plot_number])
+                    ax.plot(log.index.values, log[prop], label=label, c=default_colors[plot_number % len(default_colors)])
                 else:
                     twin_axes[plot_number] = ax.twinx()
                     twin_axes[plot_number].yaxis.set_major_formatter(FuncFormatter(scientific_formatter))
@@ -4398,18 +4401,53 @@ class RootCyNAPSFigures:
 class SoilFigures:
 
     def soil_profiles_averages(outputs_dirpath, name, grid):
-        vmin, vmax = grid.min(), grid.max()
-        grid_x_2d = np.mean(grid, axis=2) # Mean on y
-        grid_y_2d = np.mean(grid, axis=0) # Mean on x
+        x1, x2 = grid["x1"], grid["x2"]
+        y1, y2 = grid["y1"], grid["y2"]
+        z1, z2 = grid["z1"], grid["z2"]
+
+        to_plot = grid[name]
+
+        vmin, vmax = to_plot.min(), to_plot.max()
+        
+        grid_y_2d = np.mean(to_plot, axis=2) # Mean on x
+        grid_x_2d = np.mean(to_plot, axis=0) # Mean on y
+        print(name, grid_x_2d.mean(), grid_y_2d.mean())
+
+        # Extract exact edge vectors from one slice (0th index in other axes)
+        x_edges = np.r_[x1[0,0,:], x2[0,0,-1]]
+        y_edges = np.r_[y1[:,0,0], y2[-1,0,0]]
+        z_edges = np.r_[z1[0,:,0], z2[0,-1,0]]
+        
+        # Handle uniform field robustly
+        if vmin == vmax:
+            eps = 1e-12 if vmin == 0 else abs(vmin) * 1e-12
+            vmin -= eps
+            vmax += eps
+        from matplotlib.colors import Normalize
+        norm = Normalize(vmin=vmin, vmax=vmax)
 
         fig, axs = plt.subplots(1, 2)
 
+        # X–Depth (mean over Y)
+        X, Z = np.meshgrid(x_edges, z_edges, indexing='xy')      # (nz+1, nx+1)
+        im1 = axs[0].pcolormesh(X, Z, grid_x_2d, norm=norm,
+                                shading='auto', cmap='viridis')
         axs[0].set_xlabel('X')
         axs[0].set_ylabel('Depth')
-        im1 = axs[0].imshow(grid_x_2d.T, vmin=vmin, vmax=vmax, aspect='auto', cmap='viridis')
 
-        axs[1].set_xlabel('Y')
-        im2 = axs[1].imshow(grid_y_2d, vmin=vmin, vmax=vmax, aspect='auto', cmap='viridis')
+        # Y–Depth (mean over X)
+        Y, Z = np.meshgrid(y_edges, z_edges, indexing='xy')      # (nz+1, nx+1)
+        im2 = axs[1].pcolormesh(Y, Z, grid_y_2d.T, norm=norm,
+                                shading='auto', cmap='viridis')
+        
+        # Depth downward if z increases with depth
+        if z_edges[-1] > z_edges[0]:
+            axs[0].invert_yaxis()
+            axs[1].invert_yaxis()
+
+        # True aspect in data units (optional)
+        # axs[0].set_aspect('equal', adjustable='box')
+        # axs[1].set_aspect('equal', adjustable='box')
 
         fig.subplots_adjust(right=0.8)
         cbar = fig.colorbar(im1, ax=axs.ravel().tolist())
