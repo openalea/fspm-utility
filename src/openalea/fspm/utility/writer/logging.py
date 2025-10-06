@@ -24,12 +24,13 @@ usual_clims = dict(
     Nm=                             dict(bounds=[1e-4, 3e-3],   show_as_log=True,   normalize_by=None), 
     hexose_exudation=               dict(bounds=[1e-13, 1e-9],  show_as_log=True,   normalize_by="length"),
     deficit_AA=               dict(bounds=[1e-13, 1e-9],  show_as_log=True,   normalize_by=None),
+    deficit_hexose_root=               dict(bounds=[1e-14, 1e-10],  show_as_log=True,   normalize_by=None),
     AA=               dict(bounds=[1e-5, 1e-3],  show_as_log=True,   normalize_by=None),
     xylem_AA=               dict(bounds=[1e-5, 1e-3],  show_as_log=True,   normalize_by=None),
     phloem_AA=               dict(bounds=[1e-6, 1e-4],  show_as_log=True,   normalize_by=None),
     C_sucrose_root=               dict(bounds=[1e-6, 1e-3],  show_as_log=True,   normalize_by=None),
     # net_hexose_production_from_phloem=   dict(bounds=None,  show_as_log=False,   normalize_by="length"),
-    # import_Nm=                      dict(bounds=[1e-12, 5e-10],  show_as_log=True,   normalize_by="length"),
+    import_Nm=                      dict(bounds=[1e-12, 5e-10],  show_as_log=True,   normalize_by="length"),
     # net_N_uptake=                  dict(bounds=[1e-11, 1.5e-10],  show_as_log=False,   normalize_by="length"),
     # net_mineral_N_uptake=                  dict(bounds=[1e-12, 3.7e-10],  show_as_log=True,   normalize_by="length"),
     # diffusion_Nm_soil=              dict(bounds=None,  show_as_log=True,   normalize_by="length"),
@@ -52,12 +53,12 @@ usual_clims = dict(
     # exodermis_conductance_factor=          dict(bounds=[0, 1],           show_as_log=False,   normalize_by=None),
     # xylem_differentiation_factor=          dict(bounds=[0, 1],           show_as_log=False,   normalize_by=None),
     # apoplastic_Nm_soil_xylem=          dict(bounds=None,           show_as_log=False,   normalize_by="length"),
-    axis_type=          dict(bounds=None,           show_as_log=False,   normalize_by=None),
+    # axis_type=          dict(bounds=None,           show_as_log=False,   normalize_by=None),
     diffusion_AA_soil=          dict(bounds=[1e-12, 4e-11],           show_as_log=False,   normalize_by="length"), # prev 
     hexose_consumption_by_growth=          dict(bounds=[1e-14, 1e-10],           show_as_log=True,   normalize_by=None),
     amino_acids_consumption_by_growth=          dict(bounds=[1e-14, 1e-10],           show_as_log=True,   normalize_by=None),
 )
-plotted_property_continuous = "C_sucrose_root"
+plotted_property_continuous = "hexose_exudation"
 
 # xarray_focus_variables = []
 xarray_focus_variables = ["struct_mass", "living_struct_mass", "length", "z1", "z2", "axis_type", "root_order", "thermal_time_since_cells_formation",
@@ -384,11 +385,13 @@ class Logger:
 
     def __call__(self):
         self.current_step_start_time = self.elapsed_time
+        suffix = ''
         if not self.static_mtg and 'root' in self.data_structures:
+            suffix = max(self.props["root"]["struct_mass"].keys())
             self.log_mtg_coordinates()
 
         if self.simulation_time_in_hours > 0:
-            self.log = f"   [RUNNING] {self.simulation_time_in_hours} hours | step took {round(self.current_step_start_time - self.previous_step_start_time, 1)} s \r"
+            self.log =  f"   [RUNNING] {self.simulation_time_in_hours} hours | step took {round(self.current_step_start_time - self.previous_step_start_time, 1)} s | {suffix}"
             self.logger_output.info(self.log)
 
         if self.recording_sums:
@@ -519,7 +522,9 @@ class Logger:
 
         is_root_data = 'root' in self.props.keys()
         if is_root_data:
-            props_dict.update({k: v for k, v in self.props["root"].items() if type(v) == dict and k in variables})
+            from openalea.metafspm.utils import ArrayDict
+            props_dict.update({k: v for k, v in self.props["root"].items() if isinstance(v, dict) and k in variables})
+            props_dict.update({k: v.to_dict() for k, v in self.props["root"].items() if isinstance(v, ArrayDict) and k in variables})
 
         is_raw_soil = "soil" in self.props.keys()
         soil_target_variables = ["soil_temperature"]
@@ -542,6 +547,7 @@ class Logger:
 
         if is_root_data:
             # Remove false root segments created just for branching regularity issues (vid 0, 2, 4, etc)
+
             props_df = props_df[props_df["struct_mass"] > 0]
 
         # Convert to xarray with given dimensions to spatialize selected properties
@@ -833,8 +839,9 @@ class Logger:
                     self.model_instance.shoot.adel_wheat.scene(self.model_instance.g_shoot).save(os.path.join(self.root_images_dirpath, f"Final_scene_{self.time_step_in_hours}.bgeom"))
 
             if not self.recording_raw:
-                self.logger_output.info("Saving a final state xarray...")
-                self.write_to_disk([self.mtg_to_dataset(variables=self.output_variables, time=self.simulation_time_in_hours)], custom_name="merged.nc")
+                if False:
+                    self.logger_output.info("Saving a final state xarray...")
+                    self.write_to_disk([self.mtg_to_dataset(variables=self.output_variables, time=self.simulation_time_in_hours)], custom_name="merged.nc")
             
             if not self.recording_images:
                 final_image_snapshot = True

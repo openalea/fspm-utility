@@ -499,6 +499,9 @@ def compare_shoot_outputs(reference_dirpath, newsimu_dirpath, meteo_data_dirpath
     df_ref_hz = df_ref_hz[df_ref_hz['axis'] == 'MS']
     df_ref_hz['t'] = df_ref_hz['t'] + delta_t_simuls
 
+    C_allocation(dirpath=newsimu_dirpath, df_org=df_current_organs, df_org_ref=df_ref_organs, 
+                 df_axe=df_current_axes, df_axe_ref=df_current_axes, df_elt=df_current_elements, df_elt_ref=df_ref_elements)
+
     tmin = df_current_axes.t.min()
     tmax = df_current_axes.t.max()
 
@@ -529,5 +532,90 @@ def compare_shoot_outputs(reference_dirpath, newsimu_dirpath, meteo_data_dirpath
         # Leaf emergence date
         leaf_emergence(pdf, df_current_hz, df_ref_hz, meteo_data)
 
+        C_allocation(pdf=pdf, dirpath=newsimu_dirpath, df_org=df_current_organs, df_org_ref=df_ref_organs, 
+                 df_axe=df_current_axes, df_axe_ref=df_ref_axes, df_elt=df_current_elements, df_elt_ref=df_ref_elements)
+        
         # Plastochron
         # plastochrone(df_current_axes, df_marion_SAMS)
+
+def C_allocation(dirpath, df_org, df_org_ref, df_axe, df_axe_ref, df_elt, df_elt_ref, pdf=None):
+    # 4) Total C production vs. Root C allcoation
+    # df_org = postprocessing_df_dict[organs_postprocessing_file_basename]
+    df_roots = df_org[df_org['organ'] == 'roots'].copy()
+    df_roots['day'] = df_roots['t'] // 24 + 1
+    df_roots['Unloading_Sucrose_tot'] = df_roots['Unloading_Sucrose'] * df_roots['mstruct']
+    Unloading_Sucrose_tot = df_roots.groupby(['day'])['Unloading_Sucrose_tot'].agg('sum')
+    days = df_roots['day'].unique()
+
+    df_roots_ref = df_org_ref[df_org_ref['organ'] == 'roots'].copy()
+    df_roots_ref['day'] = df_roots_ref['t'] // 24 + 1
+    df_roots_ref['Unloading_Sucrose_tot'] = df_roots_ref['Unloading_Sucrose'] * df_roots_ref['mstruct']
+    Unloading_Sucrose_tot_ref = df_roots_ref.groupby(['day'])['Unloading_Sucrose_tot'].agg('sum')
+    days_ref = df_roots_ref['day'].unique()
+
+    # df_axe = postprocessing_df_dict[axes_postprocessing_file_basename]
+    df_axe['day'] = df_axe['t'] // 24 + 1
+    Total_Photosynthesis = df_axe.groupby(['day'])['Tillers_Photosynthesis'].agg('sum')
+    
+    df_axe_ref['day'] = df_axe_ref['t'] // 24 + 1
+    Total_Photosynthesis_ref = df_axe_ref.groupby(['day'])['Tillers_Photosynthesis'].agg('sum')
+
+    # df_elt = postprocessing_df_dict[elements_postprocessing_file_basename]
+    df_elt['day'] = df_elt['t'] // 24 + 1
+    df_elt['sum_respi_tillers'] = df_elt['sum_respi'] * df_elt['nb_replications']
+    Shoot_respiration = df_elt.groupby(['day'])['sum_respi_tillers'].agg('sum')
+    Net_Photosynthesis = Total_Photosynthesis - Shoot_respiration
+
+    share_net_roots_live = Unloading_Sucrose_tot / Net_Photosynthesis * 100
+
+    df_elt_ref['day'] = df_elt_ref['t'] // 24 + 1
+    df_elt_ref['sum_respi_tillers'] = df_elt_ref['sum_respi'] * df_elt_ref['nb_replications']
+    Shoot_respiration_ref = df_elt_ref.groupby(['day'])['sum_respi_tillers'].agg('sum')
+    Net_Photosynthesis_ref = Total_Photosynthesis_ref - Shoot_respiration_ref
+
+    share_net_roots_live_ref = Unloading_Sucrose_tot_ref / Net_Photosynthesis_ref * 100
+
+    fig, ax = plt.subplots()
+    line1 = ax.plot(days, Unloading_Sucrose_tot, label=u'Current')
+    line2 = ax.plot(days, Unloading_Sucrose_tot_ref, label=u'Marion')
+    lines = line1 + line2
+    labs = [line.get_label() for line in lines]
+    ax.legend(lines, labs, loc='center left', prop={'size': 10}, framealpha=0.5, bbox_to_anchor=(1, 0.815), borderaxespad=0.)
+    ax.set_xlabel('Days')
+    ax.set_ylabel(u'C (µmol C.day$^{-1}$ )')
+    ax.set_title('C allocation to roots')
+    if pdf is not None:
+        pdf.savefig()
+    else:
+        fig.savefig(os.path.join(dirpath, 'C_allocation_to_roots.PNG'), dpi=200, format='PNG', bbox_inches='tight')
+    plt.close()
+
+    fig, ax = plt.subplots()
+    line1 = ax.plot(days, Net_Photosynthesis, label=u'Current')
+    line2 = ax.plot(days, Net_Photosynthesis_ref, label=u'Marion')
+    lines = line1 + line2
+    labs = [line.get_label() for line in lines]
+    ax.legend(lines, labs, loc='center left', prop={'size': 10}, framealpha=0.5, bbox_to_anchor=(1, 0.815), borderaxespad=0.)
+    ax.set_xlabel('Days')
+    ax.set_ylabel(u'C (µmol C.day$^{-1}$ )')
+    ax.set_title('Net_Photosynthesis')
+    if pdf is not None:
+        pdf.savefig()
+    else:
+        fig.savefig(os.path.join(dirpath, 'C_allocation_net_photosynthesis.PNG'), dpi=200, format='PNG', bbox_inches='tight')
+    plt.close()
+
+    fig, ax = plt.subplots()
+    line1 = ax.plot(days, share_net_roots_live, label=u'Current')
+    line2 = ax.plot(days, share_net_roots_live_ref, label=u'Marion')
+    lines = line1 + line2
+    labs = [line.get_label() for line in lines]
+    ax.legend(lines, labs, loc='center left', prop={'size': 10}, framealpha=0.5, bbox_to_anchor=(1, 0.815), borderaxespad=0.)
+    ax.set_xlabel('Days')
+    ax.set_ylabel(u'Ratio (%)')
+    ax.set_title('Net C Shoot production sent to roots (%)')
+    if pdf is not None:
+        pdf.savefig()
+    else:
+        fig.savefig(os.path.join(dirpath, 'C_allocation_net_C_shoot_production_to_roots.PNG'), dpi=200, format='PNG', bbox_inches='tight')
+    plt.close()

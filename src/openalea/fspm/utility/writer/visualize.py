@@ -1,7 +1,6 @@
 
 import numpy as np
 import os
-import threading
 
 # Units
 import re
@@ -318,6 +317,8 @@ def plot_mtg(g, position=(0, 0, 0), rotation=0, prop_cmap='C_hexose_root', cmap=
     
     # We initialize the scene with the MTG g:
     scene = turt.TurtleFrame(g, visitor=visitor, turtle=turtle, gc=False)
+    # NOTE : Uncomment to check transformations
+    # scene.save("outputs/recoupling/test_roots.bgeom")
 
     # We update the scene with the specified position of the center of the graph and the camera:
     #prepareScene(scene, width=width, height=height,
