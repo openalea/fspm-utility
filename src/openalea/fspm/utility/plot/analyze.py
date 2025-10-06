@@ -4376,7 +4376,7 @@ class RootCyNAPSFigures:
             legend_elements_2 = [
                 mpatches.Patch(facecolor='grey', edgecolor='black', label="amino acid exudation"),
                 mpatches.Patch(facecolor='white', edgecolor='black', label="mineral N passive loss"),
-            ]j
+            ]
 
             # Add first custom legend with a title
             legend = ax.legend(handles=first_header + legend_elements_1 + second_header + legend_elements_2, bbox_to_anchor=(0.95, 0.5), fontsize=6)
