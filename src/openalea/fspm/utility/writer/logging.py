@@ -60,11 +60,12 @@ usual_clims = dict(
 )
 plotted_property_continuous = "hexose_exudation"
 
-# xarray_focus_variables = []
-xarray_focus_variables = ["struct_mass", "living_struct_mass", "length", "z1", "z2", "axis_type", "root_order", "thermal_time_since_cells_formation",
-                          "hexose_exudation", "diffusion_AA_soil", "import_Nm", "apoplastic_Nm_soil_xylem", "net_Nm_uptake", "radial_import_water", "root_exchange_surface",
-                          "hexose_consumption_by_growth", "amino_acids_consumption_by_growth",
-                          "soil_temperature"]
+xarray_focus_variables = []
+xarray_exclude_variables = ["adventitious_to_emerge", "xylem_vessel_radii", "phloem_vessel_radii"] # Cannot be included as they are lists
+# xarray_focus_variables = ["struct_mass", "living_struct_mass", "length", "z1", "z2", "axis_type", "root_order", "thermal_time_since_cells_formation",
+#                           "hexose_exudation", "diffusion_AA_soil", "import_Nm", "apoplastic_Nm_soil_xylem", "net_Nm_uptake", "radial_import_water", "root_exchange_surface",
+#                           "hexose_consumption_by_growth", "amino_acids_consumption_by_growth",
+#                           "soil_temperature"]
 
 class Logger:
 
@@ -115,7 +116,7 @@ class Logger:
                     recording_mtg=True,
                     recording_raw=True,
                     final_snapshots=True,
-                    export_3D_scene=True,
+                    export_3D_scene=False,
                     recording_sums=True,
                     recording_performance=True,
                     recording_barcodes=False, compare_to_ref_barcode=False,
@@ -244,7 +245,10 @@ class Logger:
                                     i in self.props.keys()]  # To prevent getting inputs that are not provided neither from another model nor mtg
                 self.output_variables.update(
                     {f.name: f.metadata for f in fields(model) if f.name in self.summable_output_variables + self.meanable_output_variables + self.plant_scale_state + descriptors + mandatory})
-                self.xarray_focus_variables.update({f.name: f.metadata for f in fields(model) if f.name in xarray_focus_variables})
+                if len(xarray_focus_variables) > 0:
+                    self.xarray_focus_variables.update({f.name: f.metadata for f in fields(model) if f.name in xarray_focus_variables})
+                else:
+                    self.xarray_focus_variables.update({f.name: f.metadata for f in fields(model) if f.name not in xarray_exclude_variables})
                 self.units_for_outputs.update({f.name: f.metadata["unit"] for f in fields(model) if
                                                f.name in self.summable_output_variables + self.meanable_output_variables + self.plant_scale_state})
 
