@@ -111,11 +111,11 @@ class Logger:
                     animate_raw_logs=True,
                     on_shoot_logs=False)
     
-    heavy_log = dict(recording_images=True, recording_off_screen=True, auto_camera_position=False,
+    heavy_log = dict(recording_images=False, recording_off_screen=True, auto_camera_position=False,
                      plotted_property=plotted_property_continuous, flow_property=False, show_soil=False, imposed_clim=usual_clims[plotted_property_continuous]["bounds"], log_scale=usual_clims[plotted_property_continuous]["show_as_log"],
-                    recording_mtg=True,
+                    recording_mtg=False,
                     recording_raw=True,
-                    final_snapshots=True,
+                    final_snapshots=False,
                     export_3D_scene=True,
                     recording_sums=True,
                     recording_performance=True,
@@ -809,7 +809,6 @@ class Logger:
             print("\r")
             self.logger_output.info("Now proceeding to data writing on disk...")
             print("\r")
-            
 
         if self.recording_sums:
             if self.compare_to_ref_barcode:
@@ -821,8 +820,47 @@ class Logger:
             # Saving in memory summed properties
             self.plant_scale_properties.to_csv(
                 os.path.join(self.MTG_properties_summed_dirpath, "plant_scale_properties.csv"))
+        
+        if self.recording_shoot:
+            # convert list of outputs into dataframes
+            for outputs_df_list, outputs_filename, index_columns in (
+                    (self.shoot.axes_all_data_list, "axes_outputs.csv", ['t', 'plant', 'axis']),
+                    (self.shoot.organs_all_data_list, "organs_outputs.csv", ['t', 'plant', 'axis', 'organ']),
+                    (
+                    self.shoot.hiddenzones_all_data_list, "hiddenzones_outputs.csv", ['t', 'plant', 'axis', 'metamer']),
+                    (self.shoot.elements_all_data_list, "elements_outputs.csv",
+                     ['t', 'plant', 'axis', 'metamer', 'organ', 'element']),
+                    (self.shoot.soils_all_data_list, "soil_outputs.csv", ['t', 'plant', 'axis'])
+            ):
+                outputs_filepath = os.path.join(self.shoot_properties_dirpath, outputs_filename)
+                outputs_df = pd.concat(outputs_df_list, keys=self.shoot.all_simulation_steps, sort=False)
+                outputs_df.reset_index(0, inplace=True)
+                outputs_df.rename({'level_0': 't'}, axis=1, inplace=True)
+                outputs_df = outputs_df.reindex(index_columns + outputs_df.columns.difference(index_columns).tolist(),
+                                                axis=1, copy=False)
+                outputs_df.fillna(value=np.nan, inplace=True)  # Convert back None to NaN
+                outputs_df.to_csv(outputs_filepath)
 
         
+        if self.recording_raw:
+            # For saved xarray datasets
+            if len(self.log_xarray) > 0:
+                self.logger_output.info("Merging stored properties data in one xarray dataset...")
+                self.write_to_disk(self.log_xarray)
+                del self.log_xarray
+
+            time_step_files = [os.path.join(self.MTG_properties_raw_dirpath, name) for name in
+                               os.listdir(self.MTG_properties_raw_dirpath)]
+            time_dataset = xr.open_mfdataset(time_step_files)
+            time_dataset = time_dataset.assign_coords(coords=self.scenario).expand_dims(
+                dim=dict(zip(list(self.scenario.keys()), [1 for k in self.scenario])))
+            time_dataset.to_netcdf(self.MTG_properties_raw_dirpath + '/merged.nc')
+            del time_dataset
+            for file in os.listdir(self.MTG_properties_raw_dirpath):
+                if '.nc' in file and file != "merged.nc":
+                    os.remove(self.MTG_properties_raw_dirpath + '/' + file)
+
+
         final_interactive_picking = True
         if self.recording_images and final_interactive_picking and not self.recording_off_screen:
             # We are using the already plotted mesh to activate the picker and enable interactive mode
@@ -927,47 +965,12 @@ class Logger:
                     export_scene_to_gltf(output_path=os.path.join(self.root_images_dirpath, f"{self.simulation_time_in_hours}.gltf"),
                                         plotter=self.plotter, clim=self.clim, colormap=self.root_colormap, log_scale=self.log_scale)
 
-        if self.recording_raw:
-            # For saved xarray datasets
-            if len(self.log_xarray) > 0:
-                self.logger_output.info("Merging stored properties data in one xarray dataset...")
-                self.write_to_disk(self.log_xarray)
-                del self.log_xarray
-
-            time_step_files = [os.path.join(self.MTG_properties_raw_dirpath, name) for name in
-                               os.listdir(self.MTG_properties_raw_dirpath)]
-            time_dataset = xr.open_mfdataset(time_step_files)
-            time_dataset = time_dataset.assign_coords(coords=self.scenario).expand_dims(
-                dim=dict(zip(list(self.scenario.keys()), [1 for k in self.scenario])))
-            time_dataset.to_netcdf(self.MTG_properties_raw_dirpath + '/merged.nc')
-            del time_dataset
-            for file in os.listdir(self.MTG_properties_raw_dirpath):
-                if '.nc' in file and file != "merged.nc":
-                    os.remove(self.MTG_properties_raw_dirpath + '/' + file)
-
+        
         if self.recording_barcodes and not self.compare_to_ref_barcode:
             with open(os.path.join(self.MTG_barcodes_dirpath, f'persistent_barcodes.pckl'), "wb") as f:
                 pickle.dump(self.persistent_barcodes, f)
 
-        if self.recording_shoot:
-            # convert list of outputs into dataframes
-            for outputs_df_list, outputs_filename, index_columns in (
-                    (self.shoot.axes_all_data_list, "axes_outputs.csv", ['t', 'plant', 'axis']),
-                    (self.shoot.organs_all_data_list, "organs_outputs.csv", ['t', 'plant', 'axis', 'organ']),
-                    (
-                    self.shoot.hiddenzones_all_data_list, "hiddenzones_outputs.csv", ['t', 'plant', 'axis', 'metamer']),
-                    (self.shoot.elements_all_data_list, "elements_outputs.csv",
-                     ['t', 'plant', 'axis', 'metamer', 'organ', 'element']),
-                    (self.shoot.soils_all_data_list, "soil_outputs.csv", ['t', 'plant', 'axis'])
-            ):
-                outputs_filepath = os.path.join(self.shoot_properties_dirpath, outputs_filename)
-                outputs_df = pd.concat(outputs_df_list, keys=self.shoot.all_simulation_steps, sort=False)
-                outputs_df.reset_index(0, inplace=True)
-                outputs_df.rename({'level_0': 't'}, axis=1, inplace=True)
-                outputs_df = outputs_df.reindex(index_columns + outputs_df.columns.difference(index_columns).tolist(),
-                                                axis=1, copy=False)
-                outputs_df.fillna(value=np.nan, inplace=True)  # Convert back None to NaN
-                outputs_df.to_csv(outputs_filepath)
+        
 
         if self.recording_performance:
             self.simulation_performance.to_csv(os.path.join(self.outputs_dirpath, "simulation_performance.csv"))
