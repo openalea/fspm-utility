@@ -298,6 +298,7 @@ def analyze_data(scenarios, outputs_dirpath, inputs_dirpath, target_folder_key=N
 
             # C
             dataset["Length_wise_raw_rhizodeposition"] = Indicators.compute(d=dataset, formula = '(hexose_exudation + mucilage_secretion + cells_release - hexose_uptake_from_soil + phloem_hexose_exudation - hexose_uptake_from_soil + ((diffusion_AA_soil + apoplastic_AA_soil_xylem - import_AA) * 5)) / length')
+            dataset["Raw_rhizodeposition"] = Indicators.compute(d=dataset, formula = 'hexose_exudation + mucilage_secretion + cells_release - hexose_uptake_from_soil + phloem_hexose_exudation - hexose_uptake_from_soil + ((diffusion_AA_soil + apoplastic_AA_soil_xylem - import_AA) * 5)')
 
 
             average_day_temperature = 20
@@ -381,13 +382,13 @@ def analyze_data(scenarios, outputs_dirpath, inputs_dirpath, target_folder_key=N
                 
                 
                 # Plant scale C balance related
-                running = False
+                running = True
                 if running:
                     WB.plant_C_balance(shoot_outputs=shoot_outputs, dataset=scenario_dataset, outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"))
                     WB.root_N_balance(shoot_outputs=shoot_outputs, dataset=scenario_dataset, outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"))
 
                 # Plots along root axes
-                running = True
+                running = False
                 if running:
                     scenario_times = [120, 480]
                     scenario_dataset["Lengthy_active_Ni_uptake"] = Indicators.compute(d=scenario_dataset, formula = 'import_Nm / length')
@@ -408,9 +409,32 @@ def analyze_data(scenarios, outputs_dirpath, inputs_dirpath, target_folder_key=N
 
                         plt.close()
 
+                # Cumsum related
+                running = False
+                if running:
+                    scenario_times = [120, 480]
+                    commentaries = []
+                    df_soil = shoot_outputs['soil_meteo']
+                    df_axe = shoot_outputs["axes"]
+                    df_axe['day'] = df_axe['t'] // 24 + 1
+                    Total_Photosynthesis = df_axe.groupby(['day'])['Tillers_Photosynthesis'].agg('sum')
+
+                    for t in scenario_times:
+                        day = round(t / 24 + 1)
+                        temperature = round(df_soil['soil_temperature'].at[t], 1)
+                        current_dataset = filter_dataset(dataset, time=t)
+                        nitrates = round(float(current_dataset["soil_Nm"].mean().values), 1)
+                        photosynthesis = round(Total_Photosynthesis.at[day])
+                        commentaries += [f"day {day} | {temperature}°C | {nitrates} mM | {photosynthesis} µmol/d"]
+                    
+                    flows = ["Net_mineral_N_uptake", "Raw_rhizodeposition", "Net_AA_Exudation", "radial_import_water_xylem"]
+                    
+                    for flow in flows:
+                        WB.most_active_cumsum(dataset, flow, scenario_times=scenario_times, commentaries = commentaries,
+                                            outputs_dirpath=raw_dirpath)
+
                 ### Fig 1 c related
                 running = False
-
                 if running:
 
                     all_axes = [axis_id for axis_id in scenario_dataset["axis_index"].values.flatten() if isinstance(axis_id, str)]
@@ -2984,6 +3008,7 @@ class WB:
         correlations = False
         s=4
 
+        # VS distance from tip
         fig, ax = XarrayPlotting.scatter_xarray(scenario_datasets, outputs_dirpath=outputs_path, x="distance_from_tip", y="Length-wise mineral N uptake", c=c, 
                                                 discrete=discrete, s=s, xlog=xlog, name_suffix=name_suffix, to_xunit="cm", xlim=xlim, to_yunit="nmol/(cm.h)", ylim=ylim, figsize=figsize, show_correlation=correlations)
         fig, ax = XarrayPlotting.scatter_xarray(scenario_datasets, outputs_dirpath=outputs_path, x="distance_from_tip", y="Length-wise N exudation", c=c, 
@@ -2997,6 +3022,16 @@ class WB:
                                                 discrete=discrete, s=s, xlog=xlog, name_suffix=name_suffix, to_xunit="cm", xlim=xlim, to_yunit="nmol/(cm.h)", ylim=ylim, figsize=figsize, show_correlation=correlations)
         fig, ax = XarrayPlotting.scatter_xarray(scenario_datasets, outputs_dirpath=outputs_path, x="distance_from_tip", y="Lengthy_water_Ni_uptake", c=c, 
                                                 discrete=discrete, s=s, xlog=xlog, name_suffix=name_suffix, to_xunit="cm", xlim=xlim, to_yunit="nmol/(cm.h)", ylim=ylim, figsize=figsize, show_correlation=correlations)
+        fig, ax = XarrayPlotting.scatter_xarray(scenario_datasets, outputs_dirpath=outputs_path, x="distance_from_tip", y="C_hexose_root", c=c, 
+                                                discrete=discrete, s=s, xlog=xlog, name_suffix=name_suffix, to_xunit="cm", xlim=xlim, to_yunit="mmol/g", ylim=ylim, figsize=figsize, show_correlation=correlations)
+        fig, ax = XarrayPlotting.scatter_xarray(scenario_datasets, outputs_dirpath=outputs_path, x="distance_from_tip", y="Length-wise root exchange surface", c=c, 
+                                                discrete=discrete, s=s, xlog=xlog, name_suffix=name_suffix, to_xunit="cm", xlim=xlim, to_yunit="m", ylim=ylim, figsize=figsize, show_correlation=correlations)
+        
+        # Correlation plots
+        fig, ax = XarrayPlotting.scatter_xarray(scenario_datasets, outputs_dirpath=outputs_path, x="C_hexose_root", y="Length-wise mineral N uptake", c=c, 
+                                                discrete=discrete, s=s, xlog=xlog, name_suffix=name_suffix, to_xunit="mmol/g", xlim=xlim, to_yunit="nmol/(cm.h)", ylim=ylim, figsize=figsize, show_correlation=correlations)
+        fig, ax = XarrayPlotting.scatter_xarray(scenario_datasets, outputs_dirpath=outputs_path, x="Length-wise root exchange surface", y="Length-wise mineral N uptake", c=c, 
+                                                discrete=discrete, s=s, xlog=xlog, name_suffix=name_suffix, to_xunit="m", xlim=xlim, to_yunit="nmol/(cm.h)", ylim=ylim, figsize=figsize, show_correlation=correlations)
 
     def open_shoot_outputs(outputs_dirpath, meteo_data_dirpath, soil_data_dirpath, scenario, target_folder_key=None,):
         
@@ -3067,10 +3102,36 @@ class WB:
         Unloading_Amino_Acids_tot_C = Unloading_Amino_Acids_tot * average_amino_acids_CN
         days = df_roots['day'].unique().astype('int64')
 
+        thermal_time = True
+        if thermal_time:
+            df_meteo = shoot_outputs["meteo"]
+            df_meteo["t"] = df_meteo.index
+            shoot_thermal_time = df_meteo["air_temperature"].cumsum().reindex(df_meteo.index) / 24
+            days_thermal_time = [shoot_thermal_time.at[d * 24] for d in days]
+            time_scale = days_thermal_time
+
+            tt_hourly = shoot_thermal_time
+            # days since start from 't' in hours
+            days_hourly = (df_meteo['t'].to_numpy() / 24.0)
+
+            # Make mapping strictly monotonic (handle flat TT segments)
+            tt_u, idx = np.unique(tt_hourly, return_index=True)
+            days_u = days_hourly[idx]
+
+            def tt_to_days(tt):
+                tt = np.asarray(tt)
+                return np.interp(tt, tt_u, days_u)
+
+            def days_to_tt(days):
+                days = np.asarray(days)
+                return np.interp(days, days_u, tt_u)
+            
+        else:
+            time_scale = days
+
         df_axe = shoot_outputs["axes"]
         df_axe['day'] = df_axe['t'] // 24 + 1
         Total_Photosynthesis = df_axe.groupby(['day'])['Tillers_Photosynthesis'].agg('sum')
-
 
         df_elt = shoot_outputs["elements"]
         df_elt['day'] = df_elt['t'] // 24 + 1
@@ -3100,7 +3161,7 @@ class WB:
         N_metabolic_respiration_C = N_metabolic_respiration_C.groupby('day').sum().values
 
         fig, ax = plt.subplots()
-        ax.stackplot(days, net_hexose_exudation_C, net_AA_exudation_C, cells_release_C, mucilage_secretion_C, growth_respiration_C, maintenance_respiration_C, N_metabolic_respiration_C, Shoot_respiration.to_numpy(), labels=[
+        ax.stackplot(time_scale, net_hexose_exudation_C, net_AA_exudation_C, cells_release_C, mucilage_secretion_C, growth_respiration_C, maintenance_respiration_C, N_metabolic_respiration_C, Shoot_respiration.to_numpy(), labels=[
             'Net hexose exudation',
             'Net AA exudation',
             'sloughed cells',
@@ -3109,13 +3170,23 @@ class WB:
             'root maintenance respiration',
             'root N respiration',
             'shoot total respiration'])
-        ax.plot(days, Total_Photosynthesis.to_numpy(), c='red', label='Raw photosynthesis')
-        ax.plot(days, Unloading_Sucrose_tot_C.to_numpy() + Unloading_Amino_Acids_tot_C.to_numpy(), c='black', label='C allocation to roots')
+        ax.plot(time_scale, Total_Photosynthesis.to_numpy(), c='red', label='Raw photosynthesis')
+        ax.plot(time_scale, Unloading_Sucrose_tot_C.to_numpy() + Unloading_Amino_Acids_tot_C.to_numpy(), c='black', label='C allocation to roots')
         ax.legend()
-        ax.set_xlabel('Time (days)')
+        ax.set_xlabel('Thermal time (°C.day)' if thermal_time else 'Time (days)')
         ax.set_ylabel('Process flow (µmol C per day)')
 
-        fig.savefig(os.path.join(outputs_dirpath, "C_balance.png"), dpi=720)
+        if thermal_time:
+            secax = ax.secondary_xaxis('bottom', functions=(tt_to_days, days_to_tt))
+            # Move it below the primary axis
+            secax.spines['bottom'].set_position(('outward', 28))  # pixels; adjust if needed
+            secax.set_xlabel('Time (days)')
+
+        suffix = ''
+        if thermal_time:
+            suffix = "_thermal"
+
+        fig.savefig(os.path.join(outputs_dirpath, f"C_balance{suffix}.png"), dpi=720)
 
 
     def root_N_balance(shoot_outputs, dataset, outputs_dirpath):
@@ -3131,6 +3202,15 @@ class WB:
         Unloading_Amino_Acids_N = df_roots.groupby(['day'])['Unloading_Amino_Acids_tot'].agg('sum')
         days = df_roots['day'].unique()
 
+        thermal_time = True
+        if thermal_time:
+            df_meteo = shoot_outputs["meteo"]
+            shoot_thermal_time = df_meteo["air_temperature"].cumsum().reindex(df_meteo.index) / 24
+            days_thermal_time = [shoot_thermal_time.at[d * 24] for d in days]
+            time_scale = days_thermal_time
+        else:
+            time_scale = days
+
         dataset['day'] = (np.floor(dataset['t'] / 24) + 1).astype('int64')
         dataset = dataset.set_coords('day')
         net_mineral_N_active_uptake = Indicators.compute(d=dataset, formula="import_Nm + mycorrhizal_mediated_import_Nm - diffusion_Nm_soil").sum(dim="vid") * 1e6 * 3600
@@ -3144,16 +3224,20 @@ class WB:
 
         fig, ax = plt.subplots()
 
-        ax.plot(days, net_mineral_N_active_uptake, label='Net mineral N active uptake')
-        ax.plot(days, water_driven_N_uptake, label='Water-driven mineral N uptake')
-        ax.plot(days, Export_Nitrates_N.to_numpy() + Export_Amino_Acids_N.to_numpy(), label='total N export to shoot')
-        ax.plot(days, Unloading_Amino_Acids_N.to_numpy(), label='Amino acids N allocation from shoot')
-        ax.plot(days, net_AA_exudation_N, label='Net organic N exudation')
+        ax.plot(time_scale, net_mineral_N_active_uptake, label='Net mineral N active uptake')
+        ax.plot(time_scale, water_driven_N_uptake, label='Water-driven mineral N uptake')
+        ax.plot(time_scale, Export_Nitrates_N.to_numpy() + Export_Amino_Acids_N.to_numpy(), label='total N export to shoot')
+        ax.plot(time_scale, Unloading_Amino_Acids_N.to_numpy(), label='Amino acids N allocation from shoot')
+        ax.plot(time_scale, net_AA_exudation_N, label='Net organic N exudation')
         ax.legend()
-        ax.set_xlabel('Time (days)')
+        ax.set_xlabel('Thermal time (°C.day)' if thermal_time else 'Time (days)')
         ax.set_ylabel('Process flow (µmol N per day)')
 
-        fig.savefig(os.path.join(outputs_dirpath, "N_balance.png"), dpi=720)
+        suffix = ''
+        if thermal_time:
+            suffix = "_thermal"
+
+        fig.savefig(os.path.join(outputs_dirpath, f"N_balance{suffix}.png"), dpi=720)
 
     def environmental_conditions(shoot_outputs, dataset, outputs_dirpath):
         scaling = 2
@@ -3190,6 +3274,29 @@ class WB:
         ax[2].set_ylabel('Soil mineral N concentrations (mM)')
 
         fig.savefig(os.path.join(outputs_dirpath, "perceived_env.png"), dpi=720)
+
+    def most_active_cumsum(dataset, flow, scenario_times, commentaries, outputs_dirpath):
+
+        fig, ax = plt.subplots()
+        for k, t in enumerate(scenario_times):
+            current_dataset = filter_dataset(dataset, time=t)
+            x, y = RootCyNAPSFigures.worker_Fig_5(current_dataset, flow, grouped_geometry="length", normalization_property="length")
+            ax.plot([0] + list(x), [0] + list(y), c=list(twenty_palette.values())[k%len(twenty_palette)], label = commentaries[k])
+
+        ax.set_xlim([0, 1.05])
+        ax.set_ylim([0, 1.05])
+
+        ax.plot([0, 1.05], [0, 1.05], 'lightgrey', linestyle='dashed', linewidth=1)
+        ax.plot([0.1, 0.1], [0, 1.05], 'r', linestyle='dashed')
+
+        ax.legend()
+        ax.set_xlabel(f"% of root system length")
+        ax.set_ylabel(f"% of root {flow}")
+
+        ax.xaxis.set_major_formatter(PercentFormatter(1.0))
+        ax.yaxis.set_major_formatter(PercentFormatter(1.0))
+
+        fig.savefig(os.path.join(outputs_dirpath, f"{flow}_vs_length_%_front.png"), dpi=720, bbox_inches="tight")
 
 
 class RootCyNAPSFigures:

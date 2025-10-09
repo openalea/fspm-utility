@@ -22,7 +22,7 @@ from openalea.fspm.utility.writer.visualize import plot_mtg, plot_mtg_alt, soil_
 # with 24h static strategy
 usual_clims = dict(
     Nm=                             dict(bounds=[1e-4, 3e-3],   show_as_log=True,   normalize_by=None), 
-    hexose_exudation=               dict(bounds=[1e-13, 1e-9],  show_as_log=True,   normalize_by="length"),
+    hexose_exudation=               dict(bounds=[3e-14, 3e-12],  show_as_log=True,   normalize_by="length"),
     deficit_AA=               dict(bounds=[1e-13, 1e-9],  show_as_log=True,   normalize_by=None),
     deficit_hexose_root=               dict(bounds=[1e-14, 1e-10],  show_as_log=True,   normalize_by=None),
     AA=               dict(bounds=[1e-5, 1e-3],  show_as_log=True,   normalize_by=None),
@@ -116,7 +116,7 @@ class Logger:
                     recording_mtg=True,
                     recording_raw=True,
                     final_snapshots=True,
-                    export_3D_scene=False,
+                    export_3D_scene=True,
                     recording_sums=True,
                     recording_performance=True,
                     recording_barcodes=False, compare_to_ref_barcode=False,
