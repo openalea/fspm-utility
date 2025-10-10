@@ -384,20 +384,26 @@ def analyze_data(scenarios, outputs_dirpath, inputs_dirpath, target_folder_key=N
                 # Plant scale C balance related
                 running = True
                 if running:
-                    # WB.plant_C_balance(shoot_outputs=shoot_outputs, dataset=scenario_dataset, outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"))
-                    # WB.plant_C_balance(shoot_outputs=shoot_outputs, dataset=scenario_dataset, outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"), massic=True)
-                    # WB.root_N_balance(shoot_outputs=shoot_outputs, dataset=scenario_dataset, outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"))
-                    # WB.root_N_balance(shoot_outputs=shoot_outputs, dataset=scenario_dataset, outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"), massic=True)
-                    shoot_outputs_with_MS = WB.open_shoot_outputs(scenario=scenarios[0],
-                                                  target_folder_key=target_folder_key,
-                                                  outputs_dirpath=outputs_dirpath, 
-                                                  meteo_data_dirpath=os.path.join("inputs", "meteo_Ljutovac2002.csv"),
-                                                  soil_data_dirpath=os.path.join("inputs", "meteo_Ljutovac2002_soil.csv"), only_MS=False)
-                    WB.shoot_root_growth_WB(shoot_outputs=shoot_outputs_with_MS, dataset=scenario_dataset, outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"))
-                    shoot_outputs_cnwheat = WB.open_shoot_outputs(shoot_outputs_dirpath=os.path.join("inputs", "postprocessing"),
-                                                  meteo_data_dirpath=os.path.join("inputs", "meteo_Ljutovac2002.csv"),
-                                                  soil_data_dirpath=os.path.join("inputs", "meteo_Ljutovac2002_soil.csv"), only_MS=False)
-                    WB.shoot_root_growth_cnwheat(shoot_outputs=shoot_outputs_cnwheat, outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"))
+                    if True:
+                        # WB.plant_C_balance(shoot_outputs=shoot_outputs, dataset=scenario_dataset, outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"))
+                        WB.plant_C_balance_summary(shoot_outputs=shoot_outputs, dataset=scenario_dataset, outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"))
+                        # WB.plant_C_balance(shoot_outputs=shoot_outputs, dataset=scenario_dataset, outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"), massic=True)
+                    
+                    if False:
+                        WB.root_N_balance(shoot_outputs=shoot_outputs, dataset=scenario_dataset, outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"))
+                        WB.root_N_balance(shoot_outputs=shoot_outputs, dataset=scenario_dataset, outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"), massic=True)
+                    
+                    if False:
+                        shoot_outputs_with_MS = WB.open_shoot_outputs(scenario=scenarios[0],
+                                                    target_folder_key=target_folder_key,
+                                                    outputs_dirpath=outputs_dirpath, 
+                                                    meteo_data_dirpath=os.path.join("inputs", "meteo_Ljutovac2002.csv"),
+                                                    soil_data_dirpath=os.path.join("inputs", "meteo_Ljutovac2002_soil.csv"), only_MS=False)
+                        WB.shoot_root_growth_WB(shoot_outputs=shoot_outputs_with_MS, dataset=scenario_dataset, outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"))
+                        shoot_outputs_cnwheat = WB.open_shoot_outputs(shoot_outputs_dirpath=os.path.join("inputs", "postprocessing"),
+                                                    meteo_data_dirpath=os.path.join("inputs", "meteo_Ljutovac2002.csv"),
+                                                    soil_data_dirpath=os.path.join("inputs", "meteo_Ljutovac2002_soil.csv"), only_MS=False)
+                        WB.shoot_root_growth_cnwheat(shoot_outputs=shoot_outputs_cnwheat, outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"))
 
                 # Plots along root axes
                 running = False
@@ -3063,29 +3069,31 @@ class WB:
         s=4
 
         # VS distance from tip
-        fig, ax = XarrayPlotting.scatter_xarray(scenario_datasets, outputs_dirpath=outputs_path, x="distance_from_tip", y="Length-wise mineral N uptake", c=c, 
-                                                discrete=discrete, s=s, xlog=xlog, name_suffix=name_suffix, to_xunit="cm", xlim=xlim, to_yunit="nmol/(cm.h)", ylim=ylim, figsize=figsize, show_correlation=correlations)
-        fig, ax = XarrayPlotting.scatter_xarray(scenario_datasets, outputs_dirpath=outputs_path, x="distance_from_tip", y="Length-wise N exudation", c=c, 
-                                                discrete=discrete, s=s, xlog=xlog, name_suffix=name_suffix, to_xunit="cm", xlim=xlim, to_yunit="nmol/(cm.h)", ylim=ylim, figsize=figsize, show_correlation=correlations)
-        fig, ax = XarrayPlotting.scatter_xarray(scenario_datasets, outputs_dirpath=outputs_path, x="distance_from_tip", y="Length-wise_radial_import_water", c=c, 
-                                                discrete=discrete, s=s, xlog=xlog, name_suffix=name_suffix, to_xunit="cm", xlim=xlim, to_yunit="µL/(cm.h)", ylim=ylim, figsize=figsize, show_correlation=correlations)
-        fig, ax = XarrayPlotting.scatter_xarray(scenario_datasets, outputs_dirpath=outputs_path, x="distance_from_tip", y="Length_wise_raw_rhizodeposition", c=c, 
-                                                discrete=discrete, s=s, xlog=xlog, name_suffix=name_suffix, to_xunit="cm", xlim=xlim, to_yunit="nmol/(cm.h)", ylim=ylim, figsize=figsize, show_correlation=correlations)
+        # fig, ax = XarrayPlotting.scatter_xarray(scenario_datasets, outputs_dirpath=outputs_path, x="distance_from_tip", y="Length-wise mineral N uptake", c=c, 
+        #                                         discrete=discrete, s=s, xlog=xlog, name_suffix=name_suffix, to_xunit="cm", xlim=xlim, to_yunit="nmol/(cm.h)", ylim=ylim, figsize=figsize, show_correlation=correlations)
+        # fig, ax = XarrayPlotting.scatter_xarray(scenario_datasets, outputs_dirpath=outputs_path, x="distance_from_tip", y="Length-wise N exudation", c=c, 
+        #                                         discrete=discrete, s=s, xlog=xlog, name_suffix=name_suffix, to_xunit="cm", xlim=xlim, to_yunit="nmol/(cm.h)", ylim=ylim, figsize=figsize, show_correlation=correlations)
+        # fig, ax = XarrayPlotting.scatter_xarray(scenario_datasets, outputs_dirpath=outputs_path, x="distance_from_tip", y="Length-wise_radial_import_water", c=c, 
+        #                                         discrete=discrete, s=s, xlog=xlog, name_suffix=name_suffix, to_xunit="cm", xlim=xlim, to_yunit="µL/(cm.h)", ylim=ylim, figsize=figsize, show_correlation=correlations)
+        # fig, ax = XarrayPlotting.scatter_xarray(scenario_datasets, outputs_dirpath=outputs_path, x="distance_from_tip", y="Length_wise_raw_rhizodeposition", c=c, 
+        #                                         discrete=discrete, s=s, xlog=xlog, name_suffix=name_suffix, to_xunit="cm", xlim=xlim, to_yunit="nmol/(cm.h)", ylim=ylim, figsize=figsize, show_correlation=correlations)
         
-        fig, ax = XarrayPlotting.scatter_xarray(scenario_datasets, outputs_dirpath=outputs_path, x="distance_from_tip", y="Lengthy_active_Ni_uptake", c=c, 
-                                                discrete=discrete, s=s, xlog=xlog, name_suffix=name_suffix, to_xunit="cm", xlim=xlim, to_yunit="nmol/(cm.h)", ylim=ylim, figsize=figsize, show_correlation=correlations)
-        fig, ax = XarrayPlotting.scatter_xarray(scenario_datasets, outputs_dirpath=outputs_path, x="distance_from_tip", y="Lengthy_water_Ni_uptake", c=c, 
-                                                discrete=discrete, s=s, xlog=xlog, name_suffix=name_suffix, to_xunit="cm", xlim=xlim, to_yunit="nmol/(cm.h)", ylim=ylim, figsize=figsize, show_correlation=correlations)
-        fig, ax = XarrayPlotting.scatter_xarray(scenario_datasets, outputs_dirpath=outputs_path, x="distance_from_tip", y="C_hexose_root", c=c, 
-                                                discrete=discrete, s=s, xlog=xlog, name_suffix=name_suffix, to_xunit="cm", xlim=xlim, to_yunit="mmol/g", ylim=ylim, figsize=figsize, show_correlation=correlations)
-        fig, ax = XarrayPlotting.scatter_xarray(scenario_datasets, outputs_dirpath=outputs_path, x="distance_from_tip", y="Length-wise root exchange surface", c=c, 
-                                                discrete=discrete, s=s, xlog=xlog, name_suffix=name_suffix, to_xunit="cm", xlim=xlim, to_yunit="m", ylim=ylim, figsize=figsize, show_correlation=correlations)
+        # fig, ax = XarrayPlotting.scatter_xarray(scenario_datasets, outputs_dirpath=outputs_path, x="distance_from_tip", y="Lengthy_active_Ni_uptake", c=c, 
+        #                                         discrete=discrete, s=s, xlog=xlog, name_suffix=name_suffix, to_xunit="cm", xlim=xlim, to_yunit="nmol/(cm.h)", ylim=ylim, figsize=figsize, show_correlation=correlations)
+        # fig, ax = XarrayPlotting.scatter_xarray(scenario_datasets, outputs_dirpath=outputs_path, x="distance_from_tip", y="Lengthy_water_Ni_uptake", c=c, 
+        #                                         discrete=discrete, s=s, xlog=xlog, name_suffix=name_suffix, to_xunit="cm", xlim=xlim, to_yunit="nmol/(cm.h)", ylim=ylim, figsize=figsize, show_correlation=correlations)
+        # fig, ax = XarrayPlotting.scatter_xarray(scenario_datasets, outputs_dirpath=outputs_path, x="distance_from_tip", y="C_hexose_root", c=c, 
+        #                                         discrete=discrete, s=s, xlog=xlog, name_suffix=name_suffix, to_xunit="cm", xlim=xlim, to_yunit="mmol/g", ylim=ylim, figsize=figsize, show_correlation=correlations)
+        # fig, ax = XarrayPlotting.scatter_xarray(scenario_datasets, outputs_dirpath=outputs_path, x="distance_from_tip", y="Length-wise root exchange surface", c=c, 
+        #                                         discrete=discrete, s=s, xlog=xlog, name_suffix=name_suffix, to_xunit="cm", xlim=xlim, to_yunit="m", ylim=ylim, figsize=figsize, show_correlation=correlations)
         
-        # Correlation plots
-        fig, ax = XarrayPlotting.scatter_xarray(scenario_datasets, outputs_dirpath=outputs_path, x="C_hexose_root", y="Length-wise mineral N uptake", c=c, 
-                                                discrete=discrete, s=s, xlog=xlog, name_suffix=name_suffix, to_xunit="mmol/g", xlim=xlim, to_yunit="nmol/(cm.h)", ylim=ylim, figsize=figsize, show_correlation=correlations)
-        fig, ax = XarrayPlotting.scatter_xarray(scenario_datasets, outputs_dirpath=outputs_path, x="Length-wise root exchange surface", y="Length-wise mineral N uptake", c=c, 
-                                                discrete=discrete, s=s, xlog=xlog, name_suffix=name_suffix, to_xunit="m", xlim=xlim, to_yunit="nmol/(cm.h)", ylim=ylim, figsize=figsize, show_correlation=correlations)
+        # # Correlation plots
+        # fig, ax = XarrayPlotting.scatter_xarray(scenario_datasets, outputs_dirpath=outputs_path, x="C_hexose_root", y="Length-wise mineral N uptake", c=c, 
+        #                                         discrete=discrete, s=s, xlog=xlog, name_suffix=name_suffix, to_xunit="mmol/g", xlim=xlim, to_yunit="nmol/(cm.h)", ylim=ylim, figsize=figsize, show_correlation=correlations)
+        # fig, ax = XarrayPlotting.scatter_xarray(scenario_datasets, outputs_dirpath=outputs_path, x="Length-wise root exchange surface", y="Length-wise mineral N uptake", c=c, 
+        #                                         discrete=discrete, s=s, xlog=xlog, name_suffix=name_suffix, to_xunit="m", xlim=xlim, to_yunit="nmol/(cm.h)", ylim=ylim, figsize=figsize, show_correlation=correlations)
+        fig, ax = XarrayPlotting.scatter_xarray(scenario_datasets, outputs_dirpath=outputs_path, x="Length_wise_raw_rhizodeposition", y="Length-wise mineral N uptake", c=c, 
+                                                discrete=discrete, s=s, xlog=xlog, name_suffix=name_suffix, to_xunit="nmol/(cm.h)", xlim=xlim, to_yunit="nmol/(cm.h)", ylim=ylim, figsize=figsize, show_correlation=True)
 
     
     def open_shoot_outputs(outputs_dirpath="", meteo_data_dirpath="", soil_data_dirpath="", scenario="", target_folder_key=None, shoot_outputs_dirpath=None, only_MS=True):
@@ -3167,6 +3175,7 @@ class WB:
         df_roots['Unloading_Amino_Acids_tot'] = df_roots['Unloading_Amino_Acids'] * df_roots['mstruct']
         Unloading_Amino_Acids_tot = df_roots.groupby(['day'])['Unloading_Amino_Acids_tot'].agg('sum')
         Unloading_Amino_Acids_tot_C = (Unloading_Amino_Acids_tot * average_amino_acids_CN).to_numpy() * conversion
+        Export_Amino_Acids_C = (df_roots.groupby(['day'])['Export_Amino_Acids'].agg('sum') * average_amino_acids_CN).to_numpy() * conversion
         days = df_roots['day'].unique().astype('int64')
 
         
@@ -3255,6 +3264,186 @@ class WB:
             suffix += "_massic"
 
         fig.savefig(os.path.join(outputs_dirpath, f"C_balance{suffix}.png"), bbox_inches="tight", dpi=720)
+
+        if not massic:
+            total_photo = Total_Photosynthesis.sum()
+            total_unload = (Unloading_Sucrose_tot_C + Unloading_Amino_Acids_tot_C).sum() / total_photo
+            total_reexport = Export_Amino_Acids_C.sum()  / total_photo
+            total_net_unload = (Unloading_Sucrose_tot_C + Unloading_Amino_Acids_tot_C - Export_Amino_Acids_C).sum()  / total_photo
+            prop_reexported = Export_Amino_Acids_C.sum() / (Unloading_Sucrose_tot_C + Unloading_Amino_Acids_tot_C).sum()
+            tot_net_hexose_exudation_C = net_hexose_exudation_C.sum() / total_photo
+            tot_net_AA_exudation_C = net_AA_exudation_C.sum() / total_photo
+            tot_cells_release_C = cells_release_C.sum() / total_photo
+            tot_mucilage_secretion_C = mucilage_secretion_C.sum() / total_photo
+            tot_growth_respiration_C=growth_respiration_C.sum() / total_photo
+            tot_maintenance_respiration_C = maintenance_respiration_C.sum() / total_photo
+            tot_N_metabolic_respiration_C = N_metabolic_respiration_C.sum() / total_photo
+            tot_Shoot_respiration = Shoot_respiration.sum() / total_photo
+
+            print(dict(
+                unloading = total_unload,
+                rexport = total_reexport,
+                prop_reexport = prop_reexported,
+                net_unload = total_net_unload,
+                tot_RD = tot_net_hexose_exudation_C + tot_net_AA_exudation_C + tot_cells_release_C + tot_mucilage_secretion_C,
+                root_respi = tot_growth_respiration_C + tot_maintenance_respiration_C + tot_N_metabolic_respiration_C,
+                shoot_respi = tot_Shoot_respiration
+            ))
+
+    def plant_C_balance_summary(shoot_outputs, dataset, outputs_dirpath, thermal_time = True, massic=False, balance=True):
+        average_amino_acids_CN = 5 / 1.4
+        conversion = 1e-3 # to mmol
+
+        df_org = shoot_outputs["organs"]
+        df_axe = shoot_outputs["axes"]
+        df_axe['day'] = df_axe['t'] // 24 + 1
+
+        if massic:
+            mstruct = df_axe.groupby(['day'])['mstruct'].agg('mean').to_numpy()
+            conversion /= mstruct
+    
+        df_roots = df_org[df_org['organ'] == 'roots'].copy()
+        df_roots['day'] = df_roots['t'] // 24 + 1
+        df_roots['Unloading_Sucrose_tot'] = df_roots['Unloading_Sucrose'] * df_roots['mstruct']
+        Unloading_Sucrose_tot = df_roots.groupby(['day'])['Unloading_Sucrose_tot'].agg('sum')
+        Unloading_Sucrose_tot_C = Unloading_Sucrose_tot.to_numpy() * conversion
+        df_roots['Unloading_Amino_Acids_tot'] = df_roots['Unloading_Amino_Acids'] * df_roots['mstruct']
+        Unloading_Amino_Acids_tot = df_roots.groupby(['day'])['Unloading_Amino_Acids_tot'].agg('sum')
+        Unloading_Amino_Acids_tot_C = (Unloading_Amino_Acids_tot * average_amino_acids_CN).to_numpy() * conversion
+        Export_Amino_Acids_C = (df_roots.groupby(['day'])['Export_Amino_Acids'].agg('sum') * average_amino_acids_CN).to_numpy() * conversion
+        days = df_roots['day'].unique().astype('int64')
+
+        hours = df_axe["t"].to_numpy()[1:]
+        mstruct_shoot = df_axe["mstruct_shoot"].to_numpy()
+        shoot_struct_mass_produced = (mstruct_shoot[1:] - mstruct_shoot[:-1]) 
+        shoot_struct_mass_produced[0] = 0.
+        df_axe["shoot_struct_mass_produced"] = np.array([0] + list(shoot_struct_mass_produced))
+        daily_shoot_struct_mass_produced_C = df_axe.groupby(['day'])['shoot_struct_mass_produced'].agg('sum').to_numpy() * conversion * 1e6 * 0.44 / 12.01
+        
+        if thermal_time:
+            df_meteo = shoot_outputs["meteo"]
+            df_meteo["t"] = df_meteo.index
+            df_meteo["air_temperature_tbase"] = df_meteo["air_temperature"].clip(lower=0)
+            shoot_thermal_time = df_meteo["air_temperature_tbase"].cumsum().reindex(df_meteo.index) / 24
+            days_thermal_time = [shoot_thermal_time.at[d * 24] for d in days]
+            time_scale = days_thermal_time
+
+            tt_hourly = shoot_thermal_time
+            # days since start from 't' in hours
+            days_hourly = (df_meteo['t'].to_numpy() / 24.0)
+
+            # Make mapping strictly monotonic (handle flat TT segments)
+            tt_u, idx = np.unique(tt_hourly, return_index=True)
+            days_u = days_hourly[idx]
+
+            def tt_to_days(tt):
+                tt = np.asarray(tt)
+                return np.interp(tt, tt_u, days_u)
+
+            def days_to_tt(days):
+                days = np.asarray(days)
+                return np.interp(days, days_u, tt_u)
+            
+        else:
+            time_scale = days
+
+        
+        Total_Photosynthesis = df_axe.groupby(['day'])['Tillers_Photosynthesis'].agg('sum').to_numpy() * conversion
+
+        df_elt = shoot_outputs["elements"]
+        df_elt['day'] = df_elt['t'] // 24 + 1
+        df_elt['sum_respi_tillers'] = df_elt['sum_respi'] * df_elt['nb_replications']
+        Shoot_respiration = df_elt.groupby(['day'])['sum_respi_tillers'].agg('sum').to_numpy() * conversion
+
+        dataset['day'] = (np.floor(dataset['t'] / 24) + 1).astype('int64')
+        dataset = dataset.set_coords('day')
+        net_hexose_exudation_C = Indicators.compute(d=dataset, formula="hexose_exudation - hexose_uptake_from_soil + phloem_hexose_exudation - hexose_uptake_from_soil").sum(dim="vid") * 1e6 * 3600 * 6
+        net_AA_exudation_C = Indicators.compute(d=dataset, formula="diffusion_AA_soil + apoplastic_AA_soil_xylem - import_AA").sum(dim="vid") * 1e6 * 3600 * average_amino_acids_CN
+        cells_release_C = dataset["cells_release"].sum(dim="vid") * 1e6 * 3600 * 6
+        mucilage_secretion_C = dataset["mucilage_secretion"].sum(dim="vid") * 1e6 * 3600 * 6
+        growth_respiration_C = dataset["resp_growth"].sum(dim="vid") * 1e6 # already per hour
+        maintenance_respiration_C = dataset["maintenance_respiration"].sum(dim="vid") * 1e6 * 3600
+        N_metabolic_respiration_C = dataset["N_metabolic_respiration"].sum(dim="vid") * 1e6 * 3600
+        root_struct_mass_produced_C = dataset["struct_mass_produced"].sum(dim="vid") * 1e6 * 0.44 / 12.01
+        Labile_C = Indicators.compute(d=dataset, formula="struct_mass*(6*(C_hexose_root + C_hexose_reserve) + 12*C_sucrose_root + 5*(AA + phloem_AA + xylem_AA)/1.4)").sum(dim="vid") * 1e6
+        Labile_C_deficit = Indicators.compute(d=dataset, formula=" - 6*3600*deficit_hexose_root - 5*3600*deficit_AA/1.4").sum(dim="vid") * 1e6
+
+
+        # Daily sum
+        net_hexose_exudation_C = net_hexose_exudation_C.groupby('day').sum().values * conversion # applied to numpy
+        net_AA_exudation_C = net_AA_exudation_C.groupby('day').sum().values * conversion
+        cells_release_C = cells_release_C.groupby('day').sum().values * conversion
+        mucilage_secretion_C = mucilage_secretion_C.groupby('day').sum().values * conversion
+        growth_respiration_C = growth_respiration_C.groupby('day').sum().values * conversion
+        maintenance_respiration_C = maintenance_respiration_C.groupby('day').sum().values * conversion
+        N_metabolic_respiration_C = N_metabolic_respiration_C.groupby('day').sum().values * conversion
+        root_struct_mass_produced_C = root_struct_mass_produced_C.groupby('day').sum().values * conversion
+        daily_labile_C = (Labile_C - Labile_C_deficit).groupby('day').mean().values * conversion
+
+        fig, ax = plt.subplots(figsize=(6.4, 4.8))
+        ax.stackplot(time_scale, net_hexose_exudation_C + cells_release_C + mucilage_secretion_C, net_AA_exudation_C, growth_respiration_C + maintenance_respiration_C + N_metabolic_respiration_C, Shoot_respiration, labels=[
+            'Hexose, mucilage, cells rhizodeposition',
+            'Net amino acids exudation'
+            'root respiration',
+            'shoot total respiration'])
+        ax.plot(time_scale, Total_Photosynthesis, c='red', label='Raw photosynthesis')
+        ax.plot(time_scale, Unloading_Sucrose_tot_C + Unloading_Amino_Acids_tot_C, c='black', label='Raw C allocation to roots')
+        ax.plot(time_scale, Unloading_Sucrose_tot_C + Unloading_Amino_Acids_tot_C - Export_Amino_Acids_C, c='green', label='Net C allocation to roots')
+        ax.legend()
+        ax.set_xlabel('Thermal time (°C.day)' if thermal_time else 'Time (days)')
+        if not massic:
+            ax.set_ylabel('Process flow (mmol C per day)')
+        else:
+            ax.set_ylabel('Process flow (mmol C/g/day)')
+
+        if thermal_time:
+            secax = ax.secondary_xaxis('bottom', functions=(tt_to_days, days_to_tt))
+            # Move it below the primary axis
+            secax.spines['bottom'].set_position(('outward', 35))  # pixels; adjust if needed
+            secax.set_xlabel('Time (days)')
+
+        suffix = ''
+        if thermal_time:
+            suffix += "_thermal"
+        if massic:
+            suffix += "_massic"
+
+        fig.savefig(os.path.join(outputs_dirpath, f"C_balance{suffix}.png"), bbox_inches="tight", dpi=720)
+
+        if not massic and balance:
+            total_photo = Total_Photosynthesis.cumsum()
+            tot_Shoot_respiration = Shoot_respiration.cumsum()
+            total_rhizodeposition = (net_hexose_exudation_C + cells_release_C + mucilage_secretion_C + net_AA_exudation_C).cumsum()
+            tot_root_respiration_C = (growth_respiration_C + maintenance_respiration_C + N_metabolic_respiration_C).cumsum()
+            tot_C_to_struct_root = root_struct_mass_produced_C.cumsum()
+            tot_C_to_struct_shoot = daily_shoot_struct_mass_produced_C.cumsum()
+
+
+            fig2, ax2 = plt.subplots(figsize=(6.4, 4.8))
+
+            ax2.stackplot(time_scale, tot_C_to_struct_root, tot_C_to_struct_shoot, total_rhizodeposition, tot_root_respiration_C, tot_Shoot_respiration,  labels=[
+                "C to root structural mass",
+                "C to shoot structural mass",
+                "C rhizodeposition",
+                "Root respiration",
+                "Shoot respiration",
+            ])
+            ax2.plot(time_scale, total_photo, label="C from photosynthesis")
+            ax2.plot(time_scale, daily_labile_C, label="Labile C roots")
+
+            ax2.legend()
+
+            if thermal_time:
+                secax2 = ax2.secondary_xaxis('bottom', functions=(tt_to_days, days_to_tt))
+                # Move it below the primary axis
+                secax2.spines['bottom'].set_position(('outward', 35))  # pixels; adjust if needed
+                secax2.set_xlabel('Time (days)')
+
+            suffix +='_cummulated'
+
+
+            fig2.savefig(os.path.join(outputs_dirpath, f"C_balance{suffix}.png"), bbox_inches="tight", dpi=720)
+
 
 
     def root_N_balance(shoot_outputs, dataset, outputs_dirpath, thermal_time=True, massic=False):
