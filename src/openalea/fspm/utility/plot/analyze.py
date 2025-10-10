@@ -305,7 +305,7 @@ def analyze_data(scenarios, outputs_dirpath, inputs_dirpath, target_folder_key=N
             dataset["Thermal time since tissue formation"] = Indicators.compute(d=dataset, formula = f'thermal_time_since_cells_formation * {average_day_temperature} / 3600 / 24')
             
             target = "kr_symplasmic_water_phloem"
-            dataset[target] = dataset[target].where(dataset[target] > 0, drop=True)
+            # dataset[target] = dataset[target].where(dataset[target] > 0, drop=True)
             # print(dataset[target].mean(), dataset[target].std() / np.sqrt(len(dataset[target].values)))
 
             # Z contributions
@@ -374,7 +374,7 @@ def analyze_data(scenarios, outputs_dirpath, inputs_dirpath, target_folder_key=N
 
                     plt.close()
                 
-
+                # @note current focus
                 running = False
                 # Experienced environmental conditions
                 if running:
@@ -384,13 +384,25 @@ def analyze_data(scenarios, outputs_dirpath, inputs_dirpath, target_folder_key=N
                 # Plant scale C balance related
                 running = True
                 if running:
-                    WB.plant_C_balance(shoot_outputs=shoot_outputs, dataset=scenario_dataset, outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"))
-                    WB.root_N_balance(shoot_outputs=shoot_outputs, dataset=scenario_dataset, outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"))
+                    # WB.plant_C_balance(shoot_outputs=shoot_outputs, dataset=scenario_dataset, outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"))
+                    # WB.plant_C_balance(shoot_outputs=shoot_outputs, dataset=scenario_dataset, outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"), massic=True)
+                    # WB.root_N_balance(shoot_outputs=shoot_outputs, dataset=scenario_dataset, outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"))
+                    # WB.root_N_balance(shoot_outputs=shoot_outputs, dataset=scenario_dataset, outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"), massic=True)
+                    shoot_outputs_with_MS = WB.open_shoot_outputs(scenario=scenarios[0],
+                                                  target_folder_key=target_folder_key,
+                                                  outputs_dirpath=outputs_dirpath, 
+                                                  meteo_data_dirpath=os.path.join("inputs", "meteo_Ljutovac2002.csv"),
+                                                  soil_data_dirpath=os.path.join("inputs", "meteo_Ljutovac2002_soil.csv"), only_MS=False)
+                    WB.shoot_root_growth_WB(shoot_outputs=shoot_outputs_with_MS, dataset=scenario_dataset, outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"))
+                    shoot_outputs_cnwheat = WB.open_shoot_outputs(shoot_outputs_dirpath=os.path.join("inputs", "postprocessing"),
+                                                  meteo_data_dirpath=os.path.join("inputs", "meteo_Ljutovac2002.csv"),
+                                                  soil_data_dirpath=os.path.join("inputs", "meteo_Ljutovac2002_soil.csv"), only_MS=False)
+                    WB.shoot_root_growth_cnwheat(shoot_outputs=shoot_outputs_cnwheat, outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"))
 
                 # Plots along root axes
                 running = False
                 if running:
-                    scenario_times = [120, 480]
+                    scenario_times = [240, 720, 1392, 1488, 2400]
                     scenario_dataset["Lengthy_active_Ni_uptake"] = Indicators.compute(d=scenario_dataset, formula = 'import_Nm / length')
                     scenario_dataset["Lengthy_water_Ni_uptake"] = Indicators.compute(d=scenario_dataset, formula = '- apoplastic_Nm_soil_xylem / length')
         
@@ -412,7 +424,7 @@ def analyze_data(scenarios, outputs_dirpath, inputs_dirpath, target_folder_key=N
                 # Cumsum related
                 running = False
                 if running:
-                    scenario_times = [120, 480]
+                    scenario_times = [240, 720, 1392, 1488, 2400]
                     commentaries = []
                     df_soil = shoot_outputs['soil_meteo']
                     df_axe = shoot_outputs["axes"]
@@ -420,17 +432,22 @@ def analyze_data(scenarios, outputs_dirpath, inputs_dirpath, target_folder_key=N
                     Total_Photosynthesis = df_axe.groupby(['day'])['Tillers_Photosynthesis'].agg('sum')
 
                     for t in scenario_times:
+                        print("preparing ", t)
                         day = round(t / 24 + 1)
                         temperature = round(df_soil['soil_temperature'].at[t], 1)
                         current_dataset = filter_dataset(dataset, time=t)
                         nitrates = round(float(current_dataset["soil_Nm"].mean().values), 1)
                         photosynthesis = round(Total_Photosynthesis.at[day])
                         commentaries += [f"day {day} | {temperature}°C | {nitrates} mM | {photosynthesis} µmol/d"]
+                        del current_dataset
                     
                     flows = ["Net_mineral_N_uptake", "Raw_rhizodeposition", "Net_AA_Exudation", "radial_import_water_xylem"]
                     
+                    fdataset = dataset[flows + ["length"]]
+                    fdataset.load()
                     for flow in flows:
-                        WB.most_active_cumsum(dataset, flow, scenario_times=scenario_times, commentaries = commentaries,
+                        print("cumsum for ", flow)
+                        WB.most_active_cumsum(fdataset, flow, scenario_times=scenario_times, commentaries = commentaries,
                                             outputs_dirpath=raw_dirpath)
 
                 ### Fig 1 c related
@@ -2176,27 +2193,64 @@ def filter_dataset(d, scenario=None, time=None, tmin=None, tmax=None, vids=[], o
 def open_and_merge_datasets(scenarios, root_outputs_path = "outputs", target_folder_key=None, use_dask=True):
     print("         [INFO] Openning xarrays...")
 
-    default_path_in_outputs = "MTG_properties/MTG_properties_raw/merged.nc"
+    default_path_in_outputs = "MTG_properties/MTG_properties_raw"
+    default_merge_filename = "merged.nc"
 
     per_scenario_files = {}
     for scenario_name in scenarios:
         if target_folder_key is None:
-            per_scenario_files[scenario_name] = os.path.join(root_outputs_path, scenario_name, default_path_in_outputs)
+            folder_path = os.path.join(root_outputs_path, scenario_name, default_path_in_outputs)
+            file_list = [f for f in os.listdir(folder_path) if f.endswith(".nc")]
+            if default_merge_filename in file_list:
+                per_scenario_files[scenario_name] = os.path.join(folder_path, default_merge_filename)
+            else:
+                per_scenario_files[scenario_name] = [os.path.join(folder_path, f) for f in file_list]
         else:
             plants_subscenarios = os.listdir(os.path.join(root_outputs_path, scenario_name))
             for subscenario in plants_subscenarios:
                 if target_folder_key in subscenario:
-                    per_scenario_files[scenario_name + "*" + subscenario] = os.path.join(root_outputs_path, scenario_name, subscenario, default_path_in_outputs)
+                    folder_path = os.path.join(root_outputs_path, scenario_name, subscenario, default_path_in_outputs)
+                    file_list = [f for f in os.listdir(folder_path) if f.endswith(".nc")]
+                    if default_merge_filename in file_list:
+                        per_scenario_files[scenario_name + "*" + subscenario] = os.path.join(folder_path, default_merge_filename)
+                    else:
+                        per_scenario_files[scenario_name + "*" + subscenario] = [os.path.join(folder_path, f) for f in file_list]
     
     if len(per_scenario_files) == 1:
-        dataset = xr.open_dataset(list(per_scenario_files.values())[0], engine="netcdf4")
+        path = list(per_scenario_files.values())[0]
+        if isinstance(path, list):
+            print("         [INFO] Opening xarray from file list...")
+            dataset = xr.open_mfdataset(path,  # list of path
+                                        combine="by_coords",
+                                        chunks={} if use_dask else None, # Keeping auto 
+                                        parallel=use_dask,
+                                        data_vars="minimal",
+                                        coords="minimal",
+                                        compat="equals",    # strict on non-concat vars
+                                        join="outer")
+        else:
+            print("         [INFO] Opening xarray from merged file...")
+            dataset = xr.open_dataset(path, engine="netcdf4")
         ds_expanded = dataset.expand_dims("scenario")
         ds_expanded["scenario"] = [list(per_scenario_files.keys())[0]]
         print("         [INFO] Finished")
         return ds_expanded
     
     else:
-        inidvidual_datasets = {scenario: xr.open_dataset(fp, chunks={} if use_dask else None) for scenario, fp in per_scenario_files.items()}
+        inidvidual_datasets = {}
+        for scenario, fp in per_scenario_files.items():
+            if isinstance(fp, list):
+                inidvidual_datasets[scenario] = xr.open_mfdataset(fp,  # list of path
+                                                                combine="by_coords",
+                                                                chunks={} if use_dask else None, # Keeping auto 
+                                                                parallel=use_dask,
+                                                                data_vars="minimal",
+                                                                coords="minimal",
+                                                                compat="equals",    # strict on non-concat vars
+                                                                join="outer")
+            else:
+                inidvidual_datasets[scenario] = xr.open_dataset(fp, chunks={} if use_dask else None)
+
         datasets_with_new_dim = []
         for scenario, ds in inidvidual_datasets.items():
             ds_expanded = ds.expand_dims("scenario")
@@ -3033,10 +3087,12 @@ class WB:
         fig, ax = XarrayPlotting.scatter_xarray(scenario_datasets, outputs_dirpath=outputs_path, x="Length-wise root exchange surface", y="Length-wise mineral N uptake", c=c, 
                                                 discrete=discrete, s=s, xlog=xlog, name_suffix=name_suffix, to_xunit="m", xlim=xlim, to_yunit="nmol/(cm.h)", ylim=ylim, figsize=figsize, show_correlation=correlations)
 
-    def open_shoot_outputs(outputs_dirpath, meteo_data_dirpath, soil_data_dirpath, scenario, target_folder_key=None,):
+    
+    def open_shoot_outputs(outputs_dirpath="", meteo_data_dirpath="", soil_data_dirpath="", scenario="", target_folder_key=None, shoot_outputs_dirpath=None, only_MS=True):
         
-        default_relative_path = "MTG_properties/shoot_properties/postprocessing"
-        shoot_outputs_dirpath = os.path.join(outputs_dirpath, scenario, target_folder_key, default_relative_path)
+        if shoot_outputs_dirpath is None:
+            default_relative_path = "MTG_properties/shoot_properties/postprocessing"
+            shoot_outputs_dirpath = os.path.join(outputs_dirpath, scenario, target_folder_key, default_relative_path)
         
         delta_t_simuls = 0
         
@@ -3058,23 +3114,27 @@ class WB:
 
         # Axes
         df_axes = pd.read_csv(os.path.join(reference_postprocessing_dirpath, 'axes_postprocessing.csv'))
-        df_axes = df_axes[df_axes['axis'] == 'MS']
+        if only_MS:
+            df_axes = df_axes[df_axes['axis'] == 'MS']
         df_axes['t'] = df_axes['t'] + delta_t_simuls
 
         # Organs
         df_organs = pd.read_csv(os.path.join(reference_postprocessing_dirpath, 'organs_postprocessing.csv'))
-        df_organs = df_organs[df_organs['axis'] == 'MS']
+        if only_MS:
+            df_organs = df_organs[df_organs['axis'] == 'MS']
         df_organs['t'] = df_organs['t'] + delta_t_simuls
 
         # Elements
 
         df_elements = pd.read_csv(os.path.join(reference_postprocessing_dirpath, 'elements_postprocessing.csv'))
-        df_elements = df_elements[df_elements['axis'] == 'MS']
+        if only_MS:
+            df_elements = df_elements[df_elements['axis'] == 'MS']
         df_elements['t'] = df_elements['t'] + delta_t_simuls
 
         # HZ
         df_hz = pd.read_csv(os.path.join(reference_postprocessing_dirpath, 'hiddenzones_postprocessing.csv'))
-        df_hz = df_hz[df_hz['axis'] == 'MS']
+        if only_MS:
+            df_hz = df_hz[df_hz['axis'] == 'MS']
         df_hz['t'] = df_hz['t'] + delta_t_simuls
 
         return dict(
@@ -3087,22 +3147,29 @@ class WB:
         )
 
     
-    def plant_C_balance(shoot_outputs, dataset, outputs_dirpath):
+    def plant_C_balance(shoot_outputs, dataset, outputs_dirpath, thermal_time = True, massic=False):
         average_amino_acids_CN = 5 / 1.4
+        conversion = 1e-3 # to mmol
 
         df_org = shoot_outputs["organs"]
+        df_axe = shoot_outputs["axes"]
+        df_axe['day'] = df_axe['t'] // 24 + 1
+
+        if massic:
+            mstruct = df_axe.groupby(['day'])['mstruct'].agg('mean').to_numpy()
+            conversion /= mstruct
     
         df_roots = df_org[df_org['organ'] == 'roots'].copy()
         df_roots['day'] = df_roots['t'] // 24 + 1
         df_roots['Unloading_Sucrose_tot'] = df_roots['Unloading_Sucrose'] * df_roots['mstruct']
         Unloading_Sucrose_tot = df_roots.groupby(['day'])['Unloading_Sucrose_tot'].agg('sum')
-        Unloading_Sucrose_tot_C = Unloading_Sucrose_tot
+        Unloading_Sucrose_tot_C = Unloading_Sucrose_tot.to_numpy() * conversion
         df_roots['Unloading_Amino_Acids_tot'] = df_roots['Unloading_Amino_Acids'] * df_roots['mstruct']
         Unloading_Amino_Acids_tot = df_roots.groupby(['day'])['Unloading_Amino_Acids_tot'].agg('sum')
-        Unloading_Amino_Acids_tot_C = Unloading_Amino_Acids_tot * average_amino_acids_CN
+        Unloading_Amino_Acids_tot_C = (Unloading_Amino_Acids_tot * average_amino_acids_CN).to_numpy() * conversion
         days = df_roots['day'].unique().astype('int64')
 
-        thermal_time = True
+        
         if thermal_time:
             df_meteo = shoot_outputs["meteo"]
             df_meteo["t"] = df_meteo.index
@@ -3129,17 +3196,13 @@ class WB:
         else:
             time_scale = days
 
-        df_axe = shoot_outputs["axes"]
-        df_axe['day'] = df_axe['t'] // 24 + 1
-        Total_Photosynthesis = df_axe.groupby(['day'])['Tillers_Photosynthesis'].agg('sum')
+        
+        Total_Photosynthesis = df_axe.groupby(['day'])['Tillers_Photosynthesis'].agg('sum').to_numpy() * conversion
 
         df_elt = shoot_outputs["elements"]
         df_elt['day'] = df_elt['t'] // 24 + 1
         df_elt['sum_respi_tillers'] = df_elt['sum_respi'] * df_elt['nb_replications']
-        Shoot_respiration = df_elt.groupby(['day'])['sum_respi_tillers'].agg('sum')
-        Net_Photosynthesis = Total_Photosynthesis - Shoot_respiration
-
-        share_net_roots_live = Unloading_Sucrose_tot / Net_Photosynthesis * 100
+        Shoot_respiration = df_elt.groupby(['day'])['sum_respi_tillers'].agg('sum').to_numpy() * conversion
 
         dataset['day'] = (np.floor(dataset['t'] / 24) + 1).astype('int64')
         dataset = dataset.set_coords('day')
@@ -3152,16 +3215,16 @@ class WB:
         N_metabolic_respiration_C = dataset["N_metabolic_respiration"].sum(dim="vid") * 1e6 * 3600
 
         # Daily sum
-        net_hexose_exudation_C = net_hexose_exudation_C.groupby('day').sum().values
-        net_AA_exudation_C = net_AA_exudation_C.groupby('day').sum().values
-        cells_release_C = cells_release_C.groupby('day').sum().values
-        mucilage_secretion_C = mucilage_secretion_C.groupby('day').sum().values
-        growth_respiration_C = growth_respiration_C.groupby('day').sum().values
-        maintenance_respiration_C = maintenance_respiration_C.groupby('day').sum().values
-        N_metabolic_respiration_C = N_metabolic_respiration_C.groupby('day').sum().values
+        net_hexose_exudation_C = net_hexose_exudation_C.groupby('day').sum().values * conversion # applied to numpy
+        net_AA_exudation_C = net_AA_exudation_C.groupby('day').sum().values * conversion
+        cells_release_C = cells_release_C.groupby('day').sum().values * conversion
+        mucilage_secretion_C = mucilage_secretion_C.groupby('day').sum().values * conversion
+        growth_respiration_C = growth_respiration_C.groupby('day').sum().values * conversion
+        maintenance_respiration_C = maintenance_respiration_C.groupby('day').sum().values * conversion
+        N_metabolic_respiration_C = N_metabolic_respiration_C.groupby('day').sum().values * conversion
 
-        fig, ax = plt.subplots()
-        ax.stackplot(time_scale, net_hexose_exudation_C, net_AA_exudation_C, cells_release_C, mucilage_secretion_C, growth_respiration_C, maintenance_respiration_C, N_metabolic_respiration_C, Shoot_respiration.to_numpy(), labels=[
+        fig, ax = plt.subplots(figsize=(6.4, 4.8))
+        ax.stackplot(time_scale, net_hexose_exudation_C, net_AA_exudation_C, cells_release_C, mucilage_secretion_C, growth_respiration_C, maintenance_respiration_C, N_metabolic_respiration_C, Shoot_respiration, labels=[
             'Net hexose exudation',
             'Net AA exudation',
             'sloughed cells',
@@ -3170,44 +3233,72 @@ class WB:
             'root maintenance respiration',
             'root N respiration',
             'shoot total respiration'])
-        ax.plot(time_scale, Total_Photosynthesis.to_numpy(), c='red', label='Raw photosynthesis')
-        ax.plot(time_scale, Unloading_Sucrose_tot_C.to_numpy() + Unloading_Amino_Acids_tot_C.to_numpy(), c='black', label='C allocation to roots')
+        ax.plot(time_scale, Total_Photosynthesis, c='red', label='Raw photosynthesis')
+        ax.plot(time_scale, Unloading_Sucrose_tot_C + Unloading_Amino_Acids_tot_C, c='black', label='C allocation to roots')
         ax.legend()
         ax.set_xlabel('Thermal time (°C.day)' if thermal_time else 'Time (days)')
-        ax.set_ylabel('Process flow (µmol C per day)')
+        if not massic:
+            ax.set_ylabel('Process flow (mmol C per day)')
+        else:
+            ax.set_ylabel('Process flow (mmol C/g/day)')
 
         if thermal_time:
             secax = ax.secondary_xaxis('bottom', functions=(tt_to_days, days_to_tt))
             # Move it below the primary axis
-            secax.spines['bottom'].set_position(('outward', 28))  # pixels; adjust if needed
+            secax.spines['bottom'].set_position(('outward', 35))  # pixels; adjust if needed
             secax.set_xlabel('Time (days)')
 
         suffix = ''
         if thermal_time:
-            suffix = "_thermal"
+            suffix += "_thermal"
+        if massic:
+            suffix += "_massic"
 
-        fig.savefig(os.path.join(outputs_dirpath, f"C_balance{suffix}.png"), dpi=720)
+        fig.savefig(os.path.join(outputs_dirpath, f"C_balance{suffix}.png"), bbox_inches="tight", dpi=720)
 
 
-    def root_N_balance(shoot_outputs, dataset, outputs_dirpath):
-        average_amino_acids_CN = 5 / 1.4
+    def root_N_balance(shoot_outputs, dataset, outputs_dirpath, thermal_time=True, massic=False):
+        conversion = 1e-3 # to mmol
 
         df_org = shoot_outputs["organs"]
+        df_axe = shoot_outputs["axes"]
+        df_axe['day'] = df_axe['t'] // 24 + 1
+
+        if massic:
+            mstruct = df_axe.groupby(['day'])['mstruct'].agg('mean').to_numpy()
+            conversion /= mstruct
     
         df_roots = df_org[df_org['organ'] == 'roots'].copy()
         df_roots['day'] = df_roots['t'] // 24 + 1
-        Export_Nitrates_N = df_roots.groupby(['day'])['Export_Nitrates'].agg('sum')
-        Export_Amino_Acids_N = df_roots.groupby(['day'])['Export_Amino_Acids'].agg('sum')
+        Export_Nitrates_N = df_roots.groupby(['day'])['Export_Nitrates'].agg('sum').to_numpy() * conversion
+        Export_Amino_Acids_N = df_roots.groupby(['day'])['Export_Amino_Acids'].agg('sum').to_numpy() * conversion
         df_roots['Unloading_Amino_Acids_tot'] = df_roots['Unloading_Amino_Acids'] * df_roots['mstruct']
-        Unloading_Amino_Acids_N = df_roots.groupby(['day'])['Unloading_Amino_Acids_tot'].agg('sum')
+        Unloading_Amino_Acids_N = df_roots.groupby(['day'])['Unloading_Amino_Acids_tot'].agg('sum').to_numpy() * conversion
         days = df_roots['day'].unique()
 
-        thermal_time = True
         if thermal_time:
             df_meteo = shoot_outputs["meteo"]
+            df_meteo["t"] = df_meteo.index
             shoot_thermal_time = df_meteo["air_temperature"].cumsum().reindex(df_meteo.index) / 24
             days_thermal_time = [shoot_thermal_time.at[d * 24] for d in days]
             time_scale = days_thermal_time
+
+            tt_hourly = shoot_thermal_time
+            # days since start from 't' in hours
+            days_hourly = (df_meteo['t'].to_numpy() / 24.0)
+
+            # Make mapping strictly monotonic (handle flat TT segments)
+            tt_u, idx = np.unique(tt_hourly, return_index=True)
+            days_u = days_hourly[idx]
+
+            def tt_to_days(tt):
+                tt = np.asarray(tt)
+                return np.interp(tt, tt_u, days_u)
+
+            def days_to_tt(days):
+                days = np.asarray(days)
+                return np.interp(days, days_u, tt_u)
+            
         else:
             time_scale = days
 
@@ -3218,26 +3309,37 @@ class WB:
         net_AA_exudation_N = Indicators.compute(d=dataset, formula="diffusion_AA_soil + apoplastic_AA_soil_xylem - import_AA").sum(dim="vid") * 1e6 * 3600 * 1.4
 
         # Daily sum
-        net_mineral_N_active_uptake = net_mineral_N_active_uptake.groupby('day').sum().values
-        water_driven_N_uptake = water_driven_N_uptake.groupby('day').sum().values
-        net_AA_exudation_N = net_AA_exudation_N.groupby('day').sum().values
+        net_mineral_N_active_uptake = net_mineral_N_active_uptake.groupby('day').sum().values * conversion
+        water_driven_N_uptake = water_driven_N_uptake.groupby('day').sum().values * conversion
+        net_AA_exudation_N = net_AA_exudation_N.groupby('day').sum().values * conversion
 
         fig, ax = plt.subplots()
 
         ax.plot(time_scale, net_mineral_N_active_uptake, label='Net mineral N active uptake')
         ax.plot(time_scale, water_driven_N_uptake, label='Water-driven mineral N uptake')
-        ax.plot(time_scale, Export_Nitrates_N.to_numpy() + Export_Amino_Acids_N.to_numpy(), label='total N export to shoot')
-        ax.plot(time_scale, Unloading_Amino_Acids_N.to_numpy(), label='Amino acids N allocation from shoot')
+        ax.plot(time_scale, Export_Nitrates_N + Export_Amino_Acids_N, label='total N export to shoot')
+        ax.plot(time_scale, Unloading_Amino_Acids_N, label='Amino acids N allocation from shoot')
         ax.plot(time_scale, net_AA_exudation_N, label='Net organic N exudation')
         ax.legend()
         ax.set_xlabel('Thermal time (°C.day)' if thermal_time else 'Time (days)')
-        ax.set_ylabel('Process flow (µmol N per day)')
+        if not massic:
+            ax.set_ylabel('Process flow (mmol N per day)')
+        else:
+            ax.set_ylabel('Process flow (mmol N/g/day)')
+
+        if thermal_time:
+            secax = ax.secondary_xaxis('bottom', functions=(tt_to_days, days_to_tt))
+            # Move it below the primary axis
+            secax.spines['bottom'].set_position(('outward', 35))  # pixels; adjust if needed
+            secax.set_xlabel('Time (days)')
 
         suffix = ''
         if thermal_time:
-            suffix = "_thermal"
+            suffix += "_thermal"
+        if massic:
+            suffix += "_massic"
 
-        fig.savefig(os.path.join(outputs_dirpath, f"N_balance{suffix}.png"), dpi=720)
+        fig.savefig(os.path.join(outputs_dirpath, f"N_balance{suffix}.png"), bbox_inches="tight", dpi=720)
 
     def environmental_conditions(shoot_outputs, dataset, outputs_dirpath):
         scaling = 2
@@ -3279,9 +3381,11 @@ class WB:
 
         fig, ax = plt.subplots()
         for k, t in enumerate(scenario_times):
+            print("Running for ", t)
             current_dataset = filter_dataset(dataset, time=t)
             x, y = RootCyNAPSFigures.worker_Fig_5(current_dataset, flow, grouped_geometry="length", normalization_property="length")
             ax.plot([0] + list(x), [0] + list(y), c=list(twenty_palette.values())[k%len(twenty_palette)], label = commentaries[k])
+            print("done")
 
         ax.set_xlim([0, 1.05])
         ax.set_ylim([0, 1.05])
@@ -3297,6 +3401,199 @@ class WB:
         ax.yaxis.set_major_formatter(PercentFormatter(1.0))
 
         fig.savefig(os.path.join(outputs_dirpath, f"{flow}_vs_length_%_front.png"), dpi=720, bbox_inches="tight")
+
+
+    def shoot_root_growth_WB(shoot_outputs, dataset, outputs_dirpath, thermal_time=True, massic=False):
+        df_axes = shoot_outputs["axes"]
+        hours = df_axes["t"].to_numpy()[1:]
+        mstruct_shoot = df_axes["mstruct_shoot"].to_numpy()
+        shoot_struct_mass_produced = (mstruct_shoot[1:] - mstruct_shoot[:-1]) * 1e3
+        shoot_struct_mass_produced[0] = 0.
+
+        root_struct_mass_produced = dataset["struct_mass_produced"].sum(dim="vid").values[1:] * 1e3
+
+        if thermal_time:
+            df_meteo = shoot_outputs["meteo"]
+            df_meteo["t"] = df_meteo.index
+            shoot_thermal_time = df_meteo["air_temperature"].cumsum().reindex(df_meteo.index) / 24.
+            days_thermal_time = [shoot_thermal_time.at[t] for t in hours]
+            time_scale = days_thermal_time
+
+            tt_hourly = shoot_thermal_time
+            # days since start from 't' in hours
+            days_hourly = (df_meteo['t'].to_numpy()) / 24
+
+            # Make mapping strictly monotonic (handle flat TT segments)
+            tt_u, idx = np.unique(tt_hourly, return_index=True)
+            days_u = days_hourly[idx]
+
+            def tt_to_days(tt):
+                tt = np.asarray(tt)
+                return np.interp(tt, tt_u, days_u)
+
+            def days_to_tt(days):
+                days = np.asarray(days)
+                return np.interp(days, days_u, tt_u)
+            
+        else:
+            time_scale = hours
+
+        # Position leaf emergence
+        df_hz = shoot_outputs["hz"]
+        df_hz['axis'] =  df_hz['axis'].apply(lambda x: x.decode('utf-8') if isinstance(x, (bytes, bytearray)) else x)
+        emergences = {}
+        for axis in ["MS", "T1", "T2", "T3", "T4"]:
+            df_axis = df_hz[df_hz["axis"].astype(str).str.contains(axis)]
+            if axis == "MS":
+                emerging_metamers = [4, 5, 6, 7, 8, 9, 10, 11]
+            else:
+                emerging_metamers = [1, 2, 3, 4, 5, 6, 7, 8]
+            emergences[axis] = []
+            for metamer in emerging_metamers:
+                df_meta = df_axis[df_axis["metamer"] == metamer]
+                is_emerged = df_meta["leaf_is_emerged"]
+                if is_emerged.any():
+                    trans = is_emerged & ~is_emerged.shift(fill_value=is_emerged.iloc[0])
+                    if trans.any():                                   # first time it happens
+                        i = trans.idxmax()                            # index of the first transition
+                        t_first = df_meta.at[i, 't']                       # the corresponding t
+                    else:
+                        t_first = None
+                else:
+                    t_first = None
+
+                if t_first is not None:
+                    # print(axis, metamer, t_first)
+                    emergences[axis].append(t_first)
+
+        fig, ax = plt.subplots()
+        ax.plot(time_scale, shoot_struct_mass_produced, label="shoot")
+        ax.plot(time_scale, root_struct_mass_produced, label="root")
+        ax.set_xlabel('Thermal time (°C.day)' if thermal_time else 'Time (days)')
+        if not massic:
+            ax.set_ylabel('Struct mass production (g per hour)')
+        else:
+            ax.set_ylabel('Struct mass production (g/g per hour)')
+
+        if thermal_time:
+            secax = ax.secondary_xaxis('bottom', functions=(tt_to_days, days_to_tt))
+            # Move it below the primary axis
+            secax.spines['bottom'].set_position(('outward', 35))  # pixels; adjust if needed
+            secax.set_xlabel('Time (days)')
+
+        ax.set_xlim([min(time_scale), max(time_scale)])
+        ax.set_ylim([-0.1, 2.6])
+        _range = ax.get_ylim()[1] - ax.get_ylim()[0]
+        for i, (axis, serie) in enumerate(emergences.items()):
+            dd_serie = [time_scale[int(t)] for t in serie]
+            ax.scatter(dd_serie, [(i+1) * _range/10 for k in range(len(dd_serie))], c=list(twenty_palette.values())[i+1], label=f"{axis} leaves emergence")
+        ax.legend()
+
+        suffix = ''
+        if thermal_time:
+            suffix += "_thermal"
+        if massic:
+            suffix += "_massic"
+
+        fig.savefig(os.path.join(outputs_dirpath, f"shoot_root_growth_rates_WB.png"), dpi=720, bbox_inches="tight")
+
+
+    def shoot_root_growth_cnwheat(shoot_outputs, outputs_dirpath, thermal_time=True, massic=False):
+        df_axes = shoot_outputs["axes"]
+        hours = df_axes["t"].to_numpy()[1:]
+        mstruct_shoot = df_axes["mstruct_shoot"].to_numpy()
+        mstruct_root = df_axes["mstruct"].to_numpy() - mstruct_shoot
+        shoot_struct_mass_produced = (mstruct_shoot[1:] - mstruct_shoot[:-1])*1e3
+        shoot_struct_mass_produced[0] = 0.
+        root_struct_mass_produced = (mstruct_root[1:] - mstruct_root[:-1])*1e3
+
+        if thermal_time:
+            df_meteo = shoot_outputs["meteo"]
+            df_meteo["t"] = df_meteo.index
+            shoot_thermal_time = df_meteo["air_temperature"].cumsum().reindex(df_meteo.index) / 24.
+            days_thermal_time = [shoot_thermal_time.at[t] for t in hours]
+            time_scale = days_thermal_time
+
+            tt_hourly = shoot_thermal_time
+            # days since start from 't' in hours
+            days_hourly = (df_meteo['t'].to_numpy()) / 24
+
+            # Make mapping strictly monotonic (handle flat TT segments)
+            tt_u, idx = np.unique(tt_hourly, return_index=True)
+            days_u = days_hourly[idx]
+
+            def tt_to_days(tt):
+                tt = np.asarray(tt)
+                return np.interp(tt, tt_u, days_u)
+
+            def days_to_tt(days):
+                days = np.asarray(days)
+                return np.interp(days, days_u, tt_u)
+            
+        else:
+            time_scale = hours
+
+
+        # Position leaf emergence
+        df_hz = shoot_outputs["hz"]
+        df_hz['axis'] =  df_hz['axis'].apply(lambda x: x.decode('utf-8') if isinstance(x, (bytes, bytearray)) else x)
+
+        emergences = {}
+        for axis in ["MS", "T1", "T2", "T3", "T4"]:
+            df_axis = df_hz[df_hz["axis"] == axis]
+            if axis == "MS":
+                emerging_metamers = [4, 5, 6, 7, 8, 9, 10, 11]
+            else:
+                emerging_metamers = [1, 2, 3, 4, 5, 6, 7, 8]
+            emergences[axis] = []
+            for metamer in emerging_metamers:
+                df_meta = df_axis[df_axis["metamer"] == metamer]
+                is_emerged = df_meta["leaf_is_emerged"]
+                if is_emerged.any():
+                    trans = is_emerged & ~is_emerged.shift(fill_value=is_emerged.iloc[0])
+                    if trans.any():                                   # first time it happens
+                        i = trans.idxmax()                            # index of the first transition
+                        t_first = df_meta.at[i, 't']                       # the corresponding t
+                    else:
+                        t_first = None
+                else:
+                    t_first = None
+
+                if t_first is not None:
+                    # print(axis, metamer, t_first)
+                    emergences[axis].append(t_first)
+
+
+        fig, ax = plt.subplots()
+        ax.plot(time_scale, shoot_struct_mass_produced, label="shoot")
+        ax.plot(time_scale, root_struct_mass_produced, label="root")
+        ax.set_xlabel('Thermal time (°C.day)' if thermal_time else 'Time (days)')
+        if not massic:
+            ax.set_ylabel('Struct mass production (g per hour)')
+        else:
+            ax.set_ylabel('Struct mass production (g/g per hour)')
+
+        ax.set_xlim([min(time_scale), max(time_scale)])
+        ax.set_ylim([-0.1, 2.6])
+        _range = ax.get_ylim()[1] - ax.get_ylim()[0]
+        for i, (axis, serie) in enumerate(emergences.items()):
+            dd_serie = [time_scale[int(t)] for t in serie]
+            ax.scatter(dd_serie, [(i+1) * _range/10 for k in range(len(dd_serie))], c=list(twenty_palette.values())[i+1], label=f"{axis} leaves emergence")
+        ax.legend()
+
+        if thermal_time:
+            secax = ax.secondary_xaxis('bottom', functions=(tt_to_days, days_to_tt))
+            # Move it below the primary axis
+            secax.spines['bottom'].set_position(('outward', 35))  # pixels; adjust if needed
+            secax.set_xlabel('Time (days)')
+
+        suffix = ''
+        if thermal_time:
+            suffix += "_thermal"
+        if massic:
+            suffix += "_massic"
+
+        fig.savefig(os.path.join(outputs_dirpath, f"shoot_root_growth_rates_CNW.png"), dpi=720, bbox_inches="tight")
 
 
 class RootCyNAPSFigures:

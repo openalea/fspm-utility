@@ -849,16 +849,18 @@ class Logger:
                 self.write_to_disk(self.log_xarray)
                 del self.log_xarray
 
-            time_step_files = [os.path.join(self.MTG_properties_raw_dirpath, name) for name in
-                               os.listdir(self.MTG_properties_raw_dirpath)]
-            time_dataset = xr.open_mfdataset(time_step_files)
-            time_dataset = time_dataset.assign_coords(coords=self.scenario).expand_dims(
-                dim=dict(zip(list(self.scenario.keys()), [1 for k in self.scenario])))
-            time_dataset.to_netcdf(self.MTG_properties_raw_dirpath + '/merged.nc')
-            del time_dataset
-            for file in os.listdir(self.MTG_properties_raw_dirpath):
-                if '.nc' in file and file != "merged.nc":
-                    os.remove(self.MTG_properties_raw_dirpath + '/' + file)
+            merging=False
+            if merging:
+                time_step_files = [os.path.join(self.MTG_properties_raw_dirpath, name) for name in
+                                os.listdir(self.MTG_properties_raw_dirpath)]
+                time_dataset = xr.open_mfdataset(time_step_files)
+                time_dataset = time_dataset.assign_coords(coords=self.scenario).expand_dims(
+                    dim=dict(zip(list(self.scenario.keys()), [1 for k in self.scenario])))
+                time_dataset.to_netcdf(self.MTG_properties_raw_dirpath + '/merged.nc')
+                del time_dataset
+                for file in os.listdir(self.MTG_properties_raw_dirpath):
+                    if '.nc' in file and file != "merged.nc":
+                        os.remove(self.MTG_properties_raw_dirpath + '/' + file)
 
 
         final_interactive_picking = True
