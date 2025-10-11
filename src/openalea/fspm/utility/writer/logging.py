@@ -70,7 +70,7 @@ xarray_exclude_variables = ["adventitious_to_emerge", "xylem_vessel_radii", "phl
 class Logger:
 
     light_log = dict(recording_images=False, recording_off_screen=True, auto_camera_position=False,
-                    plotted_property="import_Nm", flow_property=True, show_soil=False, imposed_clim=[1e-13, 1e-9], static_mtg=True,
+                    plotted_property="import_Nm", flow_property=True, show_soil=False, imposed_clim=[1e-13, 1e-9], static_mtg=False,
                     recording_mtg=False,
                     recording_raw=False,
                     final_snapshots=True, root_colormap = 'jet', # 'brg', 'jet', 'cool', 'hot', 'winter'
@@ -84,7 +84,7 @@ class Logger:
                     on_shoot_logs=False)
     
     medium_log_focus_images = dict(recording_images=True, recording_off_screen=True, auto_camera_position=False,
-                    plotted_property=plotted_property_continuous, flow_property=False, show_soil=False, imposed_clim=usual_clims[plotted_property_continuous]["bounds"], log_scale=usual_clims[plotted_property_continuous]["show_as_log"],
+                     plotted_property=plotted_property_continuous, flow_property=False, show_soil=False, imposed_clim=usual_clims[plotted_property_continuous]["bounds"], log_scale=usual_clims[plotted_property_continuous]["show_as_log"],
                     recording_mtg=False,
                     recording_raw=False,
                     final_snapshots=True,
@@ -94,7 +94,7 @@ class Logger:
                     recording_barcodes=False, compare_to_ref_barcode=False,
                     on_sums=True,
                     on_performance=True,
-                    animate_raw_logs=False,
+                    animate_raw_logs=True,
                     on_shoot_logs=True)
     
     medium_log_focus_properties = dict(recording_images=False, recording_off_screen=True, auto_camera_position=False,
@@ -115,7 +115,7 @@ class Logger:
                      plotted_property=plotted_property_continuous, flow_property=False, show_soil=False, imposed_clim=usual_clims[plotted_property_continuous]["bounds"], log_scale=usual_clims[plotted_property_continuous]["show_as_log"],
                     recording_mtg=False,
                     recording_raw=True,
-                    final_snapshots=False,
+                    final_snapshots=True,
                     export_3D_scene=True,
                     recording_sums=True,
                     recording_performance=True,
@@ -392,6 +392,7 @@ class Logger:
         suffix = ''
         if not self.static_mtg and 'root' in self.data_structures:
             suffix = max(self.props["root"]["struct_mass"].keys())
+            self.index_mtg_axes(self.data_structures["root"])
             self.log_mtg_coordinates()
 
         if self.simulation_time_in_hours > 0:
@@ -572,6 +573,40 @@ class Logger:
     def recording_mtg_files(self):
         with open(os.path.join(self.MTG_files_dirpath, f'data_{self.simulation_time_in_hours}.pckl'), "wb") as f:
             pickle.dump(self.data_structures, f)
+
+    def index_mtg_axes(self, g):
+        axis_index = g.property("axis_index")           
+        root_order = g.property("root_order")           
+        type = g.property("type")           
+        processed_vids = []
+        seminal_id = 1
+        adventitious_id = 1
+        lateral_id = 1
+        for v in g.vertices():
+            if v not in processed_vids:
+                axis = g.Axis(v)
+                insertion_id = g.parent(min(axis))
+
+                if insertion_id:
+                    if type[insertion_id] == 2: # type_Support_for_seminal_root
+                        axis_index.update({v: f"seminal_{seminal_id}" for v in axis})
+                        seminal_id += 1
+                    elif type[insertion_id] == 4: # type_Support_for_adventitious_root
+                        axis_index.update({v: f"adventitious_{adventitious_id}" for v in axis})
+                        adventitious_id += 1
+                    else:
+                        if root_order[min(axis)] > 1:
+                            axis_index.update({v: f"lateral_{lateral_id}" for v in axis})
+                            lateral_id += 1
+                        else:
+                            print("Uncaptured exception on ", v)
+                else:
+                    # If parent is None we now this is the main seminal axis
+                    axis_index.update({v: f"seminal_{seminal_id}" for v in axis})
+                    seminal_id += 1
+            
+            processed_vids += axis
+
 
     def recording_images_with_pyvista(self, custom_name="", parallel_compression=True, recording_video=True, normalize_by=None):
 

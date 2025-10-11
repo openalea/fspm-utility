@@ -42,7 +42,7 @@ import warnings
 # Very analysis-specific
 from scipy.stats import pearsonr
 
-from openalea.fspm.utility.writer.visualize import plot_mtg, plot_xr, custom_colorbar, unit_from_str, expand_compact_units, latex_unit_compact, unit_conversion
+from openalea.fspm.utility.writer.visualize import plot_mtg, plot_xr, custom_colorbar, unit_from_str, expand_compact_units, latex_unit_compact, unit_conversion, compress_gltf
 import openalea.plantgl.all as pgl
 
 from openalea.fspm.utility.plot.workflow.cnwheat_comparisions import compare_shoot_outputs
@@ -181,7 +181,7 @@ def has_enough_memory(required_gb):
 ureg = UnitRegistry()
 
 
-def analyze_data(scenarios, outputs_dirpath, inputs_dirpath, target_folder_key=None, on_sums=False, on_raw_logs=False, animate_raw_logs=False, on_soil_logs=False, on_shoot_logs=False, on_performance=False,
+def analyze_data(scenarios, outputs_dirpath, inputs_dirpath, target_folder_key=None, on_sums=False, on_raw_logs=False, animate_raw_logs=False, on_soil_logs=False, on_shoot_logs=False, on_performance=False, on_images=False,
                  target_properties=None, subdir_custom_name=None, **kwargs):
     # TODO if not available, return not performed
     print("[INFO] Starting data analysis")
@@ -239,7 +239,6 @@ def analyze_data(scenarios, outputs_dirpath, inputs_dirpath, target_folder_key=N
     if animate_raw_logs:
         print("     [INFO] Starting plot production from raw logs...")
         
-        
         first_loop = True
 
         if first_loop:
@@ -251,6 +250,18 @@ def analyze_data(scenarios, outputs_dirpath, inputs_dirpath, target_folder_key=N
                                                   outputs_dirpath=outputs_dirpath, 
                                                   meteo_data_dirpath=os.path.join("inputs", "meteo_Ljutovac2002.csv"),
                                                   soil_data_dirpath=os.path.join("inputs", "meteo_Ljutovac2002_soil.csv"))
+
+            # final_dataset = filter_dataset(dataset, time=dataset.t.max())
+            # # print(final_dataset["axis_index"].values)
+            # print(np.unique(final_dataset["axis_index"].values))
+            # known = []
+            # for k in final_dataset["axis_index"].values:
+            #     if k not in known:
+            #         known.append(k)
+            # print(known)
+            # axis_dataset = final_dataset.where(final_dataset["axis_index"]=='seminal_2', drop=True)
+            # print(axis_dataset)
+                
             
             #dataset["NAE"] = Indicators.Nitrogen_Aquisition_Efficiency(d=dataset)
             #dataset["Cumulative_NAE"] = Indicators.Cumulative_Nitrogen_Aquisition_Efficiency(d=dataset)
@@ -384,15 +395,16 @@ def analyze_data(scenarios, outputs_dirpath, inputs_dirpath, target_folder_key=N
                 # Plant scale C balance related
                 running = True
                 if running:
-                    if True:
+                    if False:
                         # WB.plant_C_balance(shoot_outputs=shoot_outputs, dataset=scenario_dataset, outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"))
                         WB.plant_C_balance_summary(shoot_outputs=shoot_outputs, dataset=scenario_dataset, outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"))
                         # WB.plant_C_balance(shoot_outputs=shoot_outputs, dataset=scenario_dataset, outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"), massic=True)
                     
-                    if False:
-                        WB.root_N_balance(shoot_outputs=shoot_outputs, dataset=scenario_dataset, outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"))
-                        WB.root_N_balance(shoot_outputs=shoot_outputs, dataset=scenario_dataset, outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"), massic=True)
-                    
+                    if True:
+                        # WB.root_N_balance(shoot_outputs=shoot_outputs, dataset=scenario_dataset, outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"))
+                        WB.plant_N_balance_summary(shoot_outputs=shoot_outputs, dataset=scenario_dataset, outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"))
+                        # WB.root_N_balance(shoot_outputs=shoot_outputs, dataset=scenario_dataset, outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"), massic=True)
+                        WB.root_synplasm_AA_balance(dataset=scenario_dataset, outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"))
                     if False:
                         shoot_outputs_with_MS = WB.open_shoot_outputs(scenario=scenarios[0],
                                                     target_folder_key=target_folder_key,
@@ -848,7 +860,11 @@ def analyze_data(scenarios, outputs_dirpath, inputs_dirpath, target_folder_key=N
             plot_csv(csv_dirpath=os.path.join(outputs_dirpath, scenario, target_folder_key), csv_name="simulation_performance.csv", stacked=True)
             print(" [INFO] Finished plotting performances")
 
-
+    if on_images:
+        outputdir = os.path.join(outputs_dirpath, scenarios[0], target_folder_key, 'root_images')
+        for file in os.listdir(outputdir):
+            if file.endswith(".gltf"):
+                compress_gltf(os.path.join(outputdir, file))
 
 def test_output_range(outputs_dirpath, scenarios, test_file_dirpath):
     
@@ -3216,7 +3232,7 @@ class WB:
         dataset['day'] = (np.floor(dataset['t'] / 24) + 1).astype('int64')
         dataset = dataset.set_coords('day')
         net_hexose_exudation_C = Indicators.compute(d=dataset, formula="hexose_exudation - hexose_uptake_from_soil + phloem_hexose_exudation - hexose_uptake_from_soil").sum(dim="vid") * 1e6 * 3600 * 6
-        net_AA_exudation_C = Indicators.compute(d=dataset, formula="diffusion_AA_soil + apoplastic_AA_soil_xylem - import_AA").sum(dim="vid") * 1e6 * 3600 * 6 * average_amino_acids_CN
+        net_AA_exudation_C = Indicators.compute(d=dataset, formula="diffusion_AA_soil + apoplastic_AA_soil_xylem - import_AA").sum(dim="vid") * 1e6 * 3600 * average_amino_acids_CN
         cells_release_C = dataset["cells_release"].sum(dim="vid") * 1e6 * 3600 * 6
         mucilage_secretion_C = dataset["mucilage_secretion"].sum(dim="vid") * 1e6 * 3600 * 6
         growth_respiration_C = dataset["resp_growth"].sum(dim="vid") * 1e6 # already per hour
@@ -3320,6 +3336,9 @@ class WB:
         df_axe["shoot_struct_mass_produced"] = np.array([0] + list(shoot_struct_mass_produced))
         daily_shoot_struct_mass_produced_C = df_axe.groupby(['day'])['shoot_struct_mass_produced'].agg('sum').to_numpy() * conversion * 1e6 * 0.44 / 12.01
         
+        df_axe["labile_C_shoot_hourly"] = 1e6 * (df_axe["sum_C_g_shoot"] - df_axe["mstruct_shoot"] * 0.44) / 12.01
+        daily_labile_C_shoot = df_axe.groupby(['day'])['labile_C_shoot_hourly'].agg('mean').to_numpy() * conversion
+
         if thermal_time:
             df_meteo = shoot_outputs["meteo"]
             df_meteo["t"] = df_meteo.index
@@ -3357,7 +3376,7 @@ class WB:
 
         dataset['day'] = (np.floor(dataset['t'] / 24) + 1).astype('int64')
         dataset = dataset.set_coords('day')
-        net_hexose_exudation_C = Indicators.compute(d=dataset, formula="hexose_exudation - hexose_uptake_from_soil + phloem_hexose_exudation - hexose_uptake_from_soil").sum(dim="vid") * 1e6 * 3600 * 6
+        net_hexose_exudation_C = Indicators.compute(d=dataset, formula="hexose_exudation - hexose_uptake_from_soil + phloem_hexose_exudation - phloem_hexose_uptake_from_soil").sum(dim="vid") * 1e6 * 3600 * 6
         net_AA_exudation_C = Indicators.compute(d=dataset, formula="diffusion_AA_soil + apoplastic_AA_soil_xylem - import_AA").sum(dim="vid") * 1e6 * 3600 * average_amino_acids_CN
         cells_release_C = dataset["cells_release"].sum(dim="vid") * 1e6 * 3600 * 6
         mucilage_secretion_C = dataset["mucilage_secretion"].sum(dim="vid") * 1e6 * 3600 * 6
@@ -3365,7 +3384,7 @@ class WB:
         maintenance_respiration_C = dataset["maintenance_respiration"].sum(dim="vid") * 1e6 * 3600
         N_metabolic_respiration_C = dataset["N_metabolic_respiration"].sum(dim="vid") * 1e6 * 3600
         root_struct_mass_produced_C = dataset["struct_mass_produced"].sum(dim="vid") * 1e6 * 0.44 / 12.01
-        Labile_C = Indicators.compute(d=dataset, formula="struct_mass*(6*(C_hexose_root + C_hexose_reserve) + 12*C_sucrose_root + 5*(AA + phloem_AA + xylem_AA)/1.4)").sum(dim="vid") * 1e6
+        Labile_C = Indicators.compute(d=dataset, formula="living_struct_mass*(6*(C_hexose_root + C_hexose_reserve) + 12*C_sucrose_root + 0*5*(AA/10 + phloem_AA + xylem_AA)/1.4)").sum(dim="vid") * 1e6
         Labile_C_deficit = Indicators.compute(d=dataset, formula=" - 6*3600*deficit_hexose_root - 5*3600*deficit_AA/1.4").sum(dim="vid") * 1e6
 
 
@@ -3378,12 +3397,14 @@ class WB:
         maintenance_respiration_C = maintenance_respiration_C.groupby('day').sum().values * conversion
         N_metabolic_respiration_C = N_metabolic_respiration_C.groupby('day').sum().values * conversion
         root_struct_mass_produced_C = root_struct_mass_produced_C.groupby('day').sum().values * conversion
-        daily_labile_C = (Labile_C - Labile_C_deficit).groupby('day').mean().values * conversion
+        daily_labile_C = (Labile_C).groupby('day').mean().values * conversion
+        daily_deficit_C = Labile_C_deficit.groupby('day').sum().values * conversion
+        daily_net_labile_C = daily_labile_C - daily_deficit_C
 
         fig, ax = plt.subplots(figsize=(6.4, 4.8))
         ax.stackplot(time_scale, net_hexose_exudation_C + cells_release_C + mucilage_secretion_C, net_AA_exudation_C, growth_respiration_C + maintenance_respiration_C + N_metabolic_respiration_C, Shoot_respiration, labels=[
             'Hexose, mucilage, cells rhizodeposition',
-            'Net amino acids exudation'
+            'Net amino acids exudation',
             'root respiration',
             'shoot total respiration'])
         ax.plot(time_scale, Total_Photosynthesis, c='red', label='Raw photosynthesis')
@@ -3421,23 +3442,37 @@ class WB:
 
             fig2, ax2 = plt.subplots(figsize=(6.4, 4.8))
 
-            ax2.stackplot(time_scale, tot_C_to_struct_root, tot_C_to_struct_shoot, total_rhizodeposition, tot_root_respiration_C, tot_Shoot_respiration,  labels=[
+            ax2.stackplot(time_scale, 
+                          tot_root_respiration_C, 
+                          total_rhizodeposition, 
+                          daily_net_labile_C,
+                          tot_C_to_struct_root, 
+                          tot_C_to_struct_shoot, 
+                          daily_labile_C_shoot,
+                          tot_Shoot_respiration,  
+                          labels=[
+                "Root respiration",
+                "C rhizodeposition",
+                "C to root labile pools",
                 "C to root structural mass",
                 "C to shoot structural mass",
-                "C rhizodeposition",
-                "Root respiration",
+                "C to shoot labile pools",
                 "Shoot respiration",
             ])
-            ax2.plot(time_scale, total_photo, label="C from photosynthesis")
-            ax2.plot(time_scale, daily_labile_C, label="Labile C roots")
+            ax2.plot(time_scale, total_photo, c='black', label="C from photosynthesis")
 
-            ax2.legend()
+            # Revert order
+            handles, labels = ax2.get_legend_handles_labels()
+            ax2.legend(handles[::-1], labels[::-1])
 
             if thermal_time:
                 secax2 = ax2.secondary_xaxis('bottom', functions=(tt_to_days, days_to_tt))
                 # Move it below the primary axis
                 secax2.spines['bottom'].set_position(('outward', 35))  # pixels; adjust if needed
                 secax2.set_xlabel('Time (days)')
+
+            ax.set_xlabel('Thermal time (°C.day)' if thermal_time else 'Time (days)')
+            ax.set_ylabel('Process cumulative flow (mmol C)')
 
             suffix +='_cummulated'
 
@@ -3529,6 +3564,179 @@ class WB:
             suffix += "_massic"
 
         fig.savefig(os.path.join(outputs_dirpath, f"N_balance{suffix}.png"), bbox_inches="tight", dpi=720)
+
+
+    def plant_N_balance_summary(shoot_outputs, dataset, outputs_dirpath, thermal_time = True, massic=False, balance=True):
+        conversion = 1e-3 # to mmol
+
+        df_org = shoot_outputs["organs"]
+        df_axe = shoot_outputs["axes"]
+        df_axe['day'] = df_axe['t'] // 24 + 1
+
+        if massic:
+            mstruct = df_axe.groupby(['day'])['mstruct'].agg('mean').to_numpy()
+            conversion /= mstruct
+    
+        df_roots = df_org[df_org['organ'] == 'roots'].copy()
+        df_roots['day'] = df_roots['t'] // 24 + 1
+        Export_Nitrates_N = df_roots.groupby(['day'])['Export_Nitrates'].agg('sum').to_numpy() * conversion
+        Export_Amino_Acids_N = df_roots.groupby(['day'])['Export_Amino_Acids'].agg('sum').to_numpy() * conversion
+        df_roots['Unloading_Amino_Acids_tot'] = df_roots['Unloading_Amino_Acids'] * df_roots['mstruct']
+        Unloading_Amino_Acids_N = df_roots.groupby(['day'])['Unloading_Amino_Acids_tot'].agg('sum').to_numpy() * conversion
+        days = df_roots['day'].unique()
+
+        mstruct_shoot = df_axe["mstruct_shoot"].to_numpy()
+        shoot_struct_mass_produced = (mstruct_shoot[1:] - mstruct_shoot[:-1]) 
+        shoot_struct_mass_produced[0] = 0.
+        df_axe["shoot_struct_mass_produced"] = np.array([0] + list(shoot_struct_mass_produced))
+        daily_shoot_struct_mass_produced_N = df_axe.groupby(['day'])['shoot_struct_mass_produced'].agg('sum').to_numpy() * conversion * 1e6 * 0.005 / 14
+        
+        df_axe["labile_N_shoot_hourly"] = 1e6 * (df_axe["sum_N_g_shoot"] - df_axe["mstruct_shoot"] * 0.005) / 14
+        daily_labile_N_shoot = df_axe.groupby(['day'])['labile_N_shoot_hourly'].agg('mean').to_numpy() * conversion
+
+        if thermal_time:
+            df_meteo = shoot_outputs["meteo"]
+            df_meteo["t"] = df_meteo.index
+            df_meteo["air_temperature_tbase"] = df_meteo["air_temperature"].clip(lower=0)
+            shoot_thermal_time = df_meteo["air_temperature_tbase"].cumsum().reindex(df_meteo.index) / 24
+            days_thermal_time = [shoot_thermal_time.at[d * 24] for d in days]
+            time_scale = days_thermal_time
+
+            tt_hourly = shoot_thermal_time
+            # days since start from 't' in hours
+            days_hourly = (df_meteo['t'].to_numpy() / 24.0)
+
+            # Make mapping strictly monotonic (handle flat TT segments)
+            tt_u, idx = np.unique(tt_hourly, return_index=True)
+            days_u = days_hourly[idx]
+
+            def tt_to_days(tt):
+                tt = np.asarray(tt)
+                return np.interp(tt, tt_u, days_u)
+
+            def days_to_tt(days):
+                days = np.asarray(days)
+                return np.interp(days, days_u, tt_u)
+            
+        else:
+            time_scale = days
+
+        dataset['day'] = (np.floor(dataset['t'] / 24) + 1).astype('int64')
+        dataset = dataset.set_coords('day')
+        net_mineral_N_active_uptake = Indicators.compute(d=dataset, formula="import_Nm + mycorrhizal_mediated_import_Nm - diffusion_Nm_soil").sum(dim="vid") * 1e6 * 3600
+        water_driven_N_uptake = - dataset["apoplastic_Nm_soil_xylem"].sum(dim="vid") * 1e6 * 3600
+        net_AA_exudation_N = Indicators.compute(d=dataset, formula="diffusion_AA_soil + apoplastic_AA_soil_xylem - import_AA").sum(dim="vid") * 1e6 * 3600 * 1.4
+        root_struct_mass_produced_N = dataset["struct_mass_produced"].sum(dim="vid") * 1e6 * 0.0173 / 14
+        Labile_Nm = Indicators.compute(d=dataset, formula="living_struct_mass*(Nm + xylem_Nm)").sum(dim="vid") * 1e6
+        Labile_Nm_deficit = Indicators.compute(d=dataset, formula=" - deficit_Nm").sum(dim="vid") * 1e6
+        Labile_N_org = Indicators.compute(d=dataset, formula="living_struct_mass*1.4*(AA*0 + xylem_AA + phloem_AA)").sum(dim="vid") * 1e6
+        Labile_N_org_deficit = Indicators.compute(d=dataset, formula=" - deficit_AA").sum(dim="vid") * 1e6
+
+        # Daily sum
+        net_mineral_N_active_uptake = net_mineral_N_active_uptake.groupby('day').sum().values * conversion
+        water_driven_N_uptake = water_driven_N_uptake.groupby('day').sum().values * conversion
+        net_AA_exudation_N = net_AA_exudation_N.groupby('day').sum().values * conversion
+        root_struct_mass_produced_N = root_struct_mass_produced_N.groupby('day').sum().values * conversion
+        daily_Labile_Nm = (Labile_Nm).groupby('day').mean().values * conversion
+        daily_Labile_Nm_deficit = Labile_Nm_deficit.groupby('day').sum().values * conversion
+        daily_net_labile_Nm = daily_Labile_Nm - daily_Labile_Nm_deficit
+        daily_Labile_N_org = (Labile_N_org).groupby('day').mean().values * conversion
+        daily_Labile_N_org_deficit = Labile_N_org_deficit.groupby('day').sum().values * conversion
+        daily_net_labile_N_org = daily_Labile_N_org - daily_Labile_N_org_deficit
+
+        fig, ax = plt.subplots()
+
+        ax.plot(time_scale, net_mineral_N_active_uptake + water_driven_N_uptake, label='Net mineral N uptake')
+        ax.plot(time_scale, Export_Nitrates_N + Export_Amino_Acids_N, label='total N export to shoot')
+        ax.plot(time_scale, Unloading_Amino_Acids_N, label='Amino acids N allocation from shoot')
+        ax.plot(time_scale, net_AA_exudation_N, label='Net organic N exudation')
+        ax.legend()
+        ax.set_xlabel('Thermal time (°C.day)' if thermal_time else 'Time (days)')
+        if not massic:
+            ax.set_ylabel('Process flow (mmol N per day)')
+        else:
+            ax.set_ylabel('Process flow (mmol N/g/day)')
+
+        if thermal_time:
+            secax = ax.secondary_xaxis('bottom', functions=(tt_to_days, days_to_tt))
+            # Move it below the primary axis
+            secax.spines['bottom'].set_position(('outward', 35))  # pixels; adjust if needed
+            secax.set_xlabel('Time (days)')
+
+        suffix = ''
+        if thermal_time:
+            suffix += "_thermal"
+        if massic:
+            suffix += "_massic"
+
+        fig.savefig(os.path.join(outputs_dirpath, f"N_balance{suffix}.png"), bbox_inches="tight", dpi=720)
+
+        if not massic and balance:
+            total_uptake = (net_mineral_N_active_uptake + water_driven_N_uptake).cumsum()
+            total_rhizodeposition = (net_AA_exudation_N).cumsum()
+            tot_N_to_struct_root = root_struct_mass_produced_N.cumsum()
+            tot_N_to_struct_shoot = daily_shoot_struct_mass_produced_N.cumsum()
+
+            fig2, ax2 = plt.subplots(figsize=(6.4, 4.8))
+
+            ax2.stackplot(time_scale, 
+                          total_rhizodeposition, 
+                          daily_net_labile_Nm,
+                          daily_net_labile_N_org,
+                          tot_N_to_struct_root, 
+                          tot_N_to_struct_shoot,
+                          daily_labile_N_shoot,
+                          labels=[
+                "N rhizodeposition",
+                "Labile mineral N roots",
+                "Labile organic N roots",
+                "N to root structural mass",
+                "N to shoot structural mass",
+                "Labile N shoot",
+            ])
+            ax2.plot(time_scale, total_uptake, c='black', label="Net mineral N uptake")
+            # ax2.plot(time_scale, daily_net_labile_C, label="Labile C roots")
+            # ax2.plot(time_scale, daily_labile_C_shoot, label="Labile C shoot")
+
+            handles, labels = ax2.get_legend_handles_labels()
+            ax2.legend(handles[::-1], labels[::-1])
+            # ax2.legend()
+
+            if thermal_time:
+                secax2 = ax2.secondary_xaxis('bottom', functions=(tt_to_days, days_to_tt))
+                # Move it below the primary axis
+                secax2.spines['bottom'].set_position(('outward', 35))  # pixels; adjust if needed
+                secax2.set_xlabel('Time (days)')
+
+            ax.set_xlabel('Thermal time (°C.day)' if thermal_time else 'Time (days)')
+            ax.set_ylabel('Process cumulative flow (mmol C)')
+
+            suffix +='_cummulated'
+
+            fig2.savefig(os.path.join(outputs_dirpath, f"N_balance{suffix}.png"), bbox_inches="tight", dpi=720)
+
+    def root_synplasm_AA_balance(dataset, outputs_dirpath):
+        variables = ["diffusion_AA_phloem",
+                "unloading_AA_phloem",
+                 "import_AA",
+                 "diffusion_AA_soil",
+                 "export_AA",
+                 "AA_synthesis",
+                 "amino_acids_consumption_by_growth",
+                 "storage_synthesis",
+                 "storage_catabolism",
+                 "AA_catabolism",
+                 "deficit_AA"]
+
+        fig, ax = plt.subplots()
+
+        t = dataset.t.values
+        for k, v in enumerate(variables):
+            ax.plot(t, dataset[v].sum(dim="vid"), c=list(twenty_palette.values())[k], label=v)
+        ax.legend()
+
+        fig.savefig(os.path.join(outputs_dirpath, f"AA_symp_balance.png"), bbox_inches="tight", dpi=720)
+
 
     def environmental_conditions(shoot_outputs, dataset, outputs_dirpath):
         scaling = 2
@@ -5417,6 +5625,11 @@ def sci_notation(x, pos):
             return r"${0:.2g}\cdot 10^{{{1}}}$".format(coeff, exponent)
 
 class XarrayPlotting:
+
+    def index_axes(dataset):
+        print("Reindexing root segments...")
+
+
 
     def scatter_xarray(dataset, outputs_dirpath, x: str, y: str, to_xunit: str=None, to_yunit: str=None, c: str=None, discrete: bool=False, s: int=None, name_suffix: str="", 
                        xlog: bool=False, ylog: bool=False, figsize: tuple=(6.4, 4.8), xlim=None, ylim=None, show_yequalx=False, show_correlation=False):
