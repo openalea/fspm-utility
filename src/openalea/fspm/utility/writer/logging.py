@@ -115,7 +115,7 @@ class Logger:
                      plotted_property=plotted_property_continuous, flow_property=False, show_soil=False, imposed_clim=usual_clims[plotted_property_continuous]["bounds"], log_scale=usual_clims[plotted_property_continuous]["show_as_log"],
                     recording_mtg=False,
                     recording_raw=True,
-                    final_snapshots=True,
+                    final_snapshots=False,
                     export_3D_scene=True,
                     recording_sums=True,
                     recording_performance=True,
