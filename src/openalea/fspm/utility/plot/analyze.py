@@ -414,7 +414,7 @@ def analyze_data(scenarios, outputs_dirpath, inputs_dirpath, target_folder_key=N
                         WB.shoot_root_CN_alloc(shoot_outputs=shoot_outputs_cnwheat, outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"), custom_suffix="CNW")
 
                 # 2D heatmap for 1 axis
-                running = True
+                running = False
                 if running:
                     chosen_root = 'seminal_2'
                     axis_dataset = scenario_dataset.where(scenario_dataset["axis_index"]=='seminal_2')
@@ -429,7 +429,7 @@ def analyze_data(scenarios, outputs_dirpath, inputs_dirpath, target_folder_key=N
 
                         
                 # Plots along root axes
-                running = False
+                running = True
                 if running:
                     scenario_times = [240, 720, 1392, 1488, 2400]
                     # scenario_times = [50, 100, 150, 300, 400, 500]
@@ -3129,8 +3129,12 @@ class WB:
         #                                         discrete=discrete, s=s, xlog=xlog, name_suffix=name_suffix, to_xunit="cm", xlim=xlim, to_yunit="nmol/(cm.h)", ylim=ylim, figsize=figsize, show_correlation=correlations)
         # fig, ax = XarrayPlotting.scatter_xarray(scenario_datasets, outputs_dirpath=outputs_path, x="distance_from_tip", y="Lengthy_water_Ni_uptake", c=c, 
         #                                         discrete=discrete, s=s, xlog=xlog, name_suffix=name_suffix, to_xunit="cm", xlim=xlim, to_yunit="nmol/(cm.h)", ylim=ylim, figsize=figsize, show_correlation=correlations)
-        # fig, ax = XarrayPlotting.scatter_xarray(scenario_datasets, outputs_dirpath=outputs_path, x="distance_from_tip", y="C_hexose_root", c=c, 
-        #                                         discrete=discrete, s=s, xlog=xlog, name_suffix=name_suffix, to_xunit="cm", xlim=xlim, to_yunit="mmol/g", ylim=ylim, figsize=figsize, show_correlation=correlations)
+        fig, ax = XarrayPlotting.scatter_xarray(scenario_datasets, outputs_dirpath=outputs_path, x="distance_from_tip", y="C_hexose_root", c=c, 
+                                                discrete=discrete, s=s, xlog=xlog, name_suffix=name_suffix, to_xunit="cm", xlim=xlim, to_yunit="mmol/g", ylim=ylim, figsize=figsize, show_correlation=correlations)
+        fig, ax = XarrayPlotting.scatter_xarray(scenario_datasets, outputs_dirpath=outputs_path, x="distance_from_tip", y="C_sucrose_root", c=c, 
+                                                discrete=discrete, s=s, xlog=xlog, name_suffix=name_suffix, to_xunit="cm", xlim=xlim, to_yunit="mmol/g", ylim=ylim, figsize=figsize, show_correlation=correlations)
+        fig, ax = XarrayPlotting.scatter_xarray(scenario_datasets, outputs_dirpath=outputs_path, x="distance_from_tip", y="xylem_Nm", c=c, 
+                                                discrete=discrete, s=s, xlog=xlog, name_suffix=name_suffix, to_xunit="cm", xlim=xlim, to_yunit="mmol/g", ylim=ylim, figsize=figsize, show_correlation=correlations)
         # fig, ax = XarrayPlotting.scatter_xarray(scenario_datasets, outputs_dirpath=outputs_path, x="distance_from_tip", y="Length-wise root exchange surface", c=c, 
         #                                         discrete=discrete, s=s, xlog=xlog, name_suffix=name_suffix, to_xunit="cm", xlim=xlim, to_yunit="m", ylim=ylim, figsize=figsize, show_correlation=correlations)
         fig, ax = XarrayPlotting.scatter_xarray(scenario_datasets, outputs_dirpath=outputs_path, x="distance_from_tip", y="diffusion_AA_phloem", c=c, 
