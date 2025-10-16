@@ -38,7 +38,7 @@ usual_clims = dict(
     # export_Nm=                      dict(bounds=[1e-12, 5e-10],  show_as_log=True,   normalize_by="length"),
     radial_import_water_xylem=            dict(bounds=[3e-10, 6e-10],           show_as_log=False,  normalize_by="length"), #[3e-11, 5e-10]log,
     radial_import_water_phloem=            dict(bounds=[-1e-9, 1e-9],           show_as_log=False,  normalize_by="length"), #[1e-22, 1e-12],
-    C_hexose_root=                  dict(bounds=[1e-5, 7e-4],   show_as_log=True,   normalize_by=None), #prev LU
+    C_hexose_root=                  dict(bounds=[1e-5, 1e-2],   show_as_log=True,   normalize_by=None), #prev LU
     root_exchange_surface=          dict(bounds=[4e-3, 3.7e-2],           show_as_log=True,   normalize_by="length"), # prev [1e-3, 1e-2]
     # phloem_exchange_surface=          dict(bounds=[1e-6, 1e-3],           show_as_log=True,   normalize_by="length"), # prev [1e-3, 1e-2]
     # tissue_formation_time=          dict(bounds=[0, 50],        show_as_log=False,  normalize_by=None),
@@ -58,7 +58,7 @@ usual_clims = dict(
     hexose_consumption_by_growth=          dict(bounds=[1e-14, 1e-10],           show_as_log=True,   normalize_by=None),
     amino_acids_consumption_by_growth=          dict(bounds=[1e-14, 1e-10],           show_as_log=True,   normalize_by=None),
 )
-plotted_property_continuous = "hexose_exudation"
+plotted_property_continuous = "C_hexose_root"
 
 xarray_focus_variables = []
 xarray_exclude_variables = ["adventitious_to_emerge", "xylem_vessel_radii", "phloem_vessel_radii"] # Cannot be included as they are lists

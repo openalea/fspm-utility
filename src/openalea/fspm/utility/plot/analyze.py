@@ -431,12 +431,14 @@ def analyze_data(scenarios, outputs_dirpath, inputs_dirpath, target_folder_key=N
                 # Plots along root axes
                 running = True
                 if running:
-                    scenario_times = [240, 720, 1392, 1488, 2400]
+                    scenario_times = [26, 240, 720, 1392, 1488, 2400]
                     # scenario_times = [50, 100, 150, 300, 400, 500]
                     all = True
                     if all:
                         scenario_dataset["Lengthy_active_Ni_uptake"] = Indicators.compute(d=scenario_dataset, formula = 'import_Nm / length')
                         scenario_dataset["Lengthy_water_Ni_uptake"] = Indicators.compute(d=scenario_dataset, formula = '- apoplastic_Nm_soil_xylem / length')
+                        scenario_dataset["massic_hexose_consumption_by_growth"] = Indicators.compute(d=scenario_dataset, formula = 'hexose_consumption_by_growth / living_struct_mass')
+                        scenario_dataset["massic_amino_acids_consumption_by_growth"] = Indicators.compute(d=scenario_dataset, formula = 'amino_acids_consumption_by_growth / living_struct_mass')
             
                         for scenario_time in scenario_times:
                             current_dataset = filter_dataset(scenario_dataset, time=scenario_time)
@@ -3143,8 +3145,16 @@ class WB:
                                                 discrete=discrete, s=s, xlog=xlog, name_suffix=name_suffix, to_xunit="cm", xlim=xlim, to_yunit="nmol/h", ylim=ylim, figsize=figsize, show_correlation=correlations)
         fig, ax = XarrayPlotting.scatter_xarray(scenario_datasets, outputs_dirpath=outputs_path, x="distance_from_tip", y="hexose_consumption_by_growth", c=c, 
                                                 discrete=discrete, s=s, xlog=xlog, name_suffix=name_suffix, to_xunit="cm", xlim=xlim, to_yunit="nmol/h", ylim=ylim, figsize=figsize, show_correlation=correlations)
+        fig, ax = XarrayPlotting.scatter_xarray(scenario_datasets, outputs_dirpath=outputs_path, x="living_struct_mass", y="hexose_consumption_by_growth", c=c, 
+                                                discrete=discrete, s=s, xlog=xlog, name_suffix=name_suffix, to_xunit="µg", xlim=xlim, to_yunit="nmol/h", ylim=ylim, figsize=figsize, show_correlation=correlations)
+        fig, ax = XarrayPlotting.scatter_xarray(scenario_datasets, outputs_dirpath=outputs_path, x="living_struct_mass", y="massic_hexose_consumption_by_growth", c=c, 
+                                                discrete=discrete, s=s, xlog=xlog, name_suffix=name_suffix, to_xunit="µg", xlim=xlim, to_yunit="nmol/µg/h", ylim=ylim, figsize=figsize, show_correlation=correlations)
         fig, ax = XarrayPlotting.scatter_xarray(scenario_datasets, outputs_dirpath=outputs_path, x="distance_from_tip", y="amino_acids_consumption_by_growth", c=c, 
                                                 discrete=discrete, s=s, xlog=xlog, name_suffix=name_suffix, to_xunit="cm", xlim=xlim, to_yunit="nmol/h", ylim=ylim, figsize=figsize, show_correlation=correlations)
+        fig, ax = XarrayPlotting.scatter_xarray(scenario_datasets, outputs_dirpath=outputs_path, x="living_struct_mass", y="amino_acids_consumption_by_growth", c=c, 
+                                                discrete=discrete, s=s, xlog=xlog, name_suffix=name_suffix, to_xunit="µg", xlim=xlim, to_yunit="nmol/h", ylim=ylim, figsize=figsize, show_correlation=correlations)
+        fig, ax = XarrayPlotting.scatter_xarray(scenario_datasets, outputs_dirpath=outputs_path, x="living_struct_mass", y="massic_amino_acids_consumption_by_growth", c=c, 
+                                                discrete=discrete, s=s, xlog=xlog, name_suffix=name_suffix, to_xunit="µg", xlim=xlim, to_yunit="nmol/µg/h", ylim=ylim, figsize=figsize, show_correlation=correlations)
         
         # Correlation plots
         fig, ax = XarrayPlotting.scatter_xarray(scenario_datasets, outputs_dirpath=outputs_path, x="C_hexose_root", y="Length-wise mineral N uptake", c=c, 
