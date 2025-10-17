@@ -36,7 +36,7 @@ usual_clims = dict(
     # diffusion_Nm_soil=              dict(bounds=None,  show_as_log=True,   normalize_by="length"),
     # diffusion_Nm_xylem=             dict(bounds=None,  show_as_log=False,   normalize_by="length"),
     # export_Nm=                      dict(bounds=[1e-12, 5e-10],  show_as_log=True,   normalize_by="length"),
-    radial_import_water_xylem=            dict(bounds=[3e-10, 6e-10],           show_as_log=False,  normalize_by="length"), #[3e-11, 5e-10]log,
+    radial_import_water_xylem=            dict(bounds=[-6e-10, 6e-10],           show_as_log=False,  normalize_by="length"), #[3e-11, 5e-10]log,
     radial_import_water_phloem=            dict(bounds=[-1e-9, 1e-9],           show_as_log=False,  normalize_by="length"), #[1e-22, 1e-12],
     C_hexose_root=                  dict(bounds=[1e-5, 1e-2],   show_as_log=True,   normalize_by=None), #prev LU
     root_exchange_surface=          dict(bounds=[4e-3, 3.7e-2],           show_as_log=True,   normalize_by="length"), # prev [1e-3, 1e-2]
@@ -111,7 +111,7 @@ class Logger:
                     animate_raw_logs=True,
                     on_shoot_logs=False)
     
-    heavy_log = dict(recording_images=False, recording_off_screen=True, auto_camera_position=False,
+    heavy_log = dict(recording_images=True, recording_off_screen=True, auto_camera_position=False,
                      plotted_property=plotted_property_continuous, flow_property=False, show_soil=False, imposed_clim=usual_clims[plotted_property_continuous]["bounds"], log_scale=usual_clims[plotted_property_continuous]["show_as_log"],
                     recording_mtg=False,
                     recording_raw=True,
