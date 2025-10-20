@@ -36,7 +36,7 @@ usual_clims = dict(
     # diffusion_Nm_soil=              dict(bounds=None,  show_as_log=True,   normalize_by="length"),
     # diffusion_Nm_xylem=             dict(bounds=None,  show_as_log=False,   normalize_by="length"),
     # export_Nm=                      dict(bounds=[1e-12, 5e-10],  show_as_log=True,   normalize_by="length"),
-    radial_import_water_xylem=            dict(bounds=[-6e-10, 6e-10],           show_as_log=False,  normalize_by="length"), #[3e-11, 5e-10]log,
+    radial_import_water_xylem=            dict(bounds=[-6e-14, 6e-14],           show_as_log=False,  normalize_by="length"), #[3e-11, 5e-10]log,
     radial_import_water_phloem=            dict(bounds=[-1e-9, 1e-9],           show_as_log=False,  normalize_by="length"), #[1e-22, 1e-12],
     C_hexose_root=                  dict(bounds=[1e-5, 1e-2],   show_as_log=True,   normalize_by=None), #prev LU
     root_exchange_surface=          dict(bounds=[4e-3, 3.7e-2],           show_as_log=True,   normalize_by="length"), # prev [1e-3, 1e-2]
@@ -56,9 +56,16 @@ usual_clims = dict(
     # axis_type=          dict(bounds=None,           show_as_log=False,   normalize_by=None),
     diffusion_AA_soil=          dict(bounds=[1e-12, 4e-11],           show_as_log=False,   normalize_by="length"), # prev 
     hexose_consumption_by_growth=          dict(bounds=[1e-14, 1e-10],           show_as_log=True,   normalize_by=None),
+    hexose_diffusion_from_phloem=          dict(bounds=[1e-14, 1e-10],           show_as_log=True,   normalize_by=None),
+    N_metabolic_respiration=          dict(bounds=[1e-14, 1e-10],           show_as_log=True,   normalize_by=None),
+    maintenance_respiration=          dict(bounds=[1e-14, 1e-10],           show_as_log=True,   normalize_by=None),
+    axial_export_water_up_phloem=          dict(bounds=[-1e-12, 1e-12],           show_as_log=False,   normalize_by=None),
+    AA_synthesis=          dict(bounds=[1e-14, 1e-10],           show_as_log=True,   normalize_by=None),
+    Cv_sucrose_root=          dict(bounds=[1, 5000],           show_as_log=True,   normalize_by=None),
+    Cv_hexose_root=          dict(bounds=[1, 5000],           show_as_log=True,   normalize_by=None),
     amino_acids_consumption_by_growth=          dict(bounds=[1e-14, 1e-10],           show_as_log=True,   normalize_by=None),
 )
-plotted_property_continuous = "C_hexose_root"
+plotted_property_continuous = "hexose_exudation"
 
 xarray_focus_variables = []
 xarray_exclude_variables = ["adventitious_to_emerge", "xylem_vessel_radii", "phloem_vessel_radii"] # Cannot be included as they are lists
@@ -111,7 +118,7 @@ class Logger:
                     animate_raw_logs=True,
                     on_shoot_logs=False)
     
-    heavy_log = dict(recording_images=True, recording_off_screen=True, auto_camera_position=False,
+    heavy_log = dict(recording_images=False, recording_off_screen=True, auto_camera_position=False,
                      plotted_property=plotted_property_continuous, flow_property=False, show_soil=False, imposed_clim=usual_clims[plotted_property_continuous]["bounds"], log_scale=usual_clims[plotted_property_continuous]["show_as_log"],
                     recording_mtg=False,
                     recording_raw=True,
