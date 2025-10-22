@@ -1,3 +1,4 @@
+.gitignore
 CHANGELOG.md
 CODE_OF_CONDUCT.md
 CONTRIBUTING.md
@@ -29,8 +30,11 @@ src/openalea.fspm_utility.egg-info/entry_points.txt
 src/openalea.fspm_utility.egg-info/requires.txt
 src/openalea.fspm_utility.egg-info/top_level.txt
 src/openalea/fspm/utility/__init__.py
+src/openalea/fspm/utility/__pycache__/__init__.cpython-310.pyc
 src/openalea/fspm/utility/plot/__init__.py
 src/openalea/fspm/utility/plot/analyze.py
+src/openalea/fspm/utility/plot/__pycache__/__init__.cpython-310.pyc
+src/openalea/fspm/utility/plot/__pycache__/analyze.cpython-310.pyc
 src/openalea/fspm/utility/plot/workflow/UA-STGNN-autoencoder.py
 src/openalea/fspm/utility/plot/workflow/__init__.py
 src/openalea/fspm/utility/plot/workflow/cnwheat_comparisions.py
@@ -53,6 +57,11 @@ src/openalea/fspm/utility/plot/workflow/global_sensivity/run_global_sensitivity.
 src/openalea/fspm/utility/plot/workflow/global_sensivity/__pycache__/run_global_sensitivity.cpython-39.pyc
 src/openalea/fspm/utility/scenario/__init__.py
 src/openalea/fspm/utility/scenario/initialize.py
+src/openalea/fspm/utility/scenario/__pycache__/__init__.cpython-310.pyc
+src/openalea/fspm/utility/scenario/__pycache__/initialize.cpython-310.pyc
 src/openalea/fspm/utility/writer/__init__.py
 src/openalea/fspm/utility/writer/logging.py
 src/openalea/fspm/utility/writer/visualize.py
+src/openalea/fspm/utility/writer/__pycache__/__init__.cpython-310.pyc
+src/openalea/fspm/utility/writer/__pycache__/logging.cpython-310.pyc
+src/openalea/fspm/utility/writer/__pycache__/visualize.cpython-310.pyc

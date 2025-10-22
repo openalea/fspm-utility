@@ -12,6 +12,8 @@ import pyvista as pv
 import matplotlib.pyplot as plt
 import inspect
 import logging
+import psutil
+import gc
 # from gudhi import bottleneck_distance
 
 from openalea.mtg.traversal import pre_order2, post_order
@@ -118,7 +120,7 @@ class Logger:
                     animate_raw_logs=True,
                     on_shoot_logs=False)
     
-    heavy_log = dict(recording_images=False, recording_off_screen=True, auto_camera_position=False,
+    heavy_log = dict(recording_images=True, recording_off_screen=True, auto_camera_position=False,
                      plotted_property=plotted_property_continuous, flow_property=False, show_soil=False, imposed_clim=usual_clims[plotted_property_continuous]["bounds"], log_scale=usual_clims[plotted_property_continuous]["show_as_log"],
                     recording_mtg=False,
                     recording_raw=True,
@@ -308,6 +310,20 @@ class Logger:
         self.logger_output.info(f"Launching {os.path.basename(outputs_dirpath)}...")
         print("\r")
 
+
+        # Evaluating realistic maximum size for process to write on disk
+        total = psutil.virtual_memory().total
+        cpu_number = psutil.cpu_count(logical=True)
+
+        os_io_write_reserve = 0.3
+        number_of_plant_per_simulation = 5 # TODO not robust
+        max_simulations = int(cpu_number / (number_of_plant_per_simulation + 2))
+        usable = total * (1.0 - os_io_write_reserve)
+
+        self.max_xr_size = usable / (number_of_plant_per_simulation * max_simulations) / 1e6 / 2 / 10 # divided by two to anticipate kept in python memory + writing
+
+        self.checkpoint_save = False
+
         self.start_time = timeit.default_timer()
         self.previous_step_start_time = self.start_time
         self.simulation_time_in_hours = 0
@@ -411,6 +427,29 @@ class Logger:
             
         if self.recording_raw:
             self.recording_raw_MTG_properties_in_xarray()
+            if self.checkpoint_save:
+                self.plant_scale_properties.to_csv(
+                    os.path.join(self.MTG_properties_summed_dirpath, f"plant_scale_properties_{self.simulation_time_in_hours}.csv"))
+                
+                # convert list of outputs into dataframes
+                for outputs_df_list, outputs_filename, index_columns in (
+                        (self.shoot.axes_all_data_list, f"axes_outputs_{self.simulation_time_in_hours}.csv", ['t', 'plant', 'axis']),
+                        (self.shoot.organs_all_data_list, f"organs_outputs_{self.simulation_time_in_hours}.csv", ['t', 'plant', 'axis', 'organ']),
+                        (
+                        self.shoot.hiddenzones_all_data_list, f"hiddenzones_outputs_{self.simulation_time_in_hours}.csv", ['t', 'plant', 'axis', 'metamer']),
+                        (self.shoot.elements_all_data_list, f"elements_outputs_{self.simulation_time_in_hours}.csv",
+                        ['t', 'plant', 'axis', 'metamer', 'organ', 'element']),
+                        (self.shoot.soils_all_data_list, f"soil_outputs_{self.simulation_time_in_hours}.csv", ['t', 'plant', 'axis'])
+                ):
+                    outputs_filepath = os.path.join(self.shoot_properties_dirpath, outputs_filename)
+                    outputs_df = pd.concat(outputs_df_list, keys=self.shoot.all_simulation_steps, sort=False)
+                    outputs_df.reset_index(0, inplace=True)
+                    outputs_df.rename({'level_0': 't'}, axis=1, inplace=True)
+                    outputs_df = outputs_df.reindex(index_columns + outputs_df.columns.difference(index_columns).tolist(),
+                                                    axis=1, copy=False)
+                    outputs_df.fillna(value=np.nan, inplace=True)  # Convert back None to NaN
+                    outputs_df.to_csv(outputs_filepath)
+                
 
         if self.recording_barcodes:
             self.barcode_from_mtg()
@@ -513,13 +552,31 @@ class Logger:
         self.plant_scale_properties = pd.concat([self.plant_scale_properties, step_sum])
 
     def recording_raw_MTG_properties_in_xarray(self):
+        self.checkpoint_save = False
         self.log_xarray += [self.mtg_to_dataset(variables=self.xarray_focus_variables, time=self.simulation_time_in_hours)]
         # 10000 corresponds to 14Gb on disk, so should be to 2000 when testing several scenarios to avoid saturating memory
-        if sys.getsizeof(self.log_xarray) > 2000:
+        if sum([ds.nbytes for ds in self.log_xarray])/1e6 > self.max_xr_size:
+            self.checkpoint_save = True
+            lock_file = os.path.join(os.path.dirname(self.outputs_dirpath), "lock")
+            print("acquiring lock on", lock_file)
+            while os.path.exists(lock_file):
+                print("Waiting for cpu attribution to be unlocked to log xarray")
+                time.sleep(5)
+
+            open(lock_file, "w").close()
+            
             self.logger_output.info("Merging stored properties data in one xarray dataset...")
             self.write_to_disk(self.log_xarray)
             # Check save maybe
-            self.log_xarray = []
+            # Ensure flush
+            for ds in self.log_xarray:
+                ds.close()
+            self.log_xarray.clear()
+            gc.collect()
+            # self.log_xarray = []
+
+            os.remove(lock_file)
+
 
     def mtg_to_dataset(self, variables,
                        coordinates=dict(
@@ -888,8 +945,19 @@ class Logger:
             # For saved xarray datasets
             if len(self.log_xarray) > 0:
                 self.logger_output.info("Merging stored properties data in one xarray dataset...")
+                
+                lock_file = os.path.join(os.path.dirname(self.outputs_dirpath), "lock")
+                print("acquiring lock on", lock_file)
+                while os.path.exists(lock_file):
+                    print("Waiting for cpu attribution to be unlocked to log xarray")
+                    time.sleep(5)
+
+                open(lock_file, "w").close()
+
                 self.write_to_disk(self.log_xarray)
                 del self.log_xarray
+
+                os.remove(lock_file)
 
             merging=False
             if merging:
