@@ -297,8 +297,9 @@ def analyze_data(scenarios, outputs_dirpath, inputs_dirpath, target_folder_key=N
             dataset["Lengthy_symplasmic_volume"] = Indicators.compute(d=dataset, formula = 'symplasmic_volume / length')
 
             # C
-            dataset["Length_wise_raw_rhizodeposition"] = Indicators.compute(d=dataset, formula = '(hexose_exudation + mucilage_secretion + cells_release - hexose_uptake_from_soil + phloem_hexose_exudation - hexose_uptake_from_soil + ((diffusion_AA_soil + apoplastic_AA_soil_xylem - import_AA) * 5)) / length')
-            dataset["Raw_rhizodeposition"] = Indicators.compute(d=dataset, formula = 'hexose_exudation + mucilage_secretion + cells_release - hexose_uptake_from_soil + phloem_hexose_exudation - hexose_uptake_from_soil + ((diffusion_AA_soil + apoplastic_AA_soil_xylem - import_AA) * 5)')
+            dataset["Length_wise_raw_rhizodeposition"] = Indicators.compute(d=dataset, formula = '(((hexose_exudation + mucilage_secretion + cells_release - hexose_uptake_from_soil + phloem_hexose_exudation - hexose_uptake_from_soil)*6) + ((diffusion_AA_soil + apoplastic_AA_soil_xylem - import_AA) * 5)) / length')
+            dataset["Length_wise_raw_rhizodeposition"] = Indicators.compute(d=dataset, formula = '(((hexose_exudation + mucilage_secretion + cells_release - hexose_uptake_from_soil + phloem_hexose_exudation - hexose_uptake_from_soil)*6) + ((diffusion_AA_soil + apoplastic_AA_soil_xylem - import_AA) * 5)) / length')
+            dataset["Raw_rhizodeposition"] = Indicators.compute(d=dataset, formula = '(hexose_exudation + mucilage_secretion + cells_release - hexose_uptake_from_soil + phloem_hexose_exudation - hexose_uptake_from_soil) * 6 + ((diffusion_AA_soil + apoplastic_AA_soil_xylem - import_AA) * 5)')
 
 
             average_day_temperature = 20
@@ -342,6 +343,7 @@ def analyze_data(scenarios, outputs_dirpath, inputs_dirpath, target_folder_key=N
 
                 scenario_filtername = scenario if target_folder_key is None else scenario + "*" + subscenario
                 scenario_dataset = filter_dataset(dataset, scenario=scenario_filtername)
+
                 # recolorize_glb(100, scenario_dataset, property="Nm", glb_dirpath="", 
                 #                colormap="jet")
 
@@ -349,7 +351,6 @@ def analyze_data(scenarios, outputs_dirpath, inputs_dirpath, target_folder_key=N
                 
                 ### Fig 1 d related
                 running = False
-
                 if running:
                     scenario_time = int(scenario_dataset.t.max())
                     if isinstance(scenario_dataset.t.values.tolist(), list):
@@ -374,7 +375,9 @@ def analyze_data(scenarios, outputs_dirpath, inputs_dirpath, target_folder_key=N
 
                     plt.close()
                 
-                # @note current focus
+
+
+                # @note CURRENT WHEAT-BRIDGES OUTPUTS FOCUS
                 running = False
                 # Experienced environmental conditions
                 if running:
@@ -382,8 +385,9 @@ def analyze_data(scenarios, outputs_dirpath, inputs_dirpath, target_folder_key=N
                 
                 
                 # Plant scale C balance related
-                running = True
+                running = False
                 if running:
+                    print("Starting balance plots summary")
                     if True:
                         # WB.plant_C_balance(shoot_outputs=shoot_outputs, dataset=scenario_dataset, outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"))
                         WB.plant_C_balance_summary(shoot_outputs=shoot_outputs, dataset=scenario_dataset, outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"))
@@ -398,8 +402,8 @@ def analyze_data(scenarios, outputs_dirpath, inputs_dirpath, target_folder_key=N
                         WB.plant_N_balance_summary(shoot_outputs=shoot_outputs, dataset=scenario_dataset, outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"))
                         WB.root_N_balance_full(shoot_outputs=shoot_outputs, dataset=scenario_dataset, outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"))
                         # WB.root_N_balance(shoot_outputs=shoot_outputs, dataset=scenario_dataset, outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"), massic=True)
-                        WB.root_synplasm_AA_balance(dataset=scenario_dataset, outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"))
-                    if False:
+                        # WB.root_synplasm_AA_balance(dataset=scenario_dataset, outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"))
+                    if True:
                         shoot_outputs_with_MS = WB.open_shoot_outputs(scenario=scenarios[0],
                                                     target_folder_key=target_folder_key,
                                                     outputs_dirpath=outputs_dirpath, 
@@ -412,69 +416,110 @@ def analyze_data(scenarios, outputs_dirpath, inputs_dirpath, target_folder_key=N
                                                     soil_data_dirpath=os.path.join("inputs", "meteo_Ljutovac2002_soil.csv"), only_MS=False)
                         WB.shoot_root_growth_cnwheat(shoot_outputs=shoot_outputs_cnwheat, outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"))
                         WB.shoot_root_CN_alloc(shoot_outputs=shoot_outputs_cnwheat, outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"), custom_suffix="CNW")
+                    print("Finished balance plots summar y")
+
+                # Total correlation plots over time
+                running = False
+                if running:
+                    print("Starting correlation plots over time")
+                    WB.XY_totals_all_times(dataset=scenario_dataset, x="Net_mineral_N_uptake", y="Raw_rhizodeposition", to_xunit="µmol/h", to_yunit="µmol/h", outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"))
+                    WB.XY_totals_all_times(dataset=scenario_dataset, x="Net_mineral_N_uptake", y="Raw_rhizodeposition", to_xunit="nmol/h", to_yunit="nmol/h", outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"), massic=True)
+                    print("Finished correlation plots over time")
+
 
                 # 2D heatmap for 1 axis
                 running = False
                 if running:
-                    chosen_root = 'seminal_2'
-                    axis_dataset = scenario_dataset.where(scenario_dataset["axis_index"]=='seminal_2')
+                    print("Starting 2D heatmap on properties")
+                    chosen_root = 'adventitious_2'
+                    axis_dataset = scenario_dataset.where((scenario_dataset["axis_index"]==chosen_root).compute(), drop=True)
+                    # print("loading dataset")
+                    # axis_dataset = axis_dataset.load()
                     axis_dataset["Lengthy_active_Ni_uptake"] = Indicators.compute(d=axis_dataset, formula = 'import_Nm / length')
                     axis_dataset["Lengthy_water_Ni_uptake"] = Indicators.compute(d=axis_dataset, formula = '- apoplastic_Nm_soil_xylem / length')
 
-                    for var in ["Length-wise mineral N uptake"]:
+                    ymin,ymax = 0., 8.
+
+                    for var, (vmin, vmax) in {"Length-wise mineral N uptake": (0., 3e-10), "Length_wise_raw_rhizodeposition": (0., 2.5e-9),
+                                              "Length-wise N exudation": (0., 1e-11), "Length-wise_radial_import_water": (0, 4e-11)}.items():
                         fig, ax = plt.subplots()
-                        axis_dataset[var].plot.pcolormesh(x="t", y="distance_from_tip", ax=ax, robust=True)
-                        fig.savefig(os.path.join(outputs_dirpath, f"{var}.png"), bbox_inches="tight", dpi=720)
+
+                        # Replace non-finite values with NaN
+                        t_values = axis_dataset['t'].values / 24
+                        t_values = np.nan_to_num(t_values, nan=0.0)
+                        distance_values = axis_dataset['distance_from_tip'].values * 100
+                        distance_values = np.nan_to_num(distance_values, nan=0.0)
+                        data = axis_dataset[var].values
+                        mesh = ax.pcolormesh(t_values, distance_values, data, shading='auto', vmin=vmin, vmax=vmax)
+                        ax.set_ylim((ymin, ymax))
+
+                        # Add labels and colorbar
+                        ax.set_xlabel('Time (days)')
+                        ax.set_ylabel('Distance from root tip (cm)')
+                        fig.colorbar(mesh, ax=ax, label=var)
+
+                        fig.savefig(os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties", f"{var}_{chosen_root}.png"), bbox_inches="tight", dpi=720)
                         plt.close()
+                    
+                    print("Finished 2D heatmap on properties")
 
                         
                 # Plots along root axes
                 running = True
                 if running:
+                    print("Starting production of scatter plots")
+                    PAR_peak = True
                     scenario_times = [26, 240, 720, 1392, 1488, 2400]
+
+                    if PAR_peak:
+                        scenario_times = [round(t/24) * 24 for t in scenario_times] # Max PAR
+                    else:
+                        scenario_times = [(round(t/24) * 24) + 12 for t in scenario_times] # night
                     # scenario_times = [50, 100, 150, 300, 400, 500]
+                    scenario_dataset["Lengthy_active_Ni_uptake"] = Indicators.compute(d=scenario_dataset, formula = 'import_Nm / length')
+                    scenario_dataset["Lengthy_water_Ni_uptake"] = Indicators.compute(d=scenario_dataset, formula = '- apoplastic_Nm_soil_xylem / length')
+                    scenario_dataset["massic_hexose_consumption_by_growth"] = Indicators.compute(d=scenario_dataset, formula = 'hexose_consumption_by_growth / living_struct_mass')
+                    scenario_dataset["massic_amino_acids_consumption_by_growth"] = Indicators.compute(d=scenario_dataset, formula = 'amino_acids_consumption_by_growth / living_struct_mass')
                     all = True
                     if all:
-                        scenario_dataset["Lengthy_active_Ni_uptake"] = Indicators.compute(d=scenario_dataset, formula = 'import_Nm / length')
-                        scenario_dataset["Lengthy_water_Ni_uptake"] = Indicators.compute(d=scenario_dataset, formula = '- apoplastic_Nm_soil_xylem / length')
-                        scenario_dataset["massic_hexose_consumption_by_growth"] = Indicators.compute(d=scenario_dataset, formula = 'hexose_consumption_by_growth / living_struct_mass')
-                        scenario_dataset["massic_amino_acids_consumption_by_growth"] = Indicators.compute(d=scenario_dataset, formula = 'amino_acids_consumption_by_growth / living_struct_mass')
             
                         for scenario_time in scenario_times:
                             current_dataset = filter_dataset(scenario_dataset, time=scenario_time)
 
-                            
-                            first_order_dataset = current_dataset.where(current_dataset["root_order"] == 1, drop=True)
-                            lateral_dataset = current_dataset.where(current_dataset["root_order"] > 1, drop=True)
-                            per_root_type_ds = dict(lateral=lateral_dataset, first_order=first_order_dataset)
+                            seminal_dataset = current_dataset.where((current_dataset['axis_index'].astype(str).str.contains('seminal')).compute(), drop=True)
+                            nodal_dataset = current_dataset.where((current_dataset['axis_index'].astype(str).str.contains('adventitious')).compute(), drop=True)
+                            lateral_dataset = current_dataset.where((current_dataset["root_order"] > 1).compute(), drop=True)
+                            per_root_type_ds = dict(lateral=lateral_dataset, nodal=nodal_dataset, seminal=seminal_dataset)
 
 
                             print(f"Producing 2D plots from Xarray at {scenario_time}h")
-                            
-                            WB.scatter_plots(per_root_type_ds, raw_dirpath, name_suffix=f"_{scenario_time}", discrete=True, xlog=False)
+                            suffix = f'_{scenario_time}_{"day" if PAR_peak else "night"}'
+                            WB.scatter_plots(per_root_type_ds, raw_dirpath, name_suffix=suffix, discrete=True, xlog=False)
 
                             plt.close()
                     else:
-                        chosen_root = 'seminal_2'
-                        print("loading")
+                        chosen_root = ['seminal_2', 'adventitious_2']
+                        # print("loading")
                         # scenario_dataset = scenario_dataset.load()
-                        axis_dataset = scenario_dataset.where(scenario_dataset["axis_index"]=='seminal_2')
-                        axis_dataset["Lengthy_active_Ni_uptake"] = Indicators.compute(d=axis_dataset, formula = 'import_Nm / length')
-                        axis_dataset["Lengthy_water_Ni_uptake"] = Indicators.compute(d=axis_dataset, formula = '- apoplastic_Nm_soil_xylem / length')
+                        axis_datasets = [scenario_dataset.where(scenario_dataset["axis_index"]==root) for root in chosen_root]
             
                         for scenario_time in scenario_times:
-                            current_dataset = filter_dataset(axis_dataset, time=scenario_time)
-                            per_root_type_ds = {chosen_root: current_dataset}
+                            print("scatter plots time", scenario_time)
+                            current_datasets = [filter_dataset(ds, time=scenario_time) for ds in axis_datasets]
+                            per_root_type_ds = dict(zip(chosen_root, current_datasets))
 
                             print(f"Producing 2D plots from Xarray at {scenario_time}h")
                             
                             WB.scatter_plots(per_root_type_ds, raw_dirpath, name_suffix=f"_{scenario_time}", discrete=True, xlog=False)
 
                             plt.close()
+
+                    print("Finished production of scatter plots")
 
                 # Cumsum related
                 running = False
                 if running:
+                    print("Starting Root-CyNAPS plots on most active root zones contribution")
                     scenario_times = [240, 720, 1392, 1488, 2400]
                     commentaries = []
                     df_soil = shoot_outputs['soil_meteo']
@@ -500,6 +545,8 @@ def analyze_data(scenarios, outputs_dirpath, inputs_dirpath, target_folder_key=N
                         print("cumsum for ", flow)
                         WB.most_active_cumsum(fdataset, flow, scenario_times=scenario_times, commentaries = commentaries,
                                             outputs_dirpath=raw_dirpath)
+                    print("Finished Root-CyNAPS plots on most active root zones contribution")
+
 
                 ### Fig 1 c related
                 running = False
@@ -3131,39 +3178,43 @@ class WB:
         #                                         discrete=discrete, s=s, xlog=xlog, name_suffix=name_suffix, to_xunit="cm", xlim=xlim, to_yunit="nmol/(cm.h)", ylim=ylim, figsize=figsize, show_correlation=correlations)
         # fig, ax = XarrayPlotting.scatter_xarray(scenario_datasets, outputs_dirpath=outputs_path, x="distance_from_tip", y="Lengthy_water_Ni_uptake", c=c, 
         #                                         discrete=discrete, s=s, xlog=xlog, name_suffix=name_suffix, to_xunit="cm", xlim=xlim, to_yunit="nmol/(cm.h)", ylim=ylim, figsize=figsize, show_correlation=correlations)
-        fig, ax = XarrayPlotting.scatter_xarray(scenario_datasets, outputs_dirpath=outputs_path, x="distance_from_tip", y="C_hexose_root", c=c, 
-                                                discrete=discrete, s=s, xlog=xlog, name_suffix=name_suffix, to_xunit="cm", xlim=xlim, to_yunit="mmol/g", ylim=ylim, figsize=figsize, show_correlation=correlations)
-        fig, ax = XarrayPlotting.scatter_xarray(scenario_datasets, outputs_dirpath=outputs_path, x="distance_from_tip", y="C_sucrose_root", c=c, 
-                                                discrete=discrete, s=s, xlog=xlog, name_suffix=name_suffix, to_xunit="cm", xlim=xlim, to_yunit="mmol/g", ylim=ylim, figsize=figsize, show_correlation=correlations)
-        fig, ax = XarrayPlotting.scatter_xarray(scenario_datasets, outputs_dirpath=outputs_path, x="distance_from_tip", y="xylem_Nm", c=c, 
-                                                discrete=discrete, s=s, xlog=xlog, name_suffix=name_suffix, to_xunit="cm", xlim=xlim, to_yunit="mmol/g", ylim=ylim, figsize=figsize, show_correlation=correlations)
+        # fig, ax = XarrayPlotting.scatter_xarray(scenario_datasets, outputs_dirpath=outputs_path, x="distance_from_tip", y="C_hexose_root", c=c, 
+        #                                         discrete=discrete, s=s, xlog=xlog, name_suffix=name_suffix, to_xunit="cm", xlim=xlim, to_yunit="mmol/g", ylim=ylim, figsize=figsize, show_correlation=correlations)
+        # fig, ax = XarrayPlotting.scatter_xarray(scenario_datasets, outputs_dirpath=outputs_path, x="distance_from_tip", y="C_sucrose_root", c=c, 
+        #                                         discrete=discrete, s=s, xlog=xlog, name_suffix=name_suffix, to_xunit="cm", xlim=xlim, to_yunit="mmol/g", ylim=ylim, figsize=figsize, show_correlation=correlations)
+        # fig, ax = XarrayPlotting.scatter_xarray(scenario_datasets, outputs_dirpath=outputs_path, x="distance_from_tip", y="xylem_Nm", c=c, 
+        #                                         discrete=discrete, s=s, xlog=xlog, name_suffix=name_suffix, to_xunit="cm", xlim=xlim, to_yunit="mmol/g", ylim=ylim, figsize=figsize, show_correlation=correlations)
         # fig, ax = XarrayPlotting.scatter_xarray(scenario_datasets, outputs_dirpath=outputs_path, x="distance_from_tip", y="Length-wise root exchange surface", c=c, 
         #                                         discrete=discrete, s=s, xlog=xlog, name_suffix=name_suffix, to_xunit="cm", xlim=xlim, to_yunit="m", ylim=ylim, figsize=figsize, show_correlation=correlations)
-        fig, ax = XarrayPlotting.scatter_xarray(scenario_datasets, outputs_dirpath=outputs_path, x="distance_from_tip", y="diffusion_AA_phloem", c=c, 
-                                                discrete=discrete, s=s, xlog=xlog, name_suffix=name_suffix, to_xunit="cm", xlim=xlim, to_yunit="nmol/h", ylim=ylim, figsize=figsize, show_correlation=correlations)
-        fig, ax = XarrayPlotting.scatter_xarray(scenario_datasets, outputs_dirpath=outputs_path, x="distance_from_tip", y="hexose_diffusion_from_phloem", c=c, 
-                                                discrete=discrete, s=s, xlog=xlog, name_suffix=name_suffix, to_xunit="cm", xlim=xlim, to_yunit="nmol/h", ylim=ylim, figsize=figsize, show_correlation=correlations)
-        fig, ax = XarrayPlotting.scatter_xarray(scenario_datasets, outputs_dirpath=outputs_path, x="distance_from_tip", y="hexose_consumption_by_growth", c=c, 
-                                                discrete=discrete, s=s, xlog=xlog, name_suffix=name_suffix, to_xunit="cm", xlim=xlim, to_yunit="nmol/h", ylim=ylim, figsize=figsize, show_correlation=correlations)
-        fig, ax = XarrayPlotting.scatter_xarray(scenario_datasets, outputs_dirpath=outputs_path, x="living_struct_mass", y="hexose_consumption_by_growth", c=c, 
-                                                discrete=discrete, s=s, xlog=xlog, name_suffix=name_suffix, to_xunit="µg", xlim=xlim, to_yunit="nmol/h", ylim=ylim, figsize=figsize, show_correlation=correlations)
-        fig, ax = XarrayPlotting.scatter_xarray(scenario_datasets, outputs_dirpath=outputs_path, x="living_struct_mass", y="massic_hexose_consumption_by_growth", c=c, 
-                                                discrete=discrete, s=s, xlog=xlog, name_suffix=name_suffix, to_xunit="µg", xlim=xlim, to_yunit="nmol/µg/h", ylim=ylim, figsize=figsize, show_correlation=correlations)
-        fig, ax = XarrayPlotting.scatter_xarray(scenario_datasets, outputs_dirpath=outputs_path, x="distance_from_tip", y="amino_acids_consumption_by_growth", c=c, 
-                                                discrete=discrete, s=s, xlog=xlog, name_suffix=name_suffix, to_xunit="cm", xlim=xlim, to_yunit="nmol/h", ylim=ylim, figsize=figsize, show_correlation=correlations)
-        fig, ax = XarrayPlotting.scatter_xarray(scenario_datasets, outputs_dirpath=outputs_path, x="living_struct_mass", y="amino_acids_consumption_by_growth", c=c, 
-                                                discrete=discrete, s=s, xlog=xlog, name_suffix=name_suffix, to_xunit="µg", xlim=xlim, to_yunit="nmol/h", ylim=ylim, figsize=figsize, show_correlation=correlations)
-        fig, ax = XarrayPlotting.scatter_xarray(scenario_datasets, outputs_dirpath=outputs_path, x="living_struct_mass", y="massic_amino_acids_consumption_by_growth", c=c, 
-                                                discrete=discrete, s=s, xlog=xlog, name_suffix=name_suffix, to_xunit="µg", xlim=xlim, to_yunit="nmol/µg/h", ylim=ylim, figsize=figsize, show_correlation=correlations)
+        # fig, ax = XarrayPlotting.scatter_xarray(scenario_datasets, outputs_dirpath=outputs_path, x="distance_from_tip", y="diffusion_AA_phloem", c=c, 
+        #                                         discrete=discrete, s=s, xlog=xlog, name_suffix=name_suffix, to_xunit="cm", xlim=xlim, to_yunit="nmol/h", ylim=ylim, figsize=figsize, show_correlation=correlations)
+        # fig, ax = XarrayPlotting.scatter_xarray(scenario_datasets, outputs_dirpath=outputs_path, x="distance_from_tip", y="hexose_diffusion_from_phloem", c=c, 
+        #                                         discrete=discrete, s=s, xlog=xlog, name_suffix=name_suffix, to_xunit="cm", xlim=xlim, to_yunit="nmol/h", ylim=ylim, figsize=figsize, show_correlation=correlations)
+        # fig, ax = XarrayPlotting.scatter_xarray(scenario_datasets, outputs_dirpath=outputs_path, x="distance_from_tip", y="hexose_consumption_by_growth", c=c, 
+        #                                         discrete=discrete, s=s, xlog=xlog, name_suffix=name_suffix, to_xunit="cm", xlim=xlim, to_yunit="nmol/h", ylim=ylim, figsize=figsize, show_correlation=correlations)
+        # fig, ax = XarrayPlotting.scatter_xarray(scenario_datasets, outputs_dirpath=outputs_path, x="living_struct_mass", y="hexose_consumption_by_growth", c=c, 
+        #                                         discrete=discrete, s=s, xlog=xlog, name_suffix=name_suffix, to_xunit="µg", xlim=xlim, to_yunit="nmol/h", ylim=ylim, figsize=figsize, show_correlation=correlations)
+        # fig, ax = XarrayPlotting.scatter_xarray(scenario_datasets, outputs_dirpath=outputs_path, x="living_struct_mass", y="massic_hexose_consumption_by_growth", c=c, 
+        #                                         discrete=discrete, s=s, xlog=xlog, name_suffix=name_suffix, to_xunit="µg", xlim=xlim, to_yunit="nmol/µg/h", ylim=ylim, figsize=figsize, show_correlation=correlations)
+        # fig, ax = XarrayPlotting.scatter_xarray(scenario_datasets, outputs_dirpath=outputs_path, x="distance_from_tip", y="amino_acids_consumption_by_growth", c=c, 
+        #                                         discrete=discrete, s=s, xlog=xlog, name_suffix=name_suffix, to_xunit="cm", xlim=xlim, to_yunit="nmol/h", ylim=ylim, figsize=figsize, show_correlation=correlations)
+        # fig, ax = XarrayPlotting.scatter_xarray(scenario_datasets, outputs_dirpath=outputs_path, x="living_struct_mass", y="amino_acids_consumption_by_growth", c=c, 
+        #                                         discrete=discrete, s=s, xlog=xlog, name_suffix=name_suffix, to_xunit="µg", xlim=xlim, to_yunit="nmol/h", ylim=ylim, figsize=figsize, show_correlation=correlations)
+        # fig, ax = XarrayPlotting.scatter_xarray(scenario_datasets, outputs_dirpath=outputs_path, x="living_struct_mass", y="massic_amino_acids_consumption_by_growth", c=c, 
+        #                                         discrete=discrete, s=s, xlog=xlog, name_suffix=name_suffix, to_xunit="µg", xlim=xlim, to_yunit="nmol/µg/h", ylim=ylim, figsize=figsize, show_correlation=correlations)
         
         # Correlation plots
-        fig, ax = XarrayPlotting.scatter_xarray(scenario_datasets, outputs_dirpath=outputs_path, x="C_hexose_root", y="Length-wise mineral N uptake", c=c, 
-                                                discrete=discrete, s=s, xlog=xlog, name_suffix=name_suffix, to_xunit="mmol/g", xlim=xlim, to_yunit="nmol/(cm.h)", ylim=ylim, figsize=figsize, show_correlation=correlations)
-        fig, ax = XarrayPlotting.scatter_xarray(scenario_datasets, outputs_dirpath=outputs_path, x="Length-wise root exchange surface", y="Length-wise mineral N uptake", c=c, 
-                                                discrete=discrete, s=s, xlog=xlog, name_suffix=name_suffix, to_xunit="m", xlim=xlim, to_yunit="nmol/(cm.h)", ylim=ylim, figsize=figsize, show_correlation=correlations)
+        # fig, ax = XarrayPlotting.scatter_xarray(scenario_datasets, outputs_dirpath=outputs_path, x="C_hexose_root", y="Length-wise mineral N uptake", c=c, 
+        #                                         discrete=discrete, s=s, xlog=xlog, name_suffix=name_suffix, to_xunit="mmol/g", xlim=xlim, to_yunit="nmol/(cm.h)", ylim=ylim, figsize=figsize, show_correlation=correlations)
+        # fig, ax = XarrayPlotting.scatter_xarray(scenario_datasets, outputs_dirpath=outputs_path, x="Length-wise root exchange surface", y="Length-wise mineral N uptake", c=c, 
+        #                                         discrete=discrete, s=s, xlog=xlog, name_suffix=name_suffix, to_xunit="m", xlim=xlim, to_yunit="nmol/(cm.h)", ylim=ylim, figsize=figsize, show_correlation=correlations)
+        local_ylim = (-0.2, 4.5) 
         fig, ax = XarrayPlotting.scatter_xarray(scenario_datasets, outputs_dirpath=outputs_path, x="Length_wise_raw_rhizodeposition", y="Length-wise mineral N uptake", c=c, 
-                                                discrete=discrete, s=s, xlog=xlog, name_suffix=name_suffix, to_xunit="nmol/(cm.h)", xlim=xlim, to_yunit="nmol/(cm.h)", ylim=ylim, figsize=figsize, show_correlation=correlations)
-
+                                                discrete=discrete, s=s, xlog=xlog, name_suffix=name_suffix, to_xunit="nmol/(cm.h)", xlim=(0, 35), to_yunit="nmol/(cm.h)", ylim=local_ylim, figsize=figsize, show_correlation=correlations)
+        fig, ax = XarrayPlotting.scatter_xarray(scenario_datasets, outputs_dirpath=outputs_path, x="Length-wise_radial_import_water", y="Length-wise mineral N uptake", c=c, 
+                                                discrete=discrete, s=s, xlog=xlog, name_suffix=name_suffix, to_xunit="µL/(cm.h)", xlim=(-0.6, 0.9), to_yunit="nmol/(cm.h)", ylim=local_ylim, figsize=figsize, show_correlation=correlations)
+        fig, ax = XarrayPlotting.scatter_xarray(scenario_datasets, outputs_dirpath=outputs_path, x="Length-wise N exudation", y="Length-wise mineral N uptake", c=c, 
+                                                discrete=discrete, s=s, xlog=xlog, name_suffix=name_suffix, to_xunit="nmol/(cm.h)", xlim=(0, 0.5), to_yunit="nmol/(cm.h)", ylim=local_ylim, figsize=figsize, show_correlation=correlations)
     
     def open_shoot_outputs(outputs_dirpath="", meteo_data_dirpath="", soil_data_dirpath="", scenario="", target_folder_key=None, shoot_outputs_dirpath=None, only_MS=True):
         
@@ -3497,18 +3548,24 @@ class WB:
             tot_C_to_struct_root = root_struct_mass_produced_C.cumsum()
             tot_C_to_struct_shoot = daily_shoot_struct_mass_produced_C.cumsum()
 
+            ratio = 1.
+            ch = True
+            if ch:
+                daily_net_labile_hex_C *= 0.1
+                ratio = total_photo / (tot_root_respiration_C + total_rhizodeposition + daily_net_labile_hex_C + daily_net_Labile_aa_C + tot_C_to_struct_root + tot_C_to_struct_shoot + daily_labile_C_shoot + tot_Shoot_respiration)
+
 
             fig2, ax2 = plt.subplots(figsize=(6.4, 4.8))
 
             ax2.stackplot(time_scale, 
-                          tot_root_respiration_C, 
-                          total_rhizodeposition, 
-                          daily_net_labile_hex_C,
-                          daily_net_Labile_aa_C,
-                          tot_C_to_struct_root, 
-                          tot_C_to_struct_shoot, 
-                          daily_labile_C_shoot,
-                          tot_Shoot_respiration,  
+                          tot_root_respiration_C * ratio, 
+                          total_rhizodeposition * ratio, 
+                          daily_net_labile_hex_C * ratio,
+                          daily_net_Labile_aa_C * ratio,
+                          tot_C_to_struct_root * ratio, 
+                          tot_C_to_struct_shoot * ratio, 
+                          daily_labile_C_shoot * ratio,
+                          tot_Shoot_respiration * ratio,  
                           labels=[
                 "Root respiration",
                 "C rhizodeposition",
@@ -3531,8 +3588,8 @@ class WB:
                 secax2.spines['bottom'].set_position(('outward', 35))  # pixels; adjust if needed
                 secax2.set_xlabel('Time (days)')
 
-            ax.set_xlabel('Thermal time (°C.day)' if thermal_time else 'Time (days)')
-            ax.set_ylabel('Process cumulative flow (mmol C)')
+            ax2.set_xlabel('Thermal time (°C.day)' if thermal_time else 'Time (days)')
+            ax2.set_ylabel('Process cumulative flow (mmol C)')
 
             suffix +='_cummulated'
 
@@ -4285,15 +4342,20 @@ class WB:
             tot_N_to_struct_root = root_struct_mass_produced_N.cumsum()
             tot_N_to_struct_shoot = daily_shoot_struct_mass_produced_N.cumsum()
 
+            ratio = 1.
+            ch = True
+            if ch:
+                ratio = total_uptake / (total_rhizodeposition + daily_net_labile_Nm + daily_net_labile_N_org + tot_N_to_struct_root + tot_N_to_struct_shoot + daily_labile_N_shoot)
+
             fig2, ax2 = plt.subplots(figsize=(6.4, 4.8))
 
             ax2.stackplot(time_scale, 
-                          total_rhizodeposition, 
-                          daily_net_labile_Nm,
-                          daily_net_labile_N_org,
-                          tot_N_to_struct_root, 
-                          tot_N_to_struct_shoot,
-                          daily_labile_N_shoot,
+                          total_rhizodeposition * ratio, 
+                          daily_net_labile_Nm * ratio,
+                          daily_net_labile_N_org * ratio,
+                          tot_N_to_struct_root * ratio, 
+                          tot_N_to_struct_shoot * ratio,
+                          daily_labile_N_shoot * ratio,
                           labels=[
                 "N rhizodeposition",
                 "Labile mineral N roots",
@@ -4316,12 +4378,12 @@ class WB:
                 secax2.spines['bottom'].set_position(('outward', 35))  # pixels; adjust if needed
                 secax2.set_xlabel('Time (days)')
 
-            ax.set_xlabel('Thermal time (°C.day)' if thermal_time else 'Time (days)')
-            ax.set_ylabel('Process cumulative flow (mmol C)')
+            ax2.set_xlabel('Thermal time (°C.day)' if thermal_time else 'Time (days)')
+            ax2.set_ylabel('Process cumulative flow (mmol N)')
 
             suffix +='_cummulated'
 
-            fig2.savefig(os.path.join(outputs_dirpath, f"N_balance{suffix}.png"), bbox_inches="tight", dpi=720)
+            fig2.savefig(os.path.join(outputs_dirpath, f"N_balance_summary{suffix}.png"), bbox_inches="tight", dpi=720)
 
 
     def root_N_balance_full(shoot_outputs, dataset, outputs_dirpath, thermal_time = True, massic=False, balance=True):
@@ -4926,6 +4988,40 @@ class WB:
         suffix += custom_suffix
 
         fig.savefig(os.path.join(outputs_dirpath, f"shoot_root_CN_alloc{suffix}.png"), dpi=720, bbox_inches="tight")
+
+
+    def XY_totals_all_times(dataset, x, y, to_xunit, to_yunit, outputs_dirpath, massic=False):
+        print((dataset[x].unit, to_xunit))
+        x_conversion = unit_conversion(dataset[x].unit, to_xunit)
+        x_unit = unit_from_str(to_xunit)
+        y_conversion = unit_conversion(dataset[y].unit, to_yunit)
+        y_unit = unit_from_str(to_yunit)
+
+        if massic:
+            x_unit += "/mg"
+            y_unit += "/mg"
+        
+        dsx = dataset[x].sum(dim="vid").values * x_conversion
+        dsy = dataset[y].sum(dim="vid").values * y_conversion
+        if massic:
+            mass = dataset["living_struct_mass"].sum(dim="vid").values * 1000
+            dsx /= mass
+            dsy /= mass
+
+        fig, ax = plt.subplots(figsize=(6.4, 4.8))
+        ax.plot(dsx, dsy, c="black")
+        ax.legend()
+        ax.set_xlabel(f"summed {x.replace("_", " ")} at each time step ({x_unit})")
+        ax.set_ylabel(f"summed {y.replace("_", " ")} at each time step ({y_unit})")
+
+
+        suffix = ''
+        if massic:
+            suffix += "_massic"
+
+        fig.savefig(os.path.join(outputs_dirpath, f"summed_{x}_vs_{y}_{suffix}.png"), bbox_inches="tight", dpi=720)
+        plt.close()
+
 
 class RootCyNAPSFigures:
 

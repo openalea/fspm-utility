@@ -18,6 +18,7 @@ build
 build-scons
 eggs
 .eggs
+*.egg-info
 parts
 bin
 var

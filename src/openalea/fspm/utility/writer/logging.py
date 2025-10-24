@@ -455,7 +455,7 @@ class Logger:
             self.barcode_from_mtg()
 
         # Only the costly logging operations are restricted here
-        if self.simulation_time_in_hours % self.logging_period_in_hours == 0 or self.checkpoint_save:
+        if (self.simulation_time_in_hours % self.logging_period_in_hours == 0) or (self.checkpoint_save and self.logging_period_in_hours > 24):
             if self.recording_mtg:
                 self.recording_mtg_files()
             if self.recording_images:
