@@ -911,18 +911,18 @@ def compress_gltf(output_path):
 
     tp_file = os.path.join(tp_directory, "tp.glb")
 
-    steps = f"""gltf-transform dedup {output_path} {tp_file}
-                gltf-transform instance {tp_file} {tp_file}
-                gltf-transform palette {tp_file} {tp_file}
-                gltf-transform flatten {tp_file} {tp_file}
-                gltf-transform join {tp_file} {tp_file}
-                gltf-transform weld {tp_file} {tp_file}
-                gltf-transform simplify {tp_file} {tp_file}
-                gltf-transform resample {tp_file} {tp_file}
-                gltf-transform prune {tp_file} {tp_file}
-                gltf-transform sparse {tp_file} {tp_file}
-                gltf-transform webp {tp_file} {tp_file}
-                gltf-transform draco {tp_file} {compressed_filepath} --method edgebreaker"""
+    steps = f"""gltf-transform dedup "{output_path}" "{tp_file}"
+                gltf-transform instance "{tp_file}" "{tp_file}"
+                gltf-transform palette "{tp_file}" "{tp_file}"
+                gltf-transform flatten "{tp_file}" "{tp_file}"
+                gltf-transform join "{tp_file}" "{tp_file}"
+                gltf-transform weld "{tp_file}" "{tp_file}"
+                gltf-transform simplify "{tp_file}" "{tp_file}"
+                gltf-transform resample "{tp_file}" "{tp_file}"
+                gltf-transform prune "{tp_file}" "{tp_file}"
+                gltf-transform sparse "{tp_file}" "{tp_file}"
+                gltf-transform webp "{tp_file}" "{tp_file}"
+                gltf-transform draco "{tp_file}" "{compressed_filepath}" --method edgebreaker"""
     
     # Split the steps into individual commands
     commands = steps.strip().split("\n")
@@ -960,3 +960,71 @@ def post_compress_gltf(image_directory):
     for filename in to_compress:
         output_path = os.path.join(image_directory, filename)
         compress_gltf(output_path)
+
+
+
+def standalone_mtg_to_gltf(root=None, soil=None, shoot=None, plotted_property="C_hexose_root", output_file_path="outputs", 
+                           parallel_compression=False, clim=[0, 1], normalize_by=None, root_colormap="jet", log_scale=False, auto_camera_position=False, 
+                           show_soil=False, recording_off_screen=True, background_color="brown", root_hairs=False):
+
+    sizes = {"landscape": [1920, 1080], "portrait": [1088, 1920], "square": [1080, 1080],
+                "small_height": [960, 1280]}
+    
+    if recording_off_screen:
+        pv.start_xvfb()
+
+    plotter = pv.Plotter(off_screen=recording_off_screen, window_size=sizes["portrait"], lighting="three lights")
+    plotter.set_background(background_color)
+
+    plotter.show(interactive_update=True)
+
+    if auto_camera_position:
+        plotter.reset_camera()
+    else:
+        step_back_coefficient = 1.3 #0.9
+        move_up_coefficient = 0.12 * 1.5
+        tilt_down_coefficient = 0.2 * 0
+        camera_coordinates = (step_back_coefficient, 0., tilt_down_coefficient)
+        horizontal_aiming = (0., 0., 1)
+        collar_position = (0., 0., -move_up_coefficient)
+        plotter.camera_position = [camera_coordinates,
+                                        collar_position,
+                                        horizontal_aiming]
+
+    if root is not None:
+        # TODO : step back according to max(||x2-x1||, ||y2-y1||, ||z2-z1||)
+        root_system_mesh, color_property, root_hair_mesh = plot_mtg_alt(root, cmap_property=plotted_property, normalize_by=normalize_by, root_hairs=root_hairs)
+        if 0. in color_property:
+            color_property.remove(0.)
+
+        current_mesh = plotter.add_mesh(root_system_mesh, cmap=root_colormap,
+                                                    clim=clim, show_edges=False,
+                                                    specular=1., log_scale=log_scale)
+        if root_hair_mesh:
+            root_hair_current_mesh = plotter.add_mesh(root_hair_mesh, cmap="Greys", opacity=0.05)
+
+        if soil is not None and show_soil:
+            soil_grid = soil_voxels_mesh(root, soil,
+                                            cmap_property="mineral_N_net_mineralization")
+            soil_grid_in_scene = plotter.add_mesh(soil_grid, cmap="cool", show_edges=False, specular=1.,
+                                                            opacity=0.1)
+
+    if shoot is not None:
+        for vid in shoot.keys():
+            double_sided_mesh = make_double_sided(shoot[vid])
+            plotter.add_mesh(double_sided_mesh, color="lightgreen", show_edges=False, specular=1., culling='none')
+    
+    plotter.update()
+    
+    export_scene_to_gltf(output_path=output_file_path,
+                                    plotter=plotter, clim=clim, parallel_compression=parallel_compression, colormap=root_colormap, log_scale=log_scale)
+    
+def make_double_sided(mesh):
+    # Create a copy of the mesh with inverted normals
+    mesh_copy = mesh.copy()
+    mesh_copy.compute_normals(cell_normals=False, inplace=True)
+    mesh_copy.flip_normals()
+
+    # Combine the original mesh with the copied and flipped mesh
+    double_sided_mesh = mesh + mesh_copy
+    return double_sided_mesh

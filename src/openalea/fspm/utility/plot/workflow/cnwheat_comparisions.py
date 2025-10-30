@@ -1,5 +1,7 @@
 import os
 import pandas as pd
+import matplotlib
+matplotlib.use('Agg')
 from matplotlib.backends.backend_pdf import PdfPages
 import matplotlib.pyplot as plt
 
@@ -130,7 +132,7 @@ def roots(pdf, df_current_organs, df_ref_organs, meteo_data, tmin, tmax):
     pdf.savefig()  # saves the current figure into a pdf page
     plt.close()
 
-def dry_mass(pdf, df_current_axes, df_ref_axes, df_current_organs, df_ref_organs, meteo_data, tmin, tmax):
+def dry_mass(pdf, df_current_axes, df_ref_axes, df_current_organs, df_ref_organs, meteo_data, tmin, tmax, dirpath):
     fig, axs = plt.subplots(2, 2, sharex=True)
 
     # Dry mass shoot
@@ -178,7 +180,10 @@ def dry_mass(pdf, df_current_axes, df_ref_axes, df_current_organs, df_ref_organs
     ax2.spines['bottom'].set_position(('outward', 35))
 
     plt.tight_layout()
-    pdf.savefig()  # saves the current figure into a pdf page
+    if pdf is not None:
+        pdf.savefig()  # saves the current figure into a pdf page
+    else:
+        fig.savefig(os.path.join(dirpath, 'dry_mass.PNG'), dpi=720, format='PNG', bbox_inches='tight')
     plt.close()
 
     # shoot : root
@@ -197,7 +202,10 @@ def dry_mass(pdf, df_current_axes, df_ref_axes, df_current_organs, df_ref_organs
     ax2.xaxis.set_label_position('bottom')  # set the position of the second x-axis to bottom
     ax2.spines['bottom'].set_position(('outward', 35))
     plt.tight_layout()
-    pdf.savefig()  # saves the current figure into a pdf page
+    if pdf is not None:
+        pdf.savefig()  # saves the current figure into a pdf page
+    else:
+        fig.savefig(os.path.join(dirpath, 'shoot_root.PNG'), dpi=720, format='PNG', bbox_inches='tight')
     plt.close()
 
 
@@ -452,7 +460,7 @@ def compare_shoot_outputs(reference_dirpath, newsimu_dirpath, meteo_data_dirpath
 
     meteo_data = pd.read_csv(meteo_data_dirpath, index_col='t')
 
-    initial_date = pd.to_datetime("01/11/2000")
+    initial_date = pd.to_datetime("17/12/1998", dayfirst=True)
     
     # Conversion step from hours 
     meteo_data['Date'] = pd.to_datetime(meteo_data.index.values*1e9*3600 + int(initial_date.timestamp())*1e9)
@@ -499,14 +507,19 @@ def compare_shoot_outputs(reference_dirpath, newsimu_dirpath, meteo_data_dirpath
     df_ref_hz = df_ref_hz[df_ref_hz['axis'] == 'MS']
     df_ref_hz['t'] = df_ref_hz['t'] + delta_t_simuls
 
-    C_allocation(dirpath=newsimu_dirpath, df_org=df_current_organs, df_org_ref=df_ref_organs, 
-                 df_axe=df_current_axes, df_axe_ref=df_current_axes, df_elt=df_current_elements, df_elt_ref=df_ref_elements)
+    # C_allocation(dirpath=newsimu_dirpath, df_org=df_current_organs, df_org_ref=df_ref_organs, 
+    #              df_axe=df_current_axes, df_axe_ref=df_current_axes, df_elt=df_current_elements, df_elt_ref=df_ref_elements)
+    
 
     tmin = df_current_axes.t.min()
     tmax = df_current_axes.t.max()
 
+    # dry_mass(None, df_current_axes, df_ref_axes, df_current_organs, df_ref_organs, meteo_data, tmin, tmax, dirpath=newsimu_dirpath)
+    
     # plot graphs_dirpath
     with PdfPages(os.path.join(newsimu_dirpath, 'Comparison_Marion.pdf')) as pdf:
+
+        print("Trying to create output pdf")
         # phloem
         phloem(pdf, df_current_organs, df_ref_organs, meteo_data, tmin, tmax)
 
@@ -517,7 +530,7 @@ def compare_shoot_outputs(reference_dirpath, newsimu_dirpath, meteo_data_dirpath
         roots(pdf, df_current_organs, df_ref_organs, meteo_data, tmin, tmax)
 
         # dry mass & shoot : root
-        dry_mass(pdf, df_current_axes, df_ref_axes, df_current_organs, df_ref_organs, meteo_data, tmin, tmax)
+        dry_mass(pdf, df_current_axes, df_ref_axes, df_current_organs, df_ref_organs, meteo_data, tmin, tmax, dirpath=newsimu_dirpath)
 
         # N mass
         N_mass(pdf, df_current_axes, df_ref_axes, df_current_organs, df_ref_organs, meteo_data, tmin, tmax)

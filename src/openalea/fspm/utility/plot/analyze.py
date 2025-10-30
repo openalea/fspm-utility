@@ -42,7 +42,8 @@ import warnings
 # Very analysis-specific
 from scipy.stats import pearsonr
 
-from openalea.fspm.utility.writer.visualize import plot_mtg, plot_xr, custom_colorbar, unit_from_str, expand_compact_units, latex_unit_compact, unit_conversion, compress_gltf
+from openalea.fspm.utility.writer.visualize import plot_mtg, plot_xr, custom_colorbar, unit_from_str, expand_compact_units, latex_unit_compact, unit_conversion, compress_gltf, standalone_mtg_to_gltf
+from openalea.fspm.utility.writer.logging import usual_clims
 import openalea.plantgl.all as pgl
 
 from openalea.fspm.utility.plot.workflow.cnwheat_comparisions import compare_shoot_outputs
@@ -181,7 +182,7 @@ def has_enough_memory(required_gb):
 ureg = UnitRegistry()
 
 
-def analyze_data(scenarios, outputs_dirpath, inputs_dirpath, target_folder_key=None, on_sums=False, on_raw_logs=False, animate_raw_logs=False, on_soil_logs=False, on_shoot_logs=False, on_performance=False, on_images=False,
+def analyze_data(scenarios, outputs_dirpath, inputs_dirpath, target_folder_key=None, on_sums=False, on_raw_logs=False, animate_raw_logs=False, on_soil_logs=False, on_shoot_logs=False, on_performance=False, on_images=False, on_mtg=False,
                  target_properties=None, subdir_custom_name=None, **kwargs):
     # TODO if not available, return not performed
     print("[INFO] Starting data analysis")
@@ -191,7 +192,7 @@ def analyze_data(scenarios, outputs_dirpath, inputs_dirpath, target_folder_key=N
             if target_folder_key is None:
                 sums_folders = [os.path.join(outputs_dirpath, scenario, "MTG_properties/MTG_properties_summed")]
             else:
-                model_output_folders = os.listdir(os.path.join(outputs_dirpath, scenario))
+                model_output_folders = [file for file in os.listdir(os.path.join(outputs_dirpath, scenario)) if file not in ("Delete_to_Stop", "input_scenario.pckl")]
                 sums_folders = []
                 for f in model_output_folders:
                     if target_folder_key in f:
@@ -385,7 +386,7 @@ def analyze_data(scenarios, outputs_dirpath, inputs_dirpath, target_folder_key=N
                 
                 
                 # Plant scale C balance related
-                running = False
+                running = True
                 if running:
                     print("Starting balance plots summary")
                     if True:
@@ -416,7 +417,9 @@ def analyze_data(scenarios, outputs_dirpath, inputs_dirpath, target_folder_key=N
                                                     soil_data_dirpath=os.path.join("inputs", "meteo_Ljutovac2002_soil.csv"), only_MS=False)
                         WB.shoot_root_growth_cnwheat(shoot_outputs=shoot_outputs_cnwheat, outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"))
                         WB.shoot_root_CN_alloc(shoot_outputs=shoot_outputs_cnwheat, outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"), custom_suffix="CNW")
-                    print("Finished balance plots summar y")
+                        
+                        WB.shoot_root_mass_WB(shoot_outputs=shoot_outputs_with_MS, shoot_outputs_ref=shoot_outputs_cnwheat, dataset=scenario_dataset, outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"))
+                    print("Finished balance plots summary")
 
                 # Total correlation plots over time
                 running = False
@@ -465,7 +468,7 @@ def analyze_data(scenarios, outputs_dirpath, inputs_dirpath, target_folder_key=N
 
                         
                 # Plots along root axes
-                running = True
+                running = False
                 if running:
                     print("Starting production of scatter plots")
                     PAR_peak = True
@@ -858,6 +861,7 @@ def analyze_data(scenarios, outputs_dirpath, inputs_dirpath, target_folder_key=N
 
         print("     [INFO] Finished plotting raw logs")
 
+    # @note shoot logs
     if on_shoot_logs:
         for scenario in scenarios:
             print(" [INFO] Starting producing CN-Wheat plots...")
@@ -945,6 +949,28 @@ def analyze_data(scenarios, outputs_dirpath, inputs_dirpath, target_folder_key=N
         for file in os.listdir(outputdir):
             if file.endswith(".gltf"):
                 compress_gltf(os.path.join(outputdir, file))
+
+    if on_mtg:
+        outputdir = os.path.join(outputs_dirpath, scenarios[0], target_folder_key, 'MTG_files')
+        imagesdir = os.path.join(outputs_dirpath, scenarios[0], target_folder_key, 'root_images')
+        plotted_properties = ["C_hexose_root"]
+        unit = ["mol.g-1"]
+
+        for k, prop_name in enumerate(plotted_properties):
+            custom_colorbar(folderpath=imagesdir, label=prop_name, vmin=usual_clims[prop_name]["bounds"][0], vmax=usual_clims[prop_name]["bounds"][1], 
+                            colormap="jet", vertical=True, log_scale=usual_clims[prop_name]["show_as_log"], filename=f"{prop_name}_colorbar.png", unit=unit[k])
+
+        for file in os.listdir(outputdir):
+            if file.endswith(".pckl"):
+                with open(os.path.join(outputdir, file), "rb") as f:
+                    data_structures = pickle.load(f)
+
+                for prop_name in plotted_properties:
+                    standalone_mtg_to_gltf(root=data_structures["root"], shoot=data_structures["shoot"], plotted_property=prop_name, 
+                        output_file_path=os.path.join(imagesdir, f"{prop_name}_{file.split('.')[0]}.gltf"), 
+                        clim=usual_clims[prop_name]["bounds"], log_scale=usual_clims[prop_name]["show_as_log"], normalize_by=usual_clims[prop_name]["normalize_by"],
+                        )
+
 
 def test_output_range(outputs_dirpath, scenarios, test_file_dirpath):
     
@@ -3225,7 +3251,7 @@ class WB:
         delta_t_simuls = 0
         
         # initial_date = pd.to_datetime("01/11/2000") # NOTE: seems wrong!
-        initial_date = pd.to_datetime("17/12/1998")
+        initial_date = pd.to_datetime("17/12/1998", dayfirst=True)
 
         meteo_data = pd.read_csv(meteo_data_dirpath, index_col='t')
         # Conversion step from hours 
@@ -3567,16 +3593,36 @@ class WB:
                           daily_labile_C_shoot * ratio,
                           tot_Shoot_respiration * ratio,  
                           labels=[
-                "Root respiration",
-                "C rhizodeposition",
-                "C to root labile hexoses",
-                "C to root labile amino acids",
-                "C to root structural mass",
-                "C to shoot structural mass",
-                "C to shoot labile pools",
-                "Shoot respiration",
+                "C allocated to root respiration",
+                "C allocated to rhizodeposition",
+                "C in root labile hexoses",
+                "C in root labile amino acids",
+                "C allocated to root structural mass",
+                "C allocated to shoot structural mass",
+                "C in shoot labile pools",
+                "C allocated to shoot respiration",
+            ]               , colors=[
+                twenty_palette["blue"],
+                twenty_palette["orange"],
+                twenty_palette["green"],
+                twenty_palette["red"],
+                twenty_palette["purple"],
+                twenty_palette["brown"],
+                twenty_palette["kaki"],
+                twenty_palette["grey"]
             ])
             ax2.plot(time_scale, total_photo, c='black', label="C from photosynthesis")
+
+            if False:
+                print("Final_proportions")
+                print("root respi", 100 * (tot_root_respiration_C * ratio)[-1] / total_photo[-1])
+                print("root rhizodep", 100 * (total_rhizodeposition * ratio)[-1] / total_photo[-1])
+                print("root lab hex", 100 * (daily_net_labile_hex_C * ratio)[-1] / total_photo[-1])
+                print("root lab aa", 100 * (daily_net_Labile_aa_C * ratio)[-1] / total_photo[-1])
+                print("root struct", 100 * (tot_C_to_struct_root * ratio)[-1] / total_photo[-1])
+                print("shoot struct", 100 * (tot_C_to_struct_shoot * ratio)[-1] / total_photo[-1])
+                print("shoot labile C", 100 * (daily_labile_C_shoot * ratio)[-1] / total_photo[-1])
+                print("shoot respi", 100 * (tot_Shoot_respiration * ratio)[-1] / total_photo[-1])
 
             # Revert order
             handles, labels = ax2.get_legend_handles_labels()
@@ -4357,16 +4403,31 @@ class WB:
                           tot_N_to_struct_shoot * ratio,
                           daily_labile_N_shoot * ratio,
                           labels=[
-                "N rhizodeposition",
-                "Labile mineral N roots",
-                "Labile organic N roots",
-                "N to root structural mass",
-                "N to shoot structural mass",
-                "Labile N shoot",
+                "N allocated to rhizodeposition",
+                "N in roots labile mineral pools",
+                "N in roots labile organic pools",
+                "N allocated to root structural mass",
+                "N allocated to shoot structural mass",
+                "N in shoot labile pools",
+            ]              , colors=[
+                twenty_palette["orange"],
+                twenty_palette["lightgreen"],
+                twenty_palette["red"],
+                twenty_palette["purple"],
+                twenty_palette["brown"],
+                twenty_palette["kaki"]
             ])
             ax2.plot(time_scale, total_uptake, c='black', label="Net mineral N uptake")
             # ax2.plot(time_scale, daily_net_labile_C, label="Labile C roots")
             # ax2.plot(time_scale, daily_labile_C_shoot, label="Labile C shoot")
+            if False:
+                print("Final_proportions")
+                print("root rhizodep", 100 * (total_rhizodeposition * ratio)[-1] / total_uptake[-1])
+                print("root lab min", 100 * (daily_net_labile_Nm * ratio)[-1] / total_uptake[-1])
+                print("root lab org", 100 * (daily_net_labile_N_org * ratio)[-1] / total_uptake[-1])
+                print("root struct", 100 * (tot_N_to_struct_root * ratio)[-1] / total_uptake[-1])
+                print("shoot struct", 100 * (tot_N_to_struct_shoot * ratio)[-1] / total_uptake[-1])
+                print("shoot labile N", 100 * (daily_labile_N_shoot * ratio)[-1] / total_uptake[-1])
 
             handles, labels = ax2.get_legend_handles_labels()
             ax2.legend(handles[::-1], labels[::-1])
@@ -4718,8 +4779,13 @@ class WB:
 
     def shoot_root_growth_WB(shoot_outputs, dataset, outputs_dirpath, thermal_time=True, massic=False):
         df_axes = shoot_outputs["axes"]
+        df_hz = shoot_outputs["hz"]
+        df_elt = shoot_outputs["elements"]
+        df_hz['mstruct_tillers'] = df_hz['mstruct'] * df_hz['nb_replications']
+        df_elt['mstruct_tillers'] = df_elt['mstruct'] * df_elt['nb_replications']
+
         hours = df_axes["t"].to_numpy()[1:]
-        mstruct_shoot = df_axes["mstruct_shoot"].to_numpy()
+        mstruct_shoot = (df_hz.groupby('t')['mstruct_tillers'].sum() + df_elt.groupby('t')['mstruct_tillers'].sum()).to_numpy()
         shoot_struct_mass_produced = (mstruct_shoot[1:] - mstruct_shoot[:-1]) * 1e3
         shoot_struct_mass_produced[0] = 0.
 
@@ -4752,7 +4818,6 @@ class WB:
             time_scale = hours
 
         # Position leaf emergence
-        df_hz = shoot_outputs["hz"]
         df_hz['axis'] =  df_hz['axis'].apply(lambda x: x.decode('utf-8') if isinstance(x, (bytes, bytearray)) else x)
         emergences = {}
         for axis in ["MS", "T1", "T2", "T3", "T4"]:
@@ -4813,9 +4878,14 @@ class WB:
 
     def shoot_root_growth_cnwheat(shoot_outputs, outputs_dirpath, thermal_time=True, massic=False):
         df_axes = shoot_outputs["axes"]
+        df_hz = shoot_outputs["hz"]
+        df_elt = shoot_outputs["elements"]
+        df_org = shoot_outputs["organs"]
+        df_hz['mstruct_tillers'] = df_hz['mstruct'] * df_hz['nb_replications']
+        df_elt['mstruct_tillers'] = df_elt['mstruct'] * df_elt['nb_replications']
         hours = df_axes["t"].to_numpy()[1:]
-        mstruct_shoot = df_axes["mstruct_shoot"].to_numpy()
-        mstruct_root = df_axes["mstruct"].to_numpy() - mstruct_shoot
+        mstruct_shoot = (df_hz.groupby('t')['mstruct_tillers'].sum() + df_elt.groupby('t')['mstruct_tillers'].sum()).to_numpy()
+        mstruct_root = df_org[(df_org['organ'] == 'roots')].groupby('t')['mstruct'].sum().to_numpy()
         shoot_struct_mass_produced = (mstruct_shoot[1:] - mstruct_shoot[:-1])*1e3
         shoot_struct_mass_produced[0] = 0.
         root_struct_mass_produced = (mstruct_root[1:] - mstruct_root[:-1])*1e3
@@ -4848,7 +4918,6 @@ class WB:
 
 
         # Position leaf emergence
-        df_hz = shoot_outputs["hz"]
         df_hz['axis'] =  df_hz['axis'].apply(lambda x: x.decode('utf-8') if isinstance(x, (bytes, bytearray)) else x)
 
         emergences = {}
@@ -4907,6 +4976,84 @@ class WB:
             suffix += "_massic"
 
         fig.savefig(os.path.join(outputs_dirpath, f"shoot_root_growth_rates_CNW.png"), dpi=720, bbox_inches="tight")
+
+
+    def shoot_root_mass_WB(shoot_outputs, shoot_outputs_ref, dataset, outputs_dirpath, thermal_time=True, massic=False):
+        df_axes = shoot_outputs["axes"]
+        df_hz = shoot_outputs["hz"]
+        df_elt = shoot_outputs["elements"]
+        df_hz['mstruct_tillers'] = df_hz['mstruct'] * df_hz['nb_replications']
+        df_elt['mstruct_tillers'] = df_elt['mstruct'] * df_elt['nb_replications']
+
+        df_hz_ref = shoot_outputs_ref["hz"]
+        df_elt_ref = shoot_outputs_ref["elements"]
+        df_org_ref = shoot_outputs_ref["organs"]
+        df_hz_ref['mstruct_tillers'] = df_hz_ref['mstruct'] * df_hz_ref['nb_replications']
+        df_elt_ref['mstruct_tillers'] = df_elt_ref['mstruct'] * df_elt_ref['nb_replications']
+
+        hours = df_axes["t"].to_numpy()
+        
+        mstruct_shoot = (df_hz.groupby('t')['mstruct_tillers'].sum() + df_elt.groupby('t')['mstruct_tillers'].sum()).to_numpy()
+        mstruct_root = dataset["living_struct_mass"].sum(dim="vid").values
+        shoot_root_ratio = mstruct_shoot / mstruct_root
+
+        mstruct_shoot_ref = (df_hz_ref.groupby('t')['mstruct_tillers'].sum() + df_elt_ref.groupby('t')['mstruct_tillers'].sum()).to_numpy()
+        mstruct_root_ref = df_org_ref[(df_org_ref['organ'] == 'roots')].groupby('t')['mstruct'].sum().to_numpy()
+        shoot_root_ratio_ref = mstruct_shoot_ref / mstruct_root_ref
+    
+        if thermal_time:
+            df_meteo = shoot_outputs["meteo"]
+            df_meteo["t"] = df_meteo.index
+            shoot_thermal_time = df_meteo["air_temperature"].clip(lower=0.).cumsum().reindex(df_meteo.index) / 24.
+            days_thermal_time = [shoot_thermal_time.at[t] for t in hours]
+            time_scale = days_thermal_time
+
+            tt_hourly = shoot_thermal_time
+            # days since start from 't' in hours
+            days_hourly = (df_meteo['t'].to_numpy()) / 24
+
+            # Make mapping strictly monotonic (handle flat TT segments)
+            tt_u, idx = np.unique(tt_hourly, return_index=True)
+            days_u = days_hourly[idx]
+
+            def tt_to_days(tt):
+                tt = np.asarray(tt)
+                return np.interp(tt, tt_u, days_u)
+
+            def days_to_tt(days):
+                days = np.asarray(days)
+                return np.interp(days, days_u, tt_u)
+            
+        else:
+            time_scale = hours
+
+        fig, ax = plt.subplots()
+        ax.plot(time_scale, shoot_root_ratio_ref[1:], label="CN-Wheat")
+        ax.plot(time_scale, shoot_root_ratio, label="Wheat-BRIDGES")
+        ax.set_xlabel('Thermal time (°C.day)' if thermal_time else 'Time (days)')
+        if not massic:
+            ax.set_ylabel('Struct mass production (g per hour)')
+        else:
+            ax.set_ylabel('Struct mass production (g/g per hour)')
+
+        if thermal_time:
+            secax = ax.secondary_xaxis('bottom', functions=(tt_to_days, days_to_tt))
+            # Move it below the primary axis
+            secax.spines['bottom'].set_position(('outward', 35))  # pixels; adjust if needed
+            secax.set_xlabel('Time (days)')
+
+        ax.set_xlim([min(time_scale), max(time_scale)])
+        ax.set_ylim([-0.1, 2.0])
+        _range = ax.get_ylim()[1] - ax.get_ylim()[0]
+        ax.legend()
+
+        suffix = ''
+        if thermal_time:
+            suffix += "_thermal"
+        if massic:
+            suffix += "_massic"
+
+        fig.savefig(os.path.join(outputs_dirpath, f"shoot_root_mass_CNW_vs_WB.png"), dpi=720, bbox_inches="tight")
 
 
     def shoot_root_CN_alloc(shoot_outputs, outputs_dirpath, thermal_time=True, massic=False, custom_suffix=""):

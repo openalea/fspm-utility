@@ -122,7 +122,7 @@ class Logger:
     
     heavy_log = dict(recording_images=True, recording_off_screen=True, auto_camera_position=False,
                      plotted_property=plotted_property_continuous, flow_property=False, show_soil=False, imposed_clim=usual_clims[plotted_property_continuous]["bounds"], log_scale=usual_clims[plotted_property_continuous]["show_as_log"],
-                    recording_mtg=False,
+                    recording_mtg=True,
                     recording_raw=True,
                     final_snapshots=True,
                     export_3D_scene=True,
@@ -635,8 +635,14 @@ class Logger:
         return props_ds
 
     def recording_mtg_files(self):
+        export = {}
+        for data_type, data in self.data_structures.items():
+            if data_type == "root" or data_type == "soil":
+                export[data_type] = data
+            elif data_type =="shoot":
+                export[data_type] = shoot_plantgl_to_mesh(data)
         with open(os.path.join(self.MTG_files_dirpath, f'data_{self.simulation_time_in_hours}.pckl'), "wb") as f:
-            pickle.dump(self.data_structures, f)
+                pickle.dump(export, f)
 
     def index_mtg_axes(self, g):
         axis_index = g.property("axis_index")           
