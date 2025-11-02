@@ -18,13 +18,14 @@ import gc
 
 from openalea.mtg.traversal import pre_order2, post_order
 from openalea.mtg import turtle as turt
-from openalea.fspm.utility.writer.visualize import plot_mtg, plot_mtg_alt, soil_voxels_mesh, shoot_plantgl_to_mesh, VertexPicker, export_scene_to_gltf, custom_colorbar
+from openalea.fspm.utility.writer.visualize import plot_mtg, plot_mtg_alt, soil_voxels_mesh, shoot_plantgl_to_mesh, VertexPicker, export_scene_to_gltf, custom_colorbar, make_double_sided
 
 
 # with 24h static strategy
 usual_clims = dict(
     Nm=                             dict(bounds=[1e-4, 3e-3],   show_as_log=True,   normalize_by=None), 
-    hexose_exudation=               dict(bounds=[3e-14, 3e-12],  show_as_log=True,   normalize_by="length"),
+    # hexose_exudation=               dict(bounds=[3e-14, 3e-12],  show_as_log=True,   normalize_by="length"),
+    hexose_exudation=               dict(bounds=[1e-14, 1e-10],  show_as_log=True,   normalize_by=None),
     deficit_AA=               dict(bounds=[1e-13, 1e-9],  show_as_log=True,   normalize_by=None),
     deficit_hexose_root=               dict(bounds=[1e-14, 1e-10],  show_as_log=True,   normalize_by=None),
     AA=               dict(bounds=[1e-5, 1e-3],  show_as_log=True,   normalize_by=None),
@@ -59,6 +60,7 @@ usual_clims = dict(
     diffusion_AA_soil=          dict(bounds=[1e-12, 4e-11],           show_as_log=False,   normalize_by="length"), # prev 
     hexose_consumption_by_growth=          dict(bounds=[1e-14, 1e-10],           show_as_log=True,   normalize_by=None),
     hexose_diffusion_from_phloem=          dict(bounds=[1e-14, 1e-10],           show_as_log=True,   normalize_by=None),
+    sucrose_loading_in_phloem=          dict(bounds=[1e-14, 1e-10],           show_as_log=True,   normalize_by=None),
     N_metabolic_respiration=          dict(bounds=[1e-14, 1e-10],           show_as_log=True,   normalize_by=None),
     maintenance_respiration=          dict(bounds=[1e-14, 1e-10],           show_as_log=True,   normalize_by=None),
     axial_export_water_up_phloem=          dict(bounds=[-1e-12, 1e-12],           show_as_log=False,   normalize_by=None),
@@ -120,7 +122,7 @@ class Logger:
                     animate_raw_logs=True,
                     on_shoot_logs=False)
     
-    heavy_log = dict(recording_images=True, recording_off_screen=True, auto_camera_position=False,
+    heavy_log = dict(recording_images=False, recording_off_screen=True, auto_camera_position=False,
                      plotted_property=plotted_property_continuous, flow_property=False, show_soil=False, imposed_clim=usual_clims[plotted_property_continuous]["bounds"], log_scale=usual_clims[plotted_property_continuous]["show_as_log"],
                     recording_mtg=True,
                     recording_raw=True,
@@ -750,7 +752,8 @@ class Logger:
             for vid in shoot_meshes.keys():
                 if vid in self.shoot_current_meshes:
                     self.plotter.remove_actor(self.shoot_current_meshes[vid])
-                self.shoot_current_meshes[vid] = self.plotter.add_mesh(shoot_meshes[vid], color="lightgreen",
+                double_sided_mesh = make_double_sided(shoot_meshes[vid])
+                self.shoot_current_meshes[vid] = self.plotter.add_mesh(double_sided_mesh, color="lightgreen",
                                                                        show_edges=False, specular=1.)
 
         if self.auto_camera_position:

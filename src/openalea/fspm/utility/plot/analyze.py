@@ -379,176 +379,181 @@ def analyze_data(scenarios, outputs_dirpath, inputs_dirpath, target_folder_key=N
 
 
                 # @note CURRENT WHEAT-BRIDGES OUTPUTS FOCUS
-                running = False
-                # Experienced environmental conditions
-                if running:
-                    WB.environmental_conditions(shoot_outputs=shoot_outputs, dataset=scenario_dataset, outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"))
-                
-                
-                # Plant scale C balance related
                 running = True
                 if running:
-                    print("Starting balance plots summary")
-                    if True:
-                        # WB.plant_C_balance(shoot_outputs=shoot_outputs, dataset=scenario_dataset, outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"))
-                        WB.plant_C_balance_summary(shoot_outputs=shoot_outputs, dataset=scenario_dataset, outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"))
-                        # WB.plant_C_balance_io(shoot_outputs=shoot_outputs, dataset=scenario_dataset, outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"))
-                        # WB.root_C_balance_io(shoot_outputs=shoot_outputs, dataset=scenario_dataset, outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"))
-                        WB.root_C_balance_io(shoot_outputs=shoot_outputs, dataset=scenario_dataset, outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"), percentage=False)
-                        WB.root_C_balance_full(shoot_outputs=shoot_outputs, dataset=scenario_dataset, outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"), percentage=False)
-                        # WB.plant_C_balance(shoot_outputs=shoot_outputs, dataset=scenario_dataset, outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"), massic=True)
-                    
-                    if True:
-                        # WB.root_N_balance(shoot_outputs=shoot_outputs, dataset=scenario_dataset, outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"))
-                        WB.plant_N_balance_summary(shoot_outputs=shoot_outputs, dataset=scenario_dataset, outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"))
-                        WB.root_N_balance_full(shoot_outputs=shoot_outputs, dataset=scenario_dataset, outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"))
-                        # WB.root_N_balance(shoot_outputs=shoot_outputs, dataset=scenario_dataset, outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"), massic=True)
-                        # WB.root_synplasm_AA_balance(dataset=scenario_dataset, outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"))
-                    if True:
-                        shoot_outputs_with_MS = WB.open_shoot_outputs(scenario=scenarios[0],
-                                                    target_folder_key=target_folder_key,
-                                                    outputs_dirpath=outputs_dirpath, 
-                                                    meteo_data_dirpath=os.path.join("inputs", "meteo_Ljutovac2002.csv"),
-                                                    soil_data_dirpath=os.path.join("inputs", "meteo_Ljutovac2002_soil.csv"), only_MS=False)
-                        WB.shoot_root_growth_WB(shoot_outputs=shoot_outputs_with_MS, dataset=scenario_dataset, outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"))
-                        WB.shoot_root_CN_alloc(shoot_outputs=shoot_outputs_with_MS, outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"), custom_suffix="WB")
-                        shoot_outputs_cnwheat = WB.open_shoot_outputs(shoot_outputs_dirpath=os.path.join("inputs", "postprocessing"),
-                                                    meteo_data_dirpath=os.path.join("inputs", "meteo_Ljutovac2002.csv"),
-                                                    soil_data_dirpath=os.path.join("inputs", "meteo_Ljutovac2002_soil.csv"), only_MS=False)
-                        WB.shoot_root_growth_cnwheat(shoot_outputs=shoot_outputs_cnwheat, outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"))
-                        WB.shoot_root_CN_alloc(shoot_outputs=shoot_outputs_cnwheat, outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"), custom_suffix="CNW")
+
+                    running = False
+                    # Experienced environmental conditions
+                    if running:
+                        WB.environmental_conditions(shoot_outputs=shoot_outputs, dataset=scenario_dataset, outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"))
+
+
+                    # Plant scale C balance related
+                    running = False
+                    if running:
+                        print("Starting balance plots summary")
+                        if True:
+                            # WB.plant_C_balance(shoot_outputs=shoot_outputs, dataset=scenario_dataset, outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"))
+                            WB.plant_C_balance_summary(shoot_outputs=shoot_outputs, dataset=scenario_dataset, outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"))
+                            # WB.plant_C_balance_io(shoot_outputs=shoot_outputs, dataset=scenario_dataset, outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"))
+                            # WB.root_C_balance_io(shoot_outputs=shoot_outputs, dataset=scenario_dataset, outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"))
+                            WB.root_C_balance_io(shoot_outputs=shoot_outputs, dataset=scenario_dataset, outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"), percentage=False)
+                            WB.root_C_balance_full(shoot_outputs=shoot_outputs, dataset=scenario_dataset, outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"), percentage=False)
+                            # WB.plant_C_balance(shoot_outputs=shoot_outputs, dataset=scenario_dataset, outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"), massic=True)
                         
-                        WB.shoot_root_mass_WB(shoot_outputs=shoot_outputs_with_MS, shoot_outputs_ref=shoot_outputs_cnwheat, dataset=scenario_dataset, outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"))
-                    print("Finished balance plots summary")
-
-                # Total correlation plots over time
-                running = False
-                if running:
-                    print("Starting correlation plots over time")
-                    WB.XY_totals_all_times(dataset=scenario_dataset, x="Net_mineral_N_uptake", y="Raw_rhizodeposition", to_xunit="µmol/h", to_yunit="µmol/h", outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"))
-                    WB.XY_totals_all_times(dataset=scenario_dataset, x="Net_mineral_N_uptake", y="Raw_rhizodeposition", to_xunit="nmol/h", to_yunit="nmol/h", outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"), massic=True)
-                    print("Finished correlation plots over time")
-
-
-                # 2D heatmap for 1 axis
-                running = False
-                if running:
-                    print("Starting 2D heatmap on properties")
-                    chosen_root = 'adventitious_2'
-                    axis_dataset = scenario_dataset.where((scenario_dataset["axis_index"]==chosen_root).compute(), drop=True)
-                    # print("loading dataset")
-                    # axis_dataset = axis_dataset.load()
-                    axis_dataset["Lengthy_active_Ni_uptake"] = Indicators.compute(d=axis_dataset, formula = 'import_Nm / length')
-                    axis_dataset["Lengthy_water_Ni_uptake"] = Indicators.compute(d=axis_dataset, formula = '- apoplastic_Nm_soil_xylem / length')
-
-                    ymin,ymax = 0., 8.
-
-                    for var, (vmin, vmax) in {"Length-wise mineral N uptake": (0., 3e-10), "Length_wise_raw_rhizodeposition": (0., 2.5e-9),
-                                              "Length-wise N exudation": (0., 1e-11), "Length-wise_radial_import_water": (0, 4e-11)}.items():
-                        fig, ax = plt.subplots()
-
-                        # Replace non-finite values with NaN
-                        t_values = axis_dataset['t'].values / 24
-                        t_values = np.nan_to_num(t_values, nan=0.0)
-                        distance_values = axis_dataset['distance_from_tip'].values * 100
-                        distance_values = np.nan_to_num(distance_values, nan=0.0)
-                        data = axis_dataset[var].values
-                        mesh = ax.pcolormesh(t_values, distance_values, data, shading='auto', vmin=vmin, vmax=vmax)
-                        ax.set_ylim((ymin, ymax))
-
-                        # Add labels and colorbar
-                        ax.set_xlabel('Time (days)')
-                        ax.set_ylabel('Distance from root tip (cm)')
-                        fig.colorbar(mesh, ax=ax, label=var)
-
-                        fig.savefig(os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties", f"{var}_{chosen_root}.png"), bbox_inches="tight", dpi=720)
-                        plt.close()
-                    
-                    print("Finished 2D heatmap on properties")
-
-                        
-                # Plots along root axes
-                running = False
-                if running:
-                    print("Starting production of scatter plots")
-                    PAR_peak = True
-                    scenario_times = [26, 240, 720, 1392, 1488, 2400]
-
-                    if PAR_peak:
-                        scenario_times = [round(t/24) * 24 for t in scenario_times] # Max PAR
-                    else:
-                        scenario_times = [(round(t/24) * 24) + 12 for t in scenario_times] # night
-                    # scenario_times = [50, 100, 150, 300, 400, 500]
-                    scenario_dataset["Lengthy_active_Ni_uptake"] = Indicators.compute(d=scenario_dataset, formula = 'import_Nm / length')
-                    scenario_dataset["Lengthy_water_Ni_uptake"] = Indicators.compute(d=scenario_dataset, formula = '- apoplastic_Nm_soil_xylem / length')
-                    scenario_dataset["massic_hexose_consumption_by_growth"] = Indicators.compute(d=scenario_dataset, formula = 'hexose_consumption_by_growth / living_struct_mass')
-                    scenario_dataset["massic_amino_acids_consumption_by_growth"] = Indicators.compute(d=scenario_dataset, formula = 'amino_acids_consumption_by_growth / living_struct_mass')
-                    all = True
-                    if all:
-            
-                        for scenario_time in scenario_times:
-                            current_dataset = filter_dataset(scenario_dataset, time=scenario_time)
-
-                            seminal_dataset = current_dataset.where((current_dataset['axis_index'].astype(str).str.contains('seminal')).compute(), drop=True)
-                            nodal_dataset = current_dataset.where((current_dataset['axis_index'].astype(str).str.contains('adventitious')).compute(), drop=True)
-                            lateral_dataset = current_dataset.where((current_dataset["root_order"] > 1).compute(), drop=True)
-                            per_root_type_ds = dict(lateral=lateral_dataset, nodal=nodal_dataset, seminal=seminal_dataset)
-
-
-                            print(f"Producing 2D plots from Xarray at {scenario_time}h")
-                            suffix = f'_{scenario_time}_{"day" if PAR_peak else "night"}'
-                            WB.scatter_plots(per_root_type_ds, raw_dirpath, name_suffix=suffix, discrete=True, xlog=False)
-
-                            plt.close()
-                    else:
-                        chosen_root = ['seminal_2', 'adventitious_2']
-                        # print("loading")
-                        # scenario_dataset = scenario_dataset.load()
-                        axis_datasets = [scenario_dataset.where(scenario_dataset["axis_index"]==root) for root in chosen_root]
-            
-                        for scenario_time in scenario_times:
-                            print("scatter plots time", scenario_time)
-                            current_datasets = [filter_dataset(ds, time=scenario_time) for ds in axis_datasets]
-                            per_root_type_ds = dict(zip(chosen_root, current_datasets))
-
-                            print(f"Producing 2D plots from Xarray at {scenario_time}h")
+                        if True:
+                            # WB.root_N_balance(shoot_outputs=shoot_outputs, dataset=scenario_dataset, outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"))
+                            WB.plant_N_balance_summary(shoot_outputs=shoot_outputs, dataset=scenario_dataset, outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"))
+                            WB.root_N_balance_full(shoot_outputs=shoot_outputs, dataset=scenario_dataset, outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"))
+                            # WB.root_N_balance(shoot_outputs=shoot_outputs, dataset=scenario_dataset, outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"), massic=True)
+                            # WB.root_synplasm_AA_balance(dataset=scenario_dataset, outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"))
+                        if True:
+                            shoot_outputs_with_MS = WB.open_shoot_outputs(scenario=scenarios[0],
+                                                        target_folder_key=target_folder_key,
+                                                        outputs_dirpath=outputs_dirpath, 
+                                                        meteo_data_dirpath=os.path.join("inputs", "meteo_Ljutovac2002.csv"),
+                                                        soil_data_dirpath=os.path.join("inputs", "meteo_Ljutovac2002_soil.csv"), only_MS=False)
+                            WB.shoot_root_growth_WB(shoot_outputs=shoot_outputs_with_MS, dataset=scenario_dataset, outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"))
+                            WB.shoot_root_CN_alloc(shoot_outputs=shoot_outputs_with_MS, outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"), custom_suffix="WB")
+                            shoot_outputs_cnwheat = WB.open_shoot_outputs(shoot_outputs_dirpath=os.path.join("inputs", "postprocessing"),
+                                                        meteo_data_dirpath=os.path.join("inputs", "meteo_Ljutovac2002.csv"),
+                                                        soil_data_dirpath=os.path.join("inputs", "meteo_Ljutovac2002_soil.csv"), only_MS=False)
+                            WB.shoot_root_growth_cnwheat(shoot_outputs=shoot_outputs_cnwheat, outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"))
+                            WB.shoot_root_CN_alloc(shoot_outputs=shoot_outputs_cnwheat, outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"), custom_suffix="CNW")
                             
-                            WB.scatter_plots(per_root_type_ds, raw_dirpath, name_suffix=f"_{scenario_time}", discrete=True, xlog=False)
+                            WB.shoot_root_mass_WB(shoot_outputs=shoot_outputs_with_MS, shoot_outputs_ref=shoot_outputs_cnwheat, dataset=scenario_dataset, outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"))
+                        print("Finished balance plots summary")
 
-                            plt.close()
+                    # Total correlation plots over time
+                    running = True
+                    if running:
+                        print("Starting correlation plots over time")
+                        WB.XY_totals_all_times(dataset=scenario_dataset, x="Net_mineral_N_uptake", y="Raw_rhizodeposition", to_xunit="µmol/h", to_yunit="µmol/h", outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"))
+                        WB.XY_totals_all_times(dataset=scenario_dataset, x="Net_mineral_N_uptake", y="Raw_rhizodeposition", to_xunit="nmol/h", to_yunit="nmol/h", outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"), massic=True)
+                        print("Finished correlation plots over time")
 
-                    print("Finished production of scatter plots")
 
-                # Cumsum related
-                running = False
-                if running:
-                    print("Starting Root-CyNAPS plots on most active root zones contribution")
-                    scenario_times = [240, 720, 1392, 1488, 2400]
-                    commentaries = []
-                    df_soil = shoot_outputs['soil_meteo']
-                    df_axe = shoot_outputs["axes"]
-                    df_axe['day'] = df_axe['t'] // 24 + 1
-                    Total_Photosynthesis = df_axe.groupby(['day'])['Tillers_Photosynthesis'].agg('sum')
+                    # 2D heatmap for 1 axis
+                    running = True
+                    if running:
+                        print("Starting 2D heatmap on properties")
+                        chosen_roots = ['seminal_2', 'adventitious_2', 'lateral_11']
+                        for chosen_root in chosen_roots:
+                            axis_dataset = scenario_dataset.where((scenario_dataset["axis_index"]==chosen_root).compute(), drop=True)
+                            # print("loading dataset")
+                            # axis_dataset = axis_dataset.load()
+                            axis_dataset["Lengthy_active_Ni_uptake"] = Indicators.compute(d=axis_dataset, formula = 'import_Nm / length')
+                            axis_dataset["Lengthy_water_Ni_uptake"] = Indicators.compute(d=axis_dataset, formula = '- apoplastic_Nm_soil_xylem / length')
 
-                    for t in scenario_times:
-                        print("preparing ", t)
-                        day = round(t / 24 + 1)
-                        temperature = round(df_soil['soil_temperature'].at[t], 1)
-                        current_dataset = filter_dataset(dataset, time=t)
-                        nitrates = round(float(current_dataset["soil_Nm"].mean().values), 1)
-                        photosynthesis = round(Total_Photosynthesis.at[day])
-                        commentaries += [f"day {day} | {temperature}°C | {nitrates} mM | {photosynthesis} µmol/d"]
-                        del current_dataset
-                    
-                    flows = ["Net_mineral_N_uptake", "Raw_rhizodeposition", "Net_AA_Exudation", "radial_import_water_xylem"]
-                    
-                    fdataset = dataset[flows + ["length"]]
-                    fdataset.load()
-                    for flow in flows:
-                        print("cumsum for ", flow)
-                        WB.most_active_cumsum(fdataset, flow, scenario_times=scenario_times, commentaries = commentaries,
-                                            outputs_dirpath=raw_dirpath)
-                    print("Finished Root-CyNAPS plots on most active root zones contribution")
+                            ymin,ymax = 0., 8.
+
+                            for var, (vmin, vmax) in {"Length-wise mineral N uptake": (0., 3e-10), "Length_wise_raw_rhizodeposition": (0., 2.5e-9),
+                                                    "Length-wise N exudation": (0., 1e-11), "Length-wise_radial_import_water": (0, 4e-11)}.items():
+                                fig, ax = plt.subplots()
+
+                                # Replace non-finite values with NaN
+                                t_values = axis_dataset['t'].values / 24
+                                t_values = np.nan_to_num(t_values, nan=0.0)
+                                distance_values = axis_dataset['distance_from_tip'].values * 100
+                                distance_values = np.nan_to_num(distance_values, nan=0.0)
+                                data = axis_dataset[var].values
+                                mesh = ax.pcolormesh(t_values, distance_values, data, shading='auto', vmin=vmin, vmax=vmax)
+                                ax.set_ylim((ymin, ymax))
+
+                                # Add labels and colorbar
+                                ax.set_xlabel('Time (days)')
+                                ax.set_ylabel('Distance from root tip (cm)')
+                                fig.colorbar(mesh, ax=ax, label=var)
+
+                                fig.savefig(os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties", f"{var}_{chosen_root}.png"), bbox_inches="tight", dpi=720)
+                                plt.close()
+                        
+                        print("Finished 2D heatmap on properties")
+
+                            
+                    # Plots along root axes
+                    running = False
+                    if running:
+                        print("Starting production of scatter plots")
+                        PAR_peak = True
+                        scenario_times = [26, 240, 720, 1392, 1488, 2400]
+
+                        if PAR_peak:
+                            scenario_times = [round(t/24) * 24 for t in scenario_times] # Max PAR
+                        else:
+                            scenario_times = [(round(t/24) * 24) + 12 for t in scenario_times] # night
+                        # scenario_times = [50, 100, 150, 300, 400, 500]
+                        scenario_dataset["Lengthy_active_Ni_uptake"] = Indicators.compute(d=scenario_dataset, formula = 'import_Nm / length')
+                        scenario_dataset["Lengthy_water_Ni_uptake"] = Indicators.compute(d=scenario_dataset, formula = '- apoplastic_Nm_soil_xylem / length')
+                        scenario_dataset["massic_hexose_consumption_by_growth"] = Indicators.compute(d=scenario_dataset, formula = 'hexose_consumption_by_growth / living_struct_mass')
+                        scenario_dataset["massic_amino_acids_consumption_by_growth"] = Indicators.compute(d=scenario_dataset, formula = 'amino_acids_consumption_by_growth / living_struct_mass')
+                        all = True
+                        if all:
+                
+                            for scenario_time in scenario_times:
+                                current_dataset = filter_dataset(scenario_dataset, time=scenario_time)
+
+                                seminal_dataset = current_dataset.where((current_dataset['axis_index'].astype(str).str.contains('seminal')).compute(), drop=True)
+                                nodal_dataset = current_dataset.where((current_dataset['axis_index'].astype(str).str.contains('adventitious')).compute(), drop=True)
+                                lateral_dataset = current_dataset.where((current_dataset["root_order"] > 1).compute(), drop=True)
+                                per_root_type_ds = dict(lateral=lateral_dataset, nodal=nodal_dataset, seminal=seminal_dataset)
+
+
+                                print(f"Producing 2D plots from Xarray at {scenario_time}h")
+                                suffix = f'_{scenario_time}_{"day" if PAR_peak else "night"}'
+                                WB.scatter_plots(per_root_type_ds, raw_dirpath, name_suffix=suffix, discrete=True, xlog=False)
+
+                                plt.close()
+                        else:
+                            chosen_root = ['seminal_2', 'adventitious_2']
+                            # print("loading")
+                            # scenario_dataset = scenario_dataset.load()
+                            axis_datasets = [scenario_dataset.where(scenario_dataset["axis_index"]==root) for root in chosen_root]
+                
+                            for scenario_time in scenario_times:
+                                print("scatter plots time", scenario_time)
+                                current_datasets = [filter_dataset(ds, time=scenario_time) for ds in axis_datasets]
+                                per_root_type_ds = dict(zip(chosen_root, current_datasets))
+
+                                print(f"Producing 2D plots from Xarray at {scenario_time}h")
+                                
+                                WB.scatter_plots(per_root_type_ds, raw_dirpath, name_suffix=f"_{scenario_time}", discrete=True, xlog=False)
+
+                                plt.close()
+
+                        print("Finished production of scatter plots")
+
+                    # Cumsum related
+                    running = False
+                    if running:
+                        print("Starting Root-CyNAPS plots on most active root zones contribution")
+                        scenario_times = [240, 720, 1392, 1488, 2400]
+                        commentaries = []
+                        df_soil = shoot_outputs['soil_meteo']
+                        df_axe = shoot_outputs["axes"]
+                        df_axe['day'] = df_axe['t'] // 24 + 1
+                        Total_Photosynthesis = df_axe.groupby(['day'])['Tillers_Photosynthesis'].agg('sum')
+
+                        for t in scenario_times:
+                            print("preparing ", t)
+                            day = round(t / 24 + 1)
+                            temperature = round(df_soil['soil_temperature'].at[t], 1)
+                            current_dataset = filter_dataset(dataset, time=t)
+                            nitrates = round(float(current_dataset["soil_Nm"].mean().values), 1)
+                            photosynthesis = round(Total_Photosynthesis.at[day])
+                            commentaries += [f"day {day} | {temperature}°C | {nitrates} mM | {photosynthesis} µmol/d"]
+                            del current_dataset
+                        
+                        flows = ["Net_mineral_N_uptake", "Raw_rhizodeposition", "Net_AA_Exudation", "radial_import_water_xylem"]
+                        
+                        fdataset = dataset[flows + ["length"]]
+                        fdataset.load()
+                        for flow in flows:
+                            print("cumsum for ", flow)
+                            WB.most_active_cumsum(fdataset, flow, scenario_times=scenario_times, commentaries = commentaries,
+                                                outputs_dirpath=raw_dirpath)
+                        print("Finished Root-CyNAPS plots on most active root zones contribution")
+
 
 
                 ### Fig 1 c related
@@ -953,21 +958,27 @@ def analyze_data(scenarios, outputs_dirpath, inputs_dirpath, target_folder_key=N
     if on_mtg:
         outputdir = os.path.join(outputs_dirpath, scenarios[0], target_folder_key, 'MTG_files')
         imagesdir = os.path.join(outputs_dirpath, scenarios[0], target_folder_key, 'root_images')
-        plotted_properties = ["C_hexose_root"]
-        unit = ["mol.g-1"]
+        plotted_properties = ["C_hexose_root", "hexose_exudation", "hexose_diffusion_from_phloem", "sucrose_loading_in_phloem", "hexose_consumption_by_growth", "Cv_sucrose_root", "Cv_hexose_root"]
+        unit = ["mol.g-1"] + (["mol.s-1"] * 4) + (["mol.m-3"] * 2)
+        # plotted_properties = ["Cv_hexose_root", "Cv_sucrose_root"]
+        # unit = ["mol.g-1", "mol.g-1"]
+        # plotted_properties = ["maintenance_respiration"]
+        # unit = ["mol.s-1"]
 
         for k, prop_name in enumerate(plotted_properties):
             custom_colorbar(folderpath=imagesdir, label=prop_name, vmin=usual_clims[prop_name]["bounds"][0], vmax=usual_clims[prop_name]["bounds"][1], 
                             colormap="jet", vertical=True, log_scale=usual_clims[prop_name]["show_as_log"], filename=f"{prop_name}_colorbar.png", unit=unit[k])
-
-        for file in os.listdir(outputdir):
-            if file.endswith(".pckl"):
+        plot_every = 10
+        file_list = [f for f in os.listdir(outputdir) if f.endswith(".pckl")]
+        for i, file in enumerate(file_list):
+            time = int(file.split('.')[0].split('_')[1])
+            if (i % plot_every == 0) or (i in (0, len(file_list)-1)):
                 with open(os.path.join(outputdir, file), "rb") as f:
                     data_structures = pickle.load(f)
 
                 for prop_name in plotted_properties:
                     standalone_mtg_to_gltf(root=data_structures["root"], shoot=data_structures["shoot"], plotted_property=prop_name, 
-                        output_file_path=os.path.join(imagesdir, f"{prop_name}_{file.split('.')[0]}.gltf"), 
+                        output_file_path=os.path.join(imagesdir, f"{prop_name}_{time:04d}.gltf"),
                         clim=usual_clims[prop_name]["bounds"], log_scale=usual_clims[prop_name]["show_as_log"], normalize_by=usual_clims[prop_name]["normalize_by"],
                         )
 
@@ -4748,6 +4759,7 @@ class WB:
         ax[0].set_ylabel('Daily average air temperature (°C)')
         ax[1].set_ylabel('Daily incident PAR (µmol/m2)')
         ax[2].set_ylabel('Soil mineral N concentrations (mM)')
+        ax[2].set_ylim([0, 2.75])
 
         fig.savefig(os.path.join(outputs_dirpath, "perceived_env.png"), dpi=720)
 
@@ -5150,14 +5162,15 @@ class WB:
         
         dsx = dataset[x].sum(dim="vid").values * x_conversion
         dsy = dataset[y].sum(dim="vid").values * y_conversion
+        dst = dataset.t.values
         if massic:
             mass = dataset["living_struct_mass"].sum(dim="vid").values * 1000
             dsx /= mass
             dsy /= mass
 
         fig, ax = plt.subplots(figsize=(6.4, 4.8))
-        ax.plot(dsx, dsy, c="black")
-        ax.legend()
+        im = ax.scatter(dsx, dsy, c=dst)
+        fig.colorbar(im, ax=ax)
         ax.set_xlabel(f"summed {x.replace("_", " ")} at each time step ({x_unit})")
         ax.set_ylabel(f"summed {y.replace("_", " ")} at each time step ({y_unit})")
 
