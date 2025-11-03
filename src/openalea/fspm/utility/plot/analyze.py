@@ -381,16 +381,17 @@ def analyze_data(scenarios, outputs_dirpath, inputs_dirpath, target_folder_key=N
                 # @note CURRENT WHEAT-BRIDGES OUTPUTS FOCUS
                 running = True
                 if running:
+                    all_true = False
 
                     running = False
                     # Experienced environmental conditions
-                    if running:
+                    if running or all_true:
                         WB.environmental_conditions(shoot_outputs=shoot_outputs, dataset=scenario_dataset, outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"))
 
 
                     # Plant scale C balance related
                     running = False
-                    if running:
+                    if running or all_true:
                         print("Starting balance plots summary")
                         if True:
                             # WB.plant_C_balance(shoot_outputs=shoot_outputs, dataset=scenario_dataset, outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"))
@@ -425,8 +426,8 @@ def analyze_data(scenarios, outputs_dirpath, inputs_dirpath, target_folder_key=N
                         print("Finished balance plots summary")
 
                     # Total correlation plots over time
-                    running = True
-                    if running:
+                    running = False
+                    if running or all_true:
                         print("Starting correlation plots over time")
                         WB.XY_totals_all_times(dataset=scenario_dataset, x="Net_mineral_N_uptake", y="Raw_rhizodeposition", to_xunit="µmol/h", to_yunit="µmol/h", outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"))
                         WB.XY_totals_all_times(dataset=scenario_dataset, x="Net_mineral_N_uptake", y="Raw_rhizodeposition", to_xunit="nmol/h", to_yunit="nmol/h", outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"), massic=True)
@@ -435,9 +436,10 @@ def analyze_data(scenarios, outputs_dirpath, inputs_dirpath, target_folder_key=N
 
                     # 2D heatmap for 1 axis
                     running = True
-                    if running:
+                    if running or all_true:
                         print("Starting 2D heatmap on properties")
-                        chosen_roots = ['seminal_2', 'adventitious_2', 'lateral_11']
+                        chosen_roots = ['seminal_2', 'adventitious_6', 'lateral_50']
+                        # chosen_roots = [f'lateral_{k+1}' for k in range(50)]
                         for chosen_root in chosen_roots:
                             axis_dataset = scenario_dataset.where((scenario_dataset["axis_index"]==chosen_root).compute(), drop=True)
                             # print("loading dataset")
@@ -447,7 +449,7 @@ def analyze_data(scenarios, outputs_dirpath, inputs_dirpath, target_folder_key=N
 
                             ymin,ymax = 0., 8.
 
-                            for var, (vmin, vmax) in {"Length-wise mineral N uptake": (0., 3e-10), "Length_wise_raw_rhizodeposition": (0., 2.5e-9),
+                            for var, (vmin, vmax) in {"Length-wise mineral N uptake": (0., 2e-10), "Length_wise_raw_rhizodeposition": (0., 8e-10),
                                                     "Length-wise N exudation": (0., 1e-11), "Length-wise_radial_import_water": (0, 4e-11)}.items():
                                 fig, ax = plt.subplots()
 
@@ -459,6 +461,8 @@ def analyze_data(scenarios, outputs_dirpath, inputs_dirpath, target_folder_key=N
                                 data = axis_dataset[var].values
                                 mesh = ax.pcolormesh(t_values, distance_values, data, shading='auto', vmin=vmin, vmax=vmax)
                                 ax.set_ylim((ymin, ymax))
+                                xlim_eff = ax.get_xlim()
+                                ax.set_xlim([0, xlim_eff[1]])
 
                                 # Add labels and colorbar
                                 ax.set_xlabel('Time (days)')
@@ -473,10 +477,10 @@ def analyze_data(scenarios, outputs_dirpath, inputs_dirpath, target_folder_key=N
                             
                     # Plots along root axes
                     running = False
-                    if running:
+                    if running or all_true:
                         print("Starting production of scatter plots")
                         PAR_peak = True
-                        scenario_times = [26, 240, 720, 1392, 1488, 2400]
+                        scenario_times = [20*24, 57*24, 100*24]
 
                         if PAR_peak:
                             scenario_times = [round(t/24) * 24 for t in scenario_times] # Max PAR
@@ -525,9 +529,14 @@ def analyze_data(scenarios, outputs_dirpath, inputs_dirpath, target_folder_key=N
 
                     # Cumsum related
                     running = False
-                    if running:
+                    if running or all_true:
                         print("Starting Root-CyNAPS plots on most active root zones contribution")
-                        scenario_times = [240, 720, 1392, 1488, 2400]
+                        PAR_peak = True
+                        scenario_times = [20*24, 57*24, 100*24]
+                        if PAR_peak:
+                            scenario_times = [round(t/24) * 24 for t in scenario_times] # Max PAR
+                        else:
+                            scenario_times = [(round(t/24) * 24) + 12 for t in scenario_times] # night
                         commentaries = []
                         df_soil = shoot_outputs['soil_meteo']
                         df_axe = shoot_outputs["axes"]
@@ -553,6 +562,26 @@ def analyze_data(scenarios, outputs_dirpath, inputs_dirpath, target_folder_key=N
                             WB.most_active_cumsum(fdataset, flow, scenario_times=scenario_times, commentaries = commentaries,
                                                 outputs_dirpath=raw_dirpath)
                         print("Finished Root-CyNAPS plots on most active root zones contribution")
+
+                    # Single roots related
+                    running = False
+                    if running or all_true:
+                        PAR_peak = True
+                        scenario_times = [20*24, 57*24, 100*24]
+                        # scenario_times = [20*24, 60*24, 100*24]
+                        # scenario_times = [(k+1)*10*24 for k in range(10)]
+                        if PAR_peak:
+                            scenario_times = [round(t/24) * 24 for t in scenario_times] # Max PAR
+                        else:
+                            scenario_times = [(round(t/24) * 24) + 12 for t in scenario_times] # night
+                        WB.along_dist_from_tip_comp(dataset, variables=["Length_wise_raw_rhizodeposition", "Length-wise mineral N uptake"], 
+                                                    to_units=["nmol/(cm.h)", "nmol/(cm.h)"], 
+                                                    target_roots=["seminal_2", "adventitious_6", "lateral_50"],
+                                                    target_times=scenario_times, 
+                                                    outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"),
+                                                    xlim=[0, 0.1], 
+                                                    ylims=[(0, 40), (0, 12)]
+                                                    )
 
 
 
@@ -956,23 +985,25 @@ def analyze_data(scenarios, outputs_dirpath, inputs_dirpath, target_folder_key=N
                 compress_gltf(os.path.join(outputdir, file))
 
     if on_mtg:
+        # @note generate 3d plots from MTG
         outputdir = os.path.join(outputs_dirpath, scenarios[0], target_folder_key, 'MTG_files')
         imagesdir = os.path.join(outputs_dirpath, scenarios[0], target_folder_key, 'root_images')
-        plotted_properties = ["C_hexose_root", "hexose_exudation", "hexose_diffusion_from_phloem", "sucrose_loading_in_phloem", "hexose_consumption_by_growth", "Cv_sucrose_root", "Cv_hexose_root"]
-        unit = ["mol.g-1"] + (["mol.s-1"] * 4) + (["mol.m-3"] * 2)
+        # plotted_properties = ["C_hexose_root", "hexose_exudation", "hexose_diffusion_from_phloem", "sucrose_loading_in_phloem", "hexose_consumption_by_growth", "Cv_sucrose_root", "Cv_hexose_root"]
+        # unit = ["mol.g-1"] + (["mol.s-1"] * 4) + (["mol.m-3"] * 2)
         # plotted_properties = ["Cv_hexose_root", "Cv_sucrose_root"]
         # unit = ["mol.g-1", "mol.g-1"]
-        # plotted_properties = ["maintenance_respiration"]
-        # unit = ["mol.s-1"]
+        plotted_properties = ["hexose_exudation"]
+        unit = ["mol.s-1.m-1"]
 
         for k, prop_name in enumerate(plotted_properties):
             custom_colorbar(folderpath=imagesdir, label=prop_name, vmin=usual_clims[prop_name]["bounds"][0], vmax=usual_clims[prop_name]["bounds"][1], 
                             colormap="jet", vertical=True, log_scale=usual_clims[prop_name]["show_as_log"], filename=f"{prop_name}_colorbar.png", unit=unit[k])
-        plot_every = 10
+        plot_every = 1
         file_list = [f for f in os.listdir(outputdir) if f.endswith(".pckl")]
+        systematic_plots = (0, len(file_list)-1, file_list.index("data_480.pckl"), file_list.index("data_1368.pckl"), file_list.index("data_2400.pckl"))
         for i, file in enumerate(file_list):
             time = int(file.split('.')[0].split('_')[1])
-            if (i % plot_every == 0) or (i in (0, len(file_list)-1)):
+            if (i % plot_every == 0) or (i in systematic_plots):
                 with open(os.path.join(outputdir, file), "rb") as f:
                     data_structures = pickle.load(f)
 
@@ -3245,13 +3276,21 @@ class WB:
         #                                         discrete=discrete, s=s, xlog=xlog, name_suffix=name_suffix, to_xunit="mmol/g", xlim=xlim, to_yunit="nmol/(cm.h)", ylim=ylim, figsize=figsize, show_correlation=correlations)
         # fig, ax = XarrayPlotting.scatter_xarray(scenario_datasets, outputs_dirpath=outputs_path, x="Length-wise root exchange surface", y="Length-wise mineral N uptake", c=c, 
         #                                         discrete=discrete, s=s, xlog=xlog, name_suffix=name_suffix, to_xunit="m", xlim=xlim, to_yunit="nmol/(cm.h)", ylim=ylim, figsize=figsize, show_correlation=correlations)
-        local_ylim = (-0.2, 4.5) 
-        fig, ax = XarrayPlotting.scatter_xarray(scenario_datasets, outputs_dirpath=outputs_path, x="Length_wise_raw_rhizodeposition", y="Length-wise mineral N uptake", c=c, 
-                                                discrete=discrete, s=s, xlog=xlog, name_suffix=name_suffix, to_xunit="nmol/(cm.h)", xlim=(0, 35), to_yunit="nmol/(cm.h)", ylim=local_ylim, figsize=figsize, show_correlation=correlations)
-        fig, ax = XarrayPlotting.scatter_xarray(scenario_datasets, outputs_dirpath=outputs_path, x="Length-wise_radial_import_water", y="Length-wise mineral N uptake", c=c, 
-                                                discrete=discrete, s=s, xlog=xlog, name_suffix=name_suffix, to_xunit="µL/(cm.h)", xlim=(-0.6, 0.9), to_yunit="nmol/(cm.h)", ylim=local_ylim, figsize=figsize, show_correlation=correlations)
-        fig, ax = XarrayPlotting.scatter_xarray(scenario_datasets, outputs_dirpath=outputs_path, x="Length-wise N exudation", y="Length-wise mineral N uptake", c=c, 
-                                                discrete=discrete, s=s, xlog=xlog, name_suffix=name_suffix, to_xunit="nmol/(cm.h)", xlim=(0, 0.5), to_yunit="nmol/(cm.h)", ylim=local_ylim, figsize=figsize, show_correlation=correlations)
+        # local_xlim = (0, 16) 
+        local_xlim = None
+        # local_ylim = None
+        # local_xlim = (0, 35) 
+        local_ylim = (-5, 100)
+        fig, ax = XarrayPlotting.scatter_xarray(scenario_datasets, outputs_dirpath=outputs_path, y="Length_wise_raw_rhizodeposition", x="Length-wise mineral N uptake", c=c, 
+                                                discrete=discrete, s=s, xlog=xlog, name_suffix=name_suffix, to_yunit="nmol/(cm.h)", xlim=local_xlim, to_xunit="nmol/(cm.h)", ylim=local_ylim, figsize=figsize, show_correlation=correlations)
+        # local_xlim =  (-0.6, 0.9)
+        local_xlim = None
+        fig, ax = XarrayPlotting.scatter_xarray(scenario_datasets, outputs_dirpath=outputs_path, y="Length-wise_radial_import_water", x="Length-wise mineral N uptake", c=c, 
+                                                discrete=discrete, s=s, xlog=xlog, name_suffix=name_suffix, to_yunit="µL/(cm.h)", xlim=local_xlim, to_xunit="nmol/(cm.h)", ylim=local_ylim, figsize=figsize, show_correlation=correlations)
+        # local_xlim =  (0, 0.5)
+        local_xlim = None
+        fig, ax = XarrayPlotting.scatter_xarray(scenario_datasets, outputs_dirpath=outputs_path, y="Length-wise N exudation", x="Length-wise mineral N uptake", c=c, 
+                                                discrete=discrete, s=s, xlog=xlog, name_suffix=name_suffix, to_yunit="nmol/(cm.h)", xlim=local_xlim, to_xunit="nmol/(cm.h)", ylim=local_ylim, figsize=figsize, show_correlation=correlations)
     
     def open_shoot_outputs(outputs_dirpath="", meteo_data_dirpath="", soil_data_dirpath="", scenario="", target_folder_key=None, shoot_outputs_dirpath=None, only_MS=True):
         
@@ -3624,8 +3663,8 @@ class WB:
             ])
             ax2.plot(time_scale, total_photo, c='black', label="C from photosynthesis")
 
-            if False:
-                print("Final_proportions")
+            if True:
+                print("Final_proportions C")
                 print("root respi", 100 * (tot_root_respiration_C * ratio)[-1] / total_photo[-1])
                 print("root rhizodep", 100 * (total_rhizodeposition * ratio)[-1] / total_photo[-1])
                 print("root lab hex", 100 * (daily_net_labile_hex_C * ratio)[-1] / total_photo[-1])
@@ -4345,10 +4384,11 @@ class WB:
 
         dataset['day'] = (np.floor(dataset['t'] / 24) + 1).astype('int64')
         dataset = dataset.set_coords('day')
+        struct_mass_N_content = 0.005
         net_mineral_N_active_uptake = Indicators.compute(d=dataset, formula="import_Nm + mycorrhizal_mediated_import_Nm - diffusion_Nm_soil").sum(dim="vid") * 1e6 * 3600
         water_driven_N_uptake = - dataset["apoplastic_Nm_soil_xylem"].sum(dim="vid") * 1e6 * 3600
         net_AA_exudation_N = Indicators.compute(d=dataset, formula="diffusion_AA_soil + apoplastic_AA_soil_xylem - import_AA").sum(dim="vid") * 1e6 * 3600 * 1.4
-        root_struct_mass_produced_N = dataset["struct_mass_produced"].sum(dim="vid") * 1e6 * 0.0173 / 14
+        root_struct_mass_produced_N = dataset["struct_mass_produced"].sum(dim="vid") * 1e6 * struct_mass_N_content / 14
         Labile_Nm = Indicators.compute(d=dataset, formula="living_struct_mass*(Nm + xylem_Nm)").sum(dim="vid") * 1e6
         Labile_Nm_deficit = Indicators.compute(d=dataset, formula=" - deficit_Nm").sum(dim="vid") * 1e6
         Labile_N_org = Indicators.compute(d=dataset, formula="living_struct_mass*1.4*(AA + xylem_AA + phloem_AA)").sum(dim="vid") * 1e6
@@ -4428,17 +4468,21 @@ class WB:
                 twenty_palette["brown"],
                 twenty_palette["kaki"]
             ])
+            ax2.plot(time_scale, water_driven_N_uptake.cumsum(), c='dodgerblue', label="Water-driven N uptake")
+            ax2.plot(time_scale, net_mineral_N_active_uptake.cumsum(), c='green', label="Active N uptake")
             ax2.plot(time_scale, total_uptake, c='black', label="Net mineral N uptake")
             # ax2.plot(time_scale, daily_net_labile_C, label="Labile C roots")
             # ax2.plot(time_scale, daily_labile_C_shoot, label="Labile C shoot")
-            if False:
-                print("Final_proportions")
+            if True:
+                print("Final_proportions N")
                 print("root rhizodep", 100 * (total_rhizodeposition * ratio)[-1] / total_uptake[-1])
                 print("root lab min", 100 * (daily_net_labile_Nm * ratio)[-1] / total_uptake[-1])
                 print("root lab org", 100 * (daily_net_labile_N_org * ratio)[-1] / total_uptake[-1])
                 print("root struct", 100 * (tot_N_to_struct_root * ratio)[-1] / total_uptake[-1])
                 print("shoot struct", 100 * (tot_N_to_struct_shoot * ratio)[-1] / total_uptake[-1])
                 print("shoot labile N", 100 * (daily_labile_N_shoot * ratio)[-1] / total_uptake[-1])
+                print("active N uptake", 100 * net_mineral_N_active_uptake.cumsum()[-1] / total_uptake[-1])
+                print("water driven N uptake", 100 * water_driven_N_uptake.cumsum()[-1] / total_uptake[-1])
 
             handles, labels = ax2.get_legend_handles_labels()
             ax2.legend(handles[::-1], labels[::-1])
@@ -4515,10 +4559,11 @@ class WB:
 
         dataset['day'] = (np.floor(dataset['t'] / 24) + 1).astype('int64')
         dataset = dataset.set_coords('day')
+        struct_mass_N_content = 0.005
         net_mineral_N_active_uptake = Indicators.compute(d=dataset, formula="import_Nm + mycorrhizal_mediated_import_Nm - diffusion_Nm_soil").sum(dim="vid") * 1e6 * 3600
         water_driven_N_uptake = - dataset["apoplastic_Nm_soil_xylem"].sum(dim="vid") * 1e6 * 3600
         net_AA_exudation_N = Indicators.compute(d=dataset, formula="diffusion_AA_soil + apoplastic_AA_soil_xylem - import_AA").sum(dim="vid") * 1e6 * 3600 * 1.4
-        root_struct_mass_produced_N = dataset["struct_mass_produced"].sum(dim="vid") * 1e6 * 0.0173 / 14
+        root_struct_mass_produced_N = dataset["struct_mass_produced"].sum(dim="vid") * 1e6 * struct_mass_N_content / 14
         Labile_Nm = Indicators.compute(d=dataset, formula="living_struct_mass*(Nm + xylem_Nm)").sum(dim="vid") * 1e6
         Labile_Nm_deficit = Indicators.compute(d=dataset, formula=" - deficit_Nm").sum(dim="vid") * 1e6
         Labile_N_org = Indicators.compute(d=dataset, formula="living_struct_mass*1.4*(AA + xylem_AA + phloem_AA)").sum(dim="vid") * 1e6
@@ -4759,7 +4804,7 @@ class WB:
         ax[0].set_ylabel('Daily average air temperature (°C)')
         ax[1].set_ylabel('Daily incident PAR (µmol/m2)')
         ax[2].set_ylabel('Soil mineral N concentrations (mM)')
-        ax[2].set_ylim([0, 2.75])
+        ax[2].set_ylim([0, 3.5])
 
         fig.savefig(os.path.join(outputs_dirpath, "perceived_env.png"), dpi=720)
 
@@ -5043,10 +5088,7 @@ class WB:
         ax.plot(time_scale, shoot_root_ratio_ref[1:], label="CN-Wheat")
         ax.plot(time_scale, shoot_root_ratio, label="Wheat-BRIDGES")
         ax.set_xlabel('Thermal time (°C.day)' if thermal_time else 'Time (days)')
-        if not massic:
-            ax.set_ylabel('Struct mass production (g per hour)')
-        else:
-            ax.set_ylabel('Struct mass production (g/g per hour)')
+        ax.set_ylabel('Structural mass shoot:root ratio')
 
         if thermal_time:
             secax = ax.secondary_xaxis('bottom', functions=(tt_to_days, days_to_tt))
@@ -5066,6 +5108,58 @@ class WB:
             suffix += "_massic"
 
         fig.savefig(os.path.join(outputs_dirpath, f"shoot_root_mass_CNW_vs_WB.png"), dpi=720, bbox_inches="tight")
+        plt.close()
+
+        # Comparing shoot
+        fig2, ax2 = plt.subplots()
+        ax2.plot(time_scale, mstruct_shoot_ref[1:], label="CN-Wheat")
+        ax2.plot(time_scale, mstruct_shoot, label="Wheat-BRIDGES")
+        ax2.set_xlabel('Thermal time (°C.day)' if thermal_time else 'Time (days)')
+        ax2.set_ylabel('Shoot structural mass (g)')
+
+        if thermal_time:
+            secax = ax2.secondary_xaxis('bottom', functions=(tt_to_days, days_to_tt))
+            # Move it below the primary axis
+            secax.spines['bottom'].set_position(('outward', 35))  # pixels; adjust if needed
+            secax.set_xlabel('Time (days)')
+        
+        ax2.set_xlim([min(time_scale), max(time_scale)])
+        ax2.legend()
+
+        suffix = ''
+        if thermal_time:
+            suffix += "_thermal"
+        if massic:
+            suffix += "_massic"
+
+        fig2.savefig(os.path.join(outputs_dirpath, f"shoot_mass_CNW_vs_WB.png"), dpi=720, bbox_inches="tight")
+        plt.close()
+
+        # Comparing shoot
+        fig3, ax3 = plt.subplots()
+        ax3.plot(time_scale, mstruct_root_ref[1:], label="CN-Wheat")
+        ax3.plot(time_scale, mstruct_root, label="Wheat-BRIDGES")
+        ax3.set_xlabel('Thermal time (°C.day)' if thermal_time else 'Time (days)')
+        ax3.set_ylabel('Root system structural mass (g)')
+
+        if thermal_time:
+            secax = ax3.secondary_xaxis('bottom', functions=(tt_to_days, days_to_tt))
+            # Move it below the primary axis
+            secax.spines['bottom'].set_position(('outward', 35))  # pixels; adjust if needed
+            secax.set_xlabel('Time (days)')
+        
+        ax3.set_xlim([min(time_scale), max(time_scale)])
+        ax3.legend()
+
+        suffix = ''
+        if thermal_time:
+            suffix += "_thermal"
+        if massic:
+            suffix += "_massic"
+
+        fig3.savefig(os.path.join(outputs_dirpath, f"root_mass_CNW_vs_WB.png"), dpi=720, bbox_inches="tight")
+        plt.close()
+
 
 
     def shoot_root_CN_alloc(shoot_outputs, outputs_dirpath, thermal_time=True, massic=False, custom_suffix=""):
@@ -5149,37 +5243,95 @@ class WB:
         fig.savefig(os.path.join(outputs_dirpath, f"shoot_root_CN_alloc{suffix}.png"), dpi=720, bbox_inches="tight")
 
 
-    def XY_totals_all_times(dataset, x, y, to_xunit, to_yunit, outputs_dirpath, massic=False):
+    def XY_totals_all_times(dataset, x, y, to_xunit, to_yunit, outputs_dirpath, massic=False, daily_average=True):
         print((dataset[x].unit, to_xunit))
         x_conversion = unit_conversion(dataset[x].unit, to_xunit)
         x_unit = unit_from_str(to_xunit)
         y_conversion = unit_conversion(dataset[y].unit, to_yunit)
         y_unit = unit_from_str(to_yunit)
 
+        dsx_all  = dataset[x].sum(dim="vid") * x_conversion
+        dsy_all = dataset[y].sum(dim="vid") * y_conversion
+
         if massic:
             x_unit += "/mg"
             y_unit += "/mg"
-        
-        dsx = dataset[x].sum(dim="vid").values * x_conversion
-        dsy = dataset[y].sum(dim="vid").values * y_conversion
-        dst = dataset.t.values
-        if massic:
-            mass = dataset["living_struct_mass"].sum(dim="vid").values * 1000
-            dsx /= mass
-            dsy /= mass
+            mass = dataset["living_struct_mass"].sum(dim="vid") * 1000
+            dsx_all /= mass
+            dsy_all /= mass
+
+        if daily_average:
+            # Compute days from hours and add as a coordinate to the dataset
+            days = (dataset.t + 12) // 24 # Simulation starts at 12 am
+            dataset = dataset.expand_dims("days")
+            dataset = dataset.assign_coords(days=days)
+            
+            # Group by days and compute the mean
+            dsx_daily = dsx_all.groupby(dataset.days).mean(dim='t')
+            dsy_daily = dsy_all.groupby(dataset.days).mean(dim='t')
+            dsx_values = dsx_daily.values
+            dsy_values = dsy_daily.values
+            dst = dsx_daily.days.values
+        else:
+            dsx_values = dsx_all.values
+            dsy_values = dsy_all.values
+            dst = dataset.t.values
 
         fig, ax = plt.subplots(figsize=(6.4, 4.8))
-        im = ax.scatter(dsx, dsy, c=dst)
-        fig.colorbar(im, ax=ax)
-        ax.set_xlabel(f"summed {x.replace("_", " ")} at each time step ({x_unit})")
-        ax.set_ylabel(f"summed {y.replace("_", " ")} at each time step ({y_unit})")
+        im = ax.scatter(dsx_values, dsy_values, c=dst)
+        cbar = fig.colorbar(im, ax=ax)
+        if daily_average:
+            cbar.set_label('Time (days)')
+            ax.set_xlabel(f"Daily average {x.replace("_", " ").lower()} of the root system ({x_unit})", fontsize=8)
+            ax.set_ylabel(f"Daily average {y.replace("_", " ").lower()} of the root system ({y_unit})", fontsize=8)
+
+        else:
+            ax.set_xlabel(f"summed {x.replace("_", " ")} at each time step ({x_unit})")
+            ax.set_ylabel(f"summed {y.replace("_", " ")} at each time step ({y_unit})")
+            cbar.set_label('Time (hours)')
 
 
         suffix = ''
         if massic:
             suffix += "_massic"
+        if daily_average:
+            suffix += "_daily_av"
 
         fig.savefig(os.path.join(outputs_dirpath, f"summed_{x}_vs_{y}_{suffix}.png"), bbox_inches="tight", dpi=720)
+        plt.close()
+
+
+    def along_dist_from_tip_comp(dataset, variables, to_units, target_roots, target_times, outputs_dirpath, xlim=None, ylims=None):
+        conversions = [unit_conversion(dataset[var].unit, to_unit) for var, to_unit in dict(zip(variables, to_units)).items()]
+        units = [unit_from_str(tu) for tu in to_units]
+
+        fig, ax = plt.subplots(nrows=len(variables), ncols=len(target_roots), figsize=(10.4, 4.8))
+        for t, time in enumerate(target_times):
+            current_dataset = filter_dataset(dataset, time=time)
+            for r in range(len(target_roots)):
+                current_root = current_dataset.where((current_dataset["axis_index"]==target_roots[r]).compute(), drop=True)
+                for v in range(len(variables)):
+                    ax[v][r].plot(current_root["distance_from_tip"].values * 100, current_root[variables[v]].values * conversions[v], label=f"day {time // 24}")
+                    if xlim is not None:
+                        conv_xlim = [100 * i for i in xlim]
+                        ax[v][r].set_xlim(conv_xlim)
+                    if ylims is not None:
+                        if not isinstance(ylims, list):
+                            print("Warning, ylims is not applied, expected list")
+                        else:
+                            ax[v][r].set_ylim(ylims[v])
+                    if time == target_times[-1]:
+                        if v == 0 and r == len(target_roots)-1:
+                            ax[v][r].legend()
+
+                        if v == 0:
+                            ax[v][r].set_title(target_roots[r].split('_')[0], fontsize=10)
+                        if r == 0:
+                            ax[v][r].set_ylabel(f"{variables[v].replace("_", " ")}\n({units[v]})", fontsize=8)
+
+        fig.text(0.5, 0.04, 'Distance from root tip (cm)', ha='center', va='center', fontsize=8)
+
+        fig.savefig(os.path.join(outputs_dirpath, f"singles_axes.png"), bbox_inches="tight", dpi=720)
         plt.close()
 
 
