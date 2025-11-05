@@ -36,7 +36,7 @@ from scipy.stats import f_oneway
 from statsmodels.multivariate.manova import MANOVA
 from statsmodels.stats.multicomp import pairwise_tukeyhsd
 
-from data_utility.visualize import plot_xr
+from fspm.utility.writer.visualize import plot_xr
 
 '''FUNCTIONS'''
 

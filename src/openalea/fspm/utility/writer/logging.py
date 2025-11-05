@@ -25,6 +25,8 @@ from openalea.fspm.utility.writer.visualize import plot_mtg, plot_mtg_alt, soil_
 usual_clims = dict(
     Nm=                             dict(bounds=[1e-4, 3e-3],   show_as_log=True,   normalize_by=None), 
     hexose_exudation=               dict(bounds=[3e-14, 3e-12],  show_as_log=True,   normalize_by="length"),
+    raw_C_rhizodeposition=               dict(bounds=[3e-13, 5e-10],  show_as_log=True,   normalize_by="length"),
+    net_mineral_N_uptake=               dict(bounds=[1e-12, 5e-10],  show_as_log=True,   normalize_by="length"),
     # hexose_exudation=               dict(bounds=[1e-14, 1e-10],  show_as_log=True,   normalize_by=None),
     deficit_AA=               dict(bounds=[1e-13, 1e-9],  show_as_log=True,   normalize_by=None),
     deficit_hexose_root=               dict(bounds=[1e-14, 1e-10],  show_as_log=True,   normalize_by=None),
