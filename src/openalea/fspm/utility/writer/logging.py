@@ -25,11 +25,11 @@ from openalea.fspm.utility.writer.visualize import plot_mtg, plot_mtg_alt, soil_
 usual_clims = dict(
     Nm=                             dict(bounds=[1e-4, 3e-3],   show_as_log=True,   normalize_by=None), 
     hexose_exudation=               dict(bounds=[3e-14, 3e-12],  show_as_log=True,   normalize_by="length"),
-    raw_C_rhizodeposition=               dict(bounds=[3e-13, 5e-10],  show_as_log=True,   normalize_by="length"),
+    # raw_C_rhizodeposition=               dict(bounds=[3e-13, 5e-10],  show_as_log=True,   normalize_by="length"), # Not for Root-CyNAPS
     net_mineral_N_uptake=               dict(bounds=[1e-12, 5e-10],  show_as_log=True,   normalize_by="length"),
-    # hexose_exudation=               dict(bounds=[1e-14, 1e-10],  show_as_log=True,   normalize_by=None),
+    # hexose_exudation=               dict(bounds=[1e-14, 1e-10],  show_as_log=True,   normalize_by=None), # Not for Root-CyNAPS
     deficit_AA=               dict(bounds=[1e-13, 1e-9],  show_as_log=True,   normalize_by=None),
-    deficit_hexose_root=               dict(bounds=[1e-14, 1e-10],  show_as_log=True,   normalize_by=None),
+    # deficit_hexose_root=               dict(bounds=[1e-14, 1e-10],  show_as_log=True,   normalize_by=None),
     AA=               dict(bounds=[1e-5, 1e-3],  show_as_log=True,   normalize_by=None),
     xylem_AA=               dict(bounds=[1e-5, 1e-3],  show_as_log=True,   normalize_by=None),
     phloem_AA=               dict(bounds=[1e-6, 1e-4],  show_as_log=True,   normalize_by=None),
@@ -41,7 +41,8 @@ usual_clims = dict(
     # diffusion_Nm_soil=              dict(bounds=None,  show_as_log=True,   normalize_by="length"),
     # diffusion_Nm_xylem=             dict(bounds=None,  show_as_log=False,   normalize_by="length"),
     # export_Nm=                      dict(bounds=[1e-12, 5e-10],  show_as_log=True,   normalize_by="length"),
-    radial_import_water_xylem=            dict(bounds=[-6e-14, 6e-14],           show_as_log=False,  normalize_by="length"), #[3e-11, 5e-10]log,
+    # radial_import_water_xylem=            dict(bounds=[-6e-14, 6e-14],           show_as_log=False,  normalize_by="length"), #[3e-11, 5e-10]log,
+    radial_import_water_xylem=            dict(bounds=[1e-13, 6e-11],           show_as_log=True,  normalize_by="length"), #[3e-11, 5e-10]log, # WB plots
     radial_import_water_phloem=            dict(bounds=[-1e-9, 1e-9],           show_as_log=False,  normalize_by="length"), #[1e-22, 1e-12],
     C_hexose_root=                  dict(bounds=[1e-5, 1e-2],   show_as_log=True,   normalize_by=None), #prev LU
     root_exchange_surface=          dict(bounds=[4e-3, 3.7e-2],           show_as_log=True,   normalize_by="length"), # prev [1e-3, 1e-2]
@@ -59,17 +60,17 @@ usual_clims = dict(
     # xylem_differentiation_factor=          dict(bounds=[0, 1],           show_as_log=False,   normalize_by=None),
     # apoplastic_Nm_soil_xylem=          dict(bounds=None,           show_as_log=False,   normalize_by="length"),
     # axis_type=          dict(bounds=None,           show_as_log=False,   normalize_by=None),
-    diffusion_AA_soil=          dict(bounds=[1e-12, 4e-11],           show_as_log=False,   normalize_by="length"), # prev 
+    diffusion_AA_soil=          dict(bounds=[1e-15, 5e-13],           show_as_log=True,   normalize_by="length"), # prev 
     hexose_consumption_by_growth=          dict(bounds=[1e-14, 1e-10],           show_as_log=True,   normalize_by=None),
-    hexose_diffusion_from_phloem=          dict(bounds=[1e-14, 1e-10],           show_as_log=True,   normalize_by=None),
-    sucrose_loading_in_phloem=          dict(bounds=[1e-14, 1e-10],           show_as_log=True,   normalize_by=None),
-    N_metabolic_respiration=          dict(bounds=[1e-14, 1e-10],           show_as_log=True,   normalize_by=None),
-    maintenance_respiration=          dict(bounds=[1e-14, 1e-10],           show_as_log=True,   normalize_by=None),
+    # hexose_diffusion_from_phloem=          dict(bounds=[1e-14, 1e-10],           show_as_log=True,   normalize_by=None), # Not for Root-CyNAPS
+    # sucrose_loading_in_phloem=          dict(bounds=[1e-14, 1e-10],           show_as_log=True,   normalize_by=None), # Not for Root-CyNAPS
+    # N_metabolic_respiration=          dict(bounds=[1e-14, 1e-10],           show_as_log=True,   normalize_by=None), # Not for Root-CyNAPS
+    # maintenance_respiration=          dict(bounds=[1e-14, 1e-10],           show_as_log=True,   normalize_by=None), # Not for Root-CyNAPS
     axial_export_water_up_phloem=          dict(bounds=[-1e-12, 1e-12],           show_as_log=False,   normalize_by=None),
     AA_synthesis=          dict(bounds=[1e-14, 1e-10],           show_as_log=True,   normalize_by=None),
-    Cv_sucrose_root=          dict(bounds=[1, 5000],           show_as_log=True,   normalize_by=None),
-    Cv_hexose_root=          dict(bounds=[1, 5000],           show_as_log=True,   normalize_by=None),
-    amino_acids_consumption_by_growth=          dict(bounds=[1e-14, 1e-10],           show_as_log=True,   normalize_by=None),
+    # Cv_sucrose_root=          dict(bounds=[1, 5000],           show_as_log=True,   normalize_by=None), # Not for Root-CyNAPS
+    # Cv_hexose_root=          dict(bounds=[1, 5000],           show_as_log=True,   normalize_by=None), # Not for Root-CyNAPS
+    # amino_acids_consumption_by_growth=          dict(bounds=[1e-14, 1e-10],           show_as_log=True,   normalize_by=None), # Not for Root-CyNAPS
 )
 plotted_property_continuous = "hexose_exudation"
 
@@ -1004,7 +1005,7 @@ class Logger:
                     self.model_instance.shoot.adel_wheat.scene(self.model_instance.g_shoot).save(os.path.join(self.root_images_dirpath, f"Final_scene_{self.time_step_in_hours}.bgeom"))
 
             if not self.recording_raw:
-                if False:
+                if True:
                     self.logger_output.info("Saving a final state xarray...")
                     self.write_to_disk([self.mtg_to_dataset(variables=self.output_variables, time=self.simulation_time_in_hours)], custom_name="merged.nc")
             

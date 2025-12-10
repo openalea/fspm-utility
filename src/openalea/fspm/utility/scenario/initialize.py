@@ -44,7 +44,7 @@ class MakeScenarios:
         instructions_initial_mtg_file = instructions.loc[instructions["Input_type"] == "input_mtg"]
         scenarios = {name: {
             "parameters": subdict_of_parameters[name],
-            "input_tables": {var: read_table(os.path.join(input_directory, str(instructions_table_file[name][var])), index_col="t")[var] 
+            "input_tables": {var: read_table(os.path.join(input_directory, str(instructions_table_file[name][var])), index_col="t")[var] if instructions_table_file[name][var] is not None else None
                              for var in instructions_table_file.index.values if not pd.isna(instructions_table_file[name][var])} if len(instructions_table_file) > 0 else None,
             "input_mtg": {var: read_mtg(os.path.join(input_directory, str(instructions_initial_mtg_file[name][var]))) if not pd.isna(instructions_initial_mtg_file[name][var]) 
                           else None for var in instructions_initial_mtg_file.index.values} if len(instructions_initial_mtg_file) > 0 else None}

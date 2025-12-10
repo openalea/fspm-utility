@@ -391,10 +391,10 @@ def analyze_data(scenarios, outputs_dirpath, inputs_dirpath, target_folder_key=N
 
 
                     # Plant scale C balance related
-                    running = True
+                    running = False
                     if running or all_true:
                         print("Starting balance plots summary")
-                        if True:
+                        if False:
                             # WB.plant_C_balance(shoot_outputs=shoot_outputs, dataset=scenario_dataset, outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"))
                             WB.plant_C_balance_summary(shoot_outputs=shoot_outputs, dataset=scenario_dataset, outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"), p_input=False)
                             WB.plant_C_balance_summary(shoot_outputs=shoot_outputs, dataset=scenario_dataset, outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"), p_input=True)
@@ -405,7 +405,7 @@ def analyze_data(scenarios, outputs_dirpath, inputs_dirpath, target_folder_key=N
                             # WB.root_C_balance_full(shoot_outputs=shoot_outputs, dataset=scenario_dataset, outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"), percentage=False)
                             # WB.plant_C_balance(shoot_outputs=shoot_outputs, dataset=scenario_dataset, outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"), massic=True)
                         
-                        if True:
+                        if False:
                             # WB.root_N_balance(shoot_outputs=shoot_outputs, dataset=scenario_dataset, outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"))
                             WB.plant_N_balance_summary(shoot_outputs=shoot_outputs, dataset=scenario_dataset, outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"), p_input=False)
                             WB.plant_N_balance_summary(shoot_outputs=shoot_outputs, dataset=scenario_dataset, outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"), p_input=True)
@@ -413,25 +413,25 @@ def analyze_data(scenarios, outputs_dirpath, inputs_dirpath, target_folder_key=N
                             # WB.root_N_balance_full(shoot_outputs=shoot_outputs, dataset=scenario_dataset, outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"))
                             # WB.root_N_balance(shoot_outputs=shoot_outputs, dataset=scenario_dataset, outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"), massic=True)
                             # WB.root_synplasm_AA_balance(dataset=scenario_dataset, outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"))
-                        if False:
+                        if True:
                             shoot_outputs_with_MS = WB.open_shoot_outputs(scenario=scenarios[0],
                                                         target_folder_key=target_folder_key,
                                                         outputs_dirpath=outputs_dirpath, 
                                                         meteo_data_dirpath=os.path.join("inputs", "meteo_Ljutovac2002.csv"),
                                                         soil_data_dirpath=os.path.join("inputs", "meteo_Ljutovac2002_soil.csv"), only_MS=False)
-                            WB.shoot_root_growth_WB(shoot_outputs=shoot_outputs_with_MS, dataset=scenario_dataset, outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"))
-                            WB.shoot_root_CN_alloc(shoot_outputs=shoot_outputs_with_MS, outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"), custom_suffix="WB")
+                            # WB.shoot_root_growth_WB(shoot_outputs=shoot_outputs_with_MS, dataset=scenario_dataset, outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"))
+                            # WB.shoot_root_CN_alloc(shoot_outputs=shoot_outputs_with_MS, outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"), custom_suffix="WB")
                             shoot_outputs_cnwheat = WB.open_shoot_outputs(shoot_outputs_dirpath=os.path.join("inputs", "postprocessing"),
                                                         meteo_data_dirpath=os.path.join("inputs", "meteo_Ljutovac2002.csv"),
                                                         soil_data_dirpath=os.path.join("inputs", "meteo_Ljutovac2002_soil.csv"), only_MS=False)
-                            WB.shoot_root_growth_cnwheat(shoot_outputs=shoot_outputs_cnwheat, outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"))
-                            WB.shoot_root_CN_alloc(shoot_outputs=shoot_outputs_cnwheat, outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"), custom_suffix="CNW")
+                            # WB.shoot_root_growth_cnwheat(shoot_outputs=shoot_outputs_cnwheat, outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"))
+                            # WB.shoot_root_CN_alloc(shoot_outputs=shoot_outputs_cnwheat, outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"), custom_suffix="CNW")
                             
                             WB.shoot_root_mass_WB(shoot_outputs=shoot_outputs_with_MS, shoot_outputs_ref=shoot_outputs_cnwheat, dataset=scenario_dataset, outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"))
                         print("Finished balance plots summary")
 
                     # Total correlation plots over time
-                    running = False
+                    running = True
                     if running or all_true:
                         print("Starting correlation plots over time")
                         # WB.XY_totals_all_times(dataset=scenario_dataset, x="Net_mineral_N_uptake", y="Raw_rhizodeposition", to_xunit="µmol/day", to_yunit="µmol/day", outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"))
@@ -462,25 +462,28 @@ def analyze_data(scenarios, outputs_dirpath, inputs_dirpath, target_folder_key=N
                         photo_x_deg = Total_Photosynthesis / temp_daily.values
                         # photo_x_deg = Total_Photosynthesis * air_temp_daily
 
-                        WB.XY_totals_all_times_plus_shoot(shoot_outputs=shoot_outputs, dataset=scenario_dataset, xshoot=Total_Photosynthesis / 1000, y="Raw_rhizodeposition", to_xunit="mmol/day", to_yunit="mmol/day", outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"))
-                        WB.XY_totals_all_times_plus_shoot(shoot_outputs=shoot_outputs, dataset=scenario_dataset, xshoot=Total_Photosynthesis, y="Raw_rhizodeposition", to_xunit="µmol/day", to_yunit="µmol/day", outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"), massic=True)
-                        WB.XY_totals_all_times_plus_shoot(shoot_outputs=shoot_outputs, dataset=scenario_dataset, xshoot=Total_Photosynthesis / 1000, y="Net_mineral_N_uptake", to_xunit="mmol/day", to_yunit="mmol/day", outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"))
-                        WB.XY_totals_all_times_plus_shoot(shoot_outputs=shoot_outputs, dataset=scenario_dataset, xshoot=Total_Photosynthesis, y="Net_mineral_N_uptake", to_xunit="µmol/day", to_yunit="µmol/day", outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"), massic=True)
+                        # WB.XY_totals_all_times_plus_shoot(shoot_outputs=shoot_outputs, dataset=scenario_dataset, xshoot=Total_Photosynthesis / 1000, y="Raw_rhizodeposition", to_xunit="mmol/day", to_yunit="mmol/day", outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"))
+                        # WB.XY_totals_all_times_plus_shoot(shoot_outputs=shoot_outputs, dataset=scenario_dataset, xshoot=Total_Photosynthesis, y="Raw_rhizodeposition", to_xunit="µmol/day", to_yunit="µmol/day", outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"), massic=True)
+                        # WB.XY_totals_all_times_plus_shoot(shoot_outputs=shoot_outputs, dataset=scenario_dataset, xshoot=Total_Photosynthesis / 1000, y="Net_mineral_N_uptake", to_xunit="mmol/day", to_yunit="mmol/day", outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"))
+                        # WB.XY_totals_all_times_plus_shoot(shoot_outputs=shoot_outputs, dataset=scenario_dataset, xshoot=Total_Photosynthesis, y="Net_mineral_N_uptake", to_xunit="µmol/day", to_yunit="µmol/day", outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"), massic=True)
+
+                        WB.XY_totals_all_times_plus_shoot(shoot_outputs=shoot_outputs, dataset=scenario_dataset, xshoot=Total_Photosynthesis, y="Raw_rhizodeposition", to_xunit="µmol/day", to_yunit="µmol/day", outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"), massic=True, custom_suffix="norm_surf")
+                        WB.XY_totals_all_times_plus_shoot(shoot_outputs=shoot_outputs, dataset=scenario_dataset, xshoot=Total_Photosynthesis, y="Net_mineral_N_uptake", to_xunit="µmol/day", to_yunit="µmol/day", outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"), massic=True, custom_suffix="norm_surf")
                         
                         # WB.XY_totals_all_times_plus_shoot(shoot_outputs=shoot_outputs, dataset=scenario_dataset, xshoot=temp_daily.values, y="Raw_rhizodeposition", to_xunit="µmol/h", to_yunit="µmol/h", outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"), custom_suffix="stemp")
                         # WB.XY_totals_all_times_plus_shoot(shoot_outputs=shoot_outputs, dataset=scenario_dataset, xshoot=temp_daily.values, y="Raw_rhizodeposition", to_xunit="nmol/h", to_yunit="nmol/h", outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"), massic=True, custom_suffix="stemp")
                         # WB.XY_totals_all_times_plus_shoot(shoot_outputs=shoot_outputs, dataset=scenario_dataset, xshoot=temp_daily.values, y="Net_mineral_N_uptake", to_xunit="µmol/h", to_yunit="µmol/h", outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"), custom_suffix="stemp")
                         # WB.XY_totals_all_times_plus_shoot(shoot_outputs=shoot_outputs, dataset=scenario_dataset, xshoot=temp_daily.values, y="Net_mineral_N_uptake", to_xunit="nmol/h", to_yunit="nmol/h", outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"), massic=True, custom_suffix="stemp")
                         
-                        # WB.XY_totals_all_times_plus_shoot(shoot_outputs=shoot_outputs, dataset=scenario_dataset, xshoot=Unloading_Sucrose_tot, y="Raw_rhizodeposition", to_xunit="µmol/h", to_yunit="µmol/h", outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"), custom_suffix="C_unl_T")
-                        # WB.XY_totals_all_times_plus_shoot(shoot_outputs=shoot_outputs, dataset=scenario_dataset, xshoot=Unloading_Sucrose_tot, y="Raw_rhizodeposition", to_xunit="nmol/h", to_yunit="nmol/h", outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"), massic=True, custom_suffix="C_unl_T")
-                        # WB.XY_totals_all_times_plus_shoot(shoot_outputs=shoot_outputs, dataset=scenario_dataset, xshoot=Unloading_Sucrose_tot, y="Net_mineral_N_uptake", to_xunit="µmol/h", to_yunit="µmol/h", outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"), custom_suffix="C_unl_T")
-                        # WB.XY_totals_all_times_plus_shoot(shoot_outputs=shoot_outputs, dataset=scenario_dataset, xshoot=Unloading_Sucrose_tot, y="Net_mineral_N_uptake", to_xunit="nmol/h", to_yunit="nmol/h", outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"), massic=True, custom_suffix="C_unl_T")
+                        WB.XY_totals_all_times_plus_shoot(shoot_outputs=shoot_outputs, dataset=scenario_dataset, xshoot=Unloading_Sucrose_tot, y="Raw_rhizodeposition", to_xunit="µmol/h", to_yunit="µmol/h", outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"), custom_suffix="C_unl_T")
+                        WB.XY_totals_all_times_plus_shoot(shoot_outputs=shoot_outputs, dataset=scenario_dataset, xshoot=Unloading_Sucrose_tot, y="Raw_rhizodeposition", to_xunit="nmol/h", to_yunit="nmol/h", outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"), massic=True, custom_suffix="C_unl_T")
+                        WB.XY_totals_all_times_plus_shoot(shoot_outputs=shoot_outputs, dataset=scenario_dataset, xshoot=Unloading_Sucrose_tot, y="Net_mineral_N_uptake", to_xunit="µmol/h", to_yunit="µmol/h", outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"), custom_suffix="C_unl_T")
+                        WB.XY_totals_all_times_plus_shoot(shoot_outputs=shoot_outputs, dataset=scenario_dataset, xshoot=Unloading_Sucrose_tot, y="Net_mineral_N_uptake", to_xunit="nmol/h", to_yunit="nmol/h", outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"), massic=True, custom_suffix="C_unl_T")
                         
-                        # WB.XY_totals_all_times_plus_shoot(shoot_outputs=shoot_outputs, dataset=scenario_dataset, xshoot=Unloading_Amino_Acids_tot, y="Raw_rhizodeposition", to_xunit="µmol/h", to_yunit="µmol/h", outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"), custom_suffix="N_unl_T")
-                        # WB.XY_totals_all_times_plus_shoot(shoot_outputs=shoot_outputs, dataset=scenario_dataset, xshoot=Unloading_Amino_Acids_tot, y="Raw_rhizodeposition", to_xunit="nmol/h", to_yunit="nmol/h", outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"), massic=True, custom_suffix="N_unl_T")
-                        # WB.XY_totals_all_times_plus_shoot(shoot_outputs=shoot_outputs, dataset=scenario_dataset, xshoot=Unloading_Amino_Acids_tot, y="Net_mineral_N_uptake", to_xunit="µmol/h", to_yunit="µmol/h", outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"), custom_suffix="N_unl_T")
-                        # WB.XY_totals_all_times_plus_shoot(shoot_outputs=shoot_outputs, dataset=scenario_dataset, xshoot=Unloading_Amino_Acids_tot, y="Net_mineral_N_uptake", to_xunit="nmol/h", to_yunit="nmol/h", outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"), massic=True, custom_suffix="N_unl_T")
+                        WB.XY_totals_all_times_plus_shoot(shoot_outputs=shoot_outputs, dataset=scenario_dataset, xshoot=Unloading_Amino_Acids_tot, y="Raw_rhizodeposition", to_xunit="µmol/h", to_yunit="µmol/h", outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"), custom_suffix="N_unl_T")
+                        WB.XY_totals_all_times_plus_shoot(shoot_outputs=shoot_outputs, dataset=scenario_dataset, xshoot=Unloading_Amino_Acids_tot, y="Raw_rhizodeposition", to_xunit="nmol/h", to_yunit="nmol/h", outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"), massic=True, custom_suffix="N_unl_T")
+                        WB.XY_totals_all_times_plus_shoot(shoot_outputs=shoot_outputs, dataset=scenario_dataset, xshoot=Unloading_Amino_Acids_tot, y="Net_mineral_N_uptake", to_xunit="µmol/h", to_yunit="µmol/h", outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"), custom_suffix="N_unl_T")
+                        WB.XY_totals_all_times_plus_shoot(shoot_outputs=shoot_outputs, dataset=scenario_dataset, xshoot=Unloading_Amino_Acids_tot, y="Net_mineral_N_uptake", to_xunit="nmol/h", to_yunit="nmol/h", outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"), massic=True, custom_suffix="N_unl_T")
                         
                         # WB.XY_totals_all_times_plus_shoot(shoot_outputs=shoot_outputs, dataset=scenario_dataset, xshoot=photo_x_deg, y="Raw_rhizodeposition", to_xunit="µmol/h", to_yunit="µmol/h", outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"), custom_suffix="_dtemp")
                         # WB.XY_totals_all_times_plus_shoot(shoot_outputs=shoot_outputs, dataset=scenario_dataset, xshoot=photo_x_deg, y="Raw_rhizodeposition", to_xunit="nmol/h", to_yunit="nmol/h", outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"), massic=True, custom_suffix="_dtemp")
@@ -634,11 +637,11 @@ def analyze_data(scenarios, outputs_dirpath, inputs_dirpath, target_folder_key=N
                         WB.along_dist_from_tip_comp(dataset, variables=["Length_wise_raw_rhizodeposition", "Length-wise mineral N uptake"], 
                                                     to_units=["nmol/(cm.h)", "nmol/(cm.h)"], 
                                                     target_roots=["seminal_2", "adventitious_6", "lateral_50"],
-                                                    target_times=scenario_times, averaging_window=11,
+                                                    target_times=scenario_times, averaging_window=2,
                                                     outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"),
                                                     xlim=[0, 0.1], 
                                                     ylims=[(0, 40), (0, 12)],
-                                                    custom_suffix="11")
+                                                    custom_suffix="2")
 
 
 
@@ -1049,14 +1052,16 @@ def analyze_data(scenarios, outputs_dirpath, inputs_dirpath, target_folder_key=N
         # unit = ["mol.g-1"] + (["mol.s-1"] * 4) + (["mol.m-3"] * 2)
         # plotted_properties = ["Cv_hexose_root", "Cv_sucrose_root"]
         # unit = ["mol.g-1", "mol.g-1"]
-        plotted_properties = ["raw_C_rhizodeposition", "net_mineral_N_uptake"]
-        unit = ["mol.s-1.m-1"] * 2
+        # plotted_properties = ["raw_C_rhizodeposition", "net_mineral_N_uptake"]
+        # unit = ["mol.s-1.m-1"] * 2
+        plotted_properties = ["radial_import_water_xylem", "diffusion_AA_soil"]
+        unit = ["m3.s-1.m-1", "mol.s-1.m-1"]
 
         for k, prop_name in enumerate(plotted_properties):
             custom_colorbar(folderpath=imagesdir, label=prop_name, vmin=usual_clims[prop_name]["bounds"][0], vmax=usual_clims[prop_name]["bounds"][1], 
                             colormap="jet", vertical=True, log_scale=usual_clims[prop_name]["show_as_log"], filename=f"{prop_name}_colorbar.png", unit=unit[k])
         plot_every = 1
-        tmin, tmax = 762, 2500
+        tmin, tmax = 1518, 2500
         file_list = [f for f in os.listdir(outputdir) if f.endswith(".pckl")]
         systematic_plots = (0, len(file_list)-1, file_list.index("data_480.pckl"), file_list.index("data_1368.pckl"), file_list.index("data_2400.pckl"))
         for i, file in enumerate(file_list):
@@ -3571,14 +3576,14 @@ class WB:
 
         df_org = shoot_outputs["organs"]
         df_axe = shoot_outputs["axes"]
-        df_axe['day'] = df_axe['t'] // 24 + 1
+        df_axe['day'] = df_axe['t'] // 24
 
         if massic:
             mstruct = df_axe.groupby(['day'])['mstruct'].agg('mean').to_numpy()
             conversion /= mstruct
     
         df_roots = df_org[df_org['organ'] == 'roots'].copy()
-        df_roots['day'] = df_roots['t'] // 24 + 1
+        df_roots['day'] = df_roots['t'] // 24
         df_roots['Unloading_Sucrose_tot'] = df_roots['Unloading_Sucrose'] * df_roots['mstruct']
         Unloading_Sucrose_tot = df_roots.groupby(['day'])['Unloading_Sucrose_tot'].agg('sum')
         Unloading_Sucrose_tot_C = Unloading_Sucrose_tot.to_numpy() * conversion
@@ -3599,17 +3604,24 @@ class WB:
         daily_labile_C_shoot = df_axe.groupby(['day'])['labile_C_shoot_hourly'].agg('mean').to_numpy() * conversion
 
         if thermal_time:
-            df_meteo = shoot_outputs["meteo"]
-            df_meteo["t"] = df_meteo.index
-            df_meteo["air_temperature_tbase"] = df_meteo["air_temperature"].clip(lower=0)
-            shoot_thermal_time = df_meteo["air_temperature_tbase"].cumsum().reindex(df_meteo.index) / 24
-            shoot_thermal_time -= shoot_thermal_time.at[0]
-            days_thermal_time = [shoot_thermal_time.at[d * 24] for d in days]
-            time_scale = days_thermal_time
+            # --- Thermal time (anchored + positional) ---
+            df_meteo = shoot_outputs["meteo"].copy()
 
-            tt_hourly = shoot_thermal_time
-            # days since start from 't' in hours
-            days_hourly = (df_meteo['t'].to_numpy() / 24.0)
+            # Ensure hourly, contiguous, and 0-based time
+            df_meteo = df_meteo.reset_index(drop=True)
+            df_meteo["t"] = np.arange(len(df_meteo), dtype=float)          # hours from 0
+
+            # Degree-hours (base 0), then shift so TT(0h)=0 exactly
+            deg_h = np.clip(df_meteo["air_temperature"].to_numpy(dtype=float), 0.0, None)
+            tt_hourly = np.cumsum(deg_h, dtype=float)
+            tt_hourly = np.concatenate(([0.0], tt_hourly[:-1])) / 24.0     # shift by 1 hour, to days
+
+            days_hourly = df_meteo["t"].to_numpy(dtype=float) / 24.0       # 0, 1/24, 2/24, ...
+
+            days = np.sort(df_roots['day'].unique().astype(int))     # 1,2,3,...
+            idx_start = days * 24                               # hour index at day start
+            idx_start = np.clip(idx_start, 0, len(tt_hourly) - 1)     # safety
+            time_scale = tt_hourly[idx_start]     
 
             # Make mapping strictly monotonic (handle flat TT segments)
             tt_u, idx = np.unique(tt_hourly, return_index=True)
@@ -3633,11 +3645,11 @@ class WB:
         Total_Photosynthesis = df_axe.groupby(['day'])['Tillers_Photosynthesis'].agg('sum').to_numpy() * conversion
 
         df_elt = shoot_outputs["elements"]
-        df_elt['day'] = df_elt['t'] // 24 + 1
+        df_elt['day'] = df_elt['t'] // 24
         df_elt['sum_respi_tillers'] = df_elt['sum_respi'] * df_elt['nb_replications']
         Shoot_respiration = df_elt.groupby(['day'])['sum_respi_tillers'].agg('sum').to_numpy() * conversion
 
-        dataset['day'] = (np.floor(dataset['t'] / 24) + 1).astype('int64')
+        dataset['day'] = (np.floor(dataset['t'] / 24)).astype('int64')
         dataset = dataset.set_coords('day')
         net_hexose_exudation_C = Indicators.compute(d=dataset, formula="hexose_exudation - hexose_uptake_from_soil + phloem_hexose_exudation - phloem_hexose_uptake_from_soil").sum(dim="vid") * 1e6 * 3600 * 6
         net_AA_exudation_C = Indicators.compute(d=dataset, formula="diffusion_AA_soil + apoplastic_AA_soil_xylem - import_AA").sum(dim="vid") * 1e6 * 3600 * average_amino_acids_CN
@@ -3801,16 +3813,25 @@ class WB:
             else:
                 ax2.legend(handles[::-1], labels[::-1])
 
-            if thermal_time:
-                secax2 = ax2.secondary_xaxis('bottom', functions=(tt_to_days, days_to_tt))
-                # Move it below the primary axis
-                secax2.spines['bottom'].set_position(('outward', 35))  # pixels; adjust if needed
-                # secax2.set_xlabel('Time (days)')
-                secax2.set_xlabel('Date')
-                secax2.xaxis.set_major_formatter(WB.make_days_formatter(17, 12, 1998, fmt="%d/%m"))
-
             ax2.set_xlabel('Thermal time (°C.day)' if thermal_time else 'Time (days)')
             ax2.set_ylabel('Process cumulative flow (mmol C)')
+
+            if thermal_time:
+                # 1) make sure TT=0 is visible; Matplotlib added a negative margin
+                left, right = ax2.get_xlim()
+                if left < 0:
+                    left = 0
+                    right = max(time_scale)
+                    ax2.set_xlim(left, right)
+
+                # 2) NOW create the secondary axis using the *final* TT limits
+                secax2 = ax2.secondary_xaxis('bottom', functions=(tt_to_days, days_to_tt))
+                secax2.spines['bottom'].set_position(('outward', 35))
+                secax2.set_xlabel('Date')
+                secax2.xaxis.set_major_formatter(WB.make_days_formatter(
+                    17, 12, 2025, fmt="%d/%m", one_based=False
+                ))
+                # secax2.xaxis.set_major_locator(MaxNLocator(integer=True))
 
             suffix +='_cummulated'
             
@@ -4462,14 +4483,14 @@ class WB:
 
         df_org = shoot_outputs["organs"]
         df_axe = shoot_outputs["axes"]
-        df_axe['day'] = df_axe['t'] // 24 + 1
+        df_axe['day'] = df_axe['t'] // 24
 
         if massic:
             mstruct = df_axe.groupby(['day'])['mstruct'].agg('mean').to_numpy()
             conversion /= mstruct
     
         df_roots = df_org[df_org['organ'] == 'roots'].copy()
-        df_roots['day'] = df_roots['t'] // 24 + 1
+        df_roots['day'] = df_roots['t'] // 24
         Export_Nitrates_N = df_roots.groupby(['day'])['Export_Nitrates'].agg('sum').to_numpy() * conversion
         Export_Amino_Acids_N = df_roots.groupby(['day'])['Export_Amino_Acids'].agg('sum').to_numpy() * conversion
         df_roots['Unloading_Amino_Acids_tot'] = df_roots['Unloading_Amino_Acids'] * df_roots['mstruct']
@@ -4486,17 +4507,24 @@ class WB:
         daily_labile_N_shoot = df_axe.groupby(['day'])['labile_N_shoot_hourly'].agg('mean').to_numpy() * conversion
 
         if thermal_time:
-            df_meteo = shoot_outputs["meteo"]
-            df_meteo["t"] = df_meteo.index
-            df_meteo["air_temperature_tbase"] = df_meteo["air_temperature"].clip(lower=0)
-            shoot_thermal_time = df_meteo["air_temperature_tbase"].cumsum().reindex(df_meteo.index) / 24
-            shoot_thermal_time -= shoot_thermal_time.at[0]
-            days_thermal_time = [shoot_thermal_time.at[d * 24] for d in days]
-            time_scale = days_thermal_time
+            # --- Thermal time (anchored + positional) ---
+            df_meteo = shoot_outputs["meteo"].copy()
 
-            tt_hourly = shoot_thermal_time
-            # days since start from 't' in hours
-            days_hourly = (df_meteo['t'].to_numpy() / 24.0)
+            # Ensure hourly, contiguous, and 0-based time
+            df_meteo = df_meteo.reset_index(drop=True)
+            df_meteo["t"] = np.arange(len(df_meteo), dtype=float)          # hours from 0
+
+            # Degree-hours (base 0), then shift so TT(0h)=0 exactly
+            deg_h = np.clip(df_meteo["air_temperature"].to_numpy(dtype=float), 0.0, None)
+            tt_hourly = np.cumsum(deg_h, dtype=float)
+            tt_hourly = np.concatenate(([0.0], tt_hourly[:-1])) / 24.0     # shift by 1 hour, to days
+
+            days_hourly = df_meteo["t"].to_numpy(dtype=float) / 24.0       # 0, 1/24, 2/24, ...
+
+            days = np.sort(df_roots['day'].unique().astype(int))     # 1,2,3,...
+            idx_start = days * 24                               # hour index at day start
+            idx_start = np.clip(idx_start, 0, len(tt_hourly) - 1)     # safety
+            time_scale = tt_hourly[idx_start]     
 
             # Make mapping strictly monotonic (handle flat TT segments)
             tt_u, idx = np.unique(tt_hourly, return_index=True)
@@ -4513,7 +4541,7 @@ class WB:
         else:
             time_scale = days
 
-        dataset['day'] = (np.floor(dataset['t'] / 24) + 1).astype('int64')
+        dataset['day'] = (np.floor(dataset['t'] / 24)).astype('int64')
         dataset = dataset.set_coords('day')
         struct_mass_N_content = 0.005
         net_mineral_N_active_uptake = Indicators.compute(d=dataset, formula="import_Nm + mycorrhizal_mediated_import_Nm - diffusion_Nm_soil").sum(dim="vid") * 1e6 * 3600
@@ -4657,11 +4685,20 @@ class WB:
             ax2.set_xlim(min(time_scale)-10, max(time_scale) + 30)
 
             if thermal_time:
+                # 1) make sure TT=0 is visible; Matplotlib added a negative margin
+                left, right = ax2.get_xlim()
+                if left < 0:
+                    left = 0
+                    right = max(time_scale)
+                    ax2.set_xlim(left, right)
+
+                # 2) NOW create the secondary axis using the *final* TT limits
                 secax2 = ax2.secondary_xaxis('bottom', functions=(tt_to_days, days_to_tt))
-                # Move it below the primary axis
-                secax2.spines['bottom'].set_position(('outward', 35))  # pixels; adjust if needed
+                secax2.spines['bottom'].set_position(('outward', 35))
                 secax2.set_xlabel('Date')
-                secax2.xaxis.set_major_formatter(WB.make_days_formatter(17, 12, 1998, fmt="%d/%m"))
+                secax2.xaxis.set_major_formatter(WB.make_days_formatter(
+                    17, 12, 2025, fmt="%d/%m", one_based=False
+                ))
                 # secax2.xaxis.set_major_locator(MaxNLocator(integer=True))
 
             ax2.set_xlabel('Thermal time (°C.day)' if thermal_time else 'Time (days)')
@@ -5234,15 +5271,28 @@ class WB:
         shoot_root_ratio_ref = mstruct_shoot_ref / mstruct_root_ref
     
         if thermal_time:
-            df_meteo = shoot_outputs["meteo"]
-            df_meteo["t"] = df_meteo.index
-            shoot_thermal_time = df_meteo["air_temperature"].clip(lower=0.).cumsum().reindex(df_meteo.index) / 24.
-            days_thermal_time = [shoot_thermal_time.at[t] for t in hours]
-            time_scale = days_thermal_time
+            # --- Thermal time (anchored + positional) ---
+            df_meteo = shoot_outputs["meteo"].copy()
+            df_org = shoot_outputs["organs"]
+            df_roots = df_org[df_org['organ'] == 'roots'].copy()
+            df_roots['day'] = df_roots['t'] // 24
 
-            tt_hourly = shoot_thermal_time
-            # days since start from 't' in hours
-            days_hourly = (df_meteo['t'].to_numpy()) / 24
+            # Ensure hourly, contiguous, and 0-based time
+            df_meteo = df_meteo.reset_index(drop=True)
+            df_meteo["t"] = np.arange(len(df_meteo), dtype=float)          # hours from 0
+
+            # Degree-hours (base 0), then shift so TT(0h)=0 exactly
+            deg_h = np.clip(df_meteo["air_temperature"].to_numpy(dtype=float), 0.0, None)
+            tt_hourly = np.cumsum(deg_h, dtype=float)
+            tt_hourly = np.concatenate(([0.0], tt_hourly[:-1])) / 24.0     # shift by 1 hour, to days
+
+            days_hourly = df_meteo["t"].to_numpy(dtype=float) / 24.0       # 0, 1/24, 2/24, ...
+            days_hourly_simu = df_roots["t"].to_numpy(dtype=float) / 24.0
+
+            days = np.sort(df_roots['day'].unique().astype(int))     # 1,2,3,...
+            idx_start = days * 24                               # hour index at day start
+            idx_start = np.clip(idx_start, 0, len(tt_hourly) - 1)     # safety
+            # time_scale = tt_hourly[idx_start]      
 
             # Make mapping strictly monotonic (handle flat TT segments)
             tt_u, idx = np.unique(tt_hourly, return_index=True)
@@ -5256,6 +5306,8 @@ class WB:
                 days = np.asarray(days)
                 return np.interp(days, days_u, tt_u)
             
+            time_scale = days_to_tt(days_hourly_simu)
+            
         else:
             time_scale = hours
 
@@ -5266,12 +5318,23 @@ class WB:
         ax.set_ylabel('Structural mass shoot:root ratio')
 
         if thermal_time:
-            secax = ax.secondary_xaxis('bottom', functions=(tt_to_days, days_to_tt))
-            # Move it below the primary axis
-            secax.spines['bottom'].set_position(('outward', 35))  # pixels; adjust if needed
-            secax.set_xlabel('Time (days)')
+            # 1) make sure TT=0 is visible; Matplotlib added a negative margin
+            left, right = ax.get_xlim()
+            if left < 0:
+                left = 0
+                right = max(time_scale)
+                ax.set_xlim(left, right)
 
-        ax.set_xlim([min(time_scale), max(time_scale)])
+            # 2) NOW create the secondary axis using the *final* TT limits
+            secax = ax.secondary_xaxis('bottom', functions=(tt_to_days, days_to_tt))
+            secax.spines['bottom'].set_position(('outward', 35))
+            secax.set_xlabel('Date')
+            secax.xaxis.set_major_formatter(WB.make_days_formatter(
+                17, 12, 2025, fmt="%d/%m", one_based=False
+            ))
+            # secax.xaxis.set_major_locator(MaxNLocator(integer=True))
+
+        # ax.set_xlim([min(time_scale), max(time_scale)])
         ax.set_ylim([-0.1, 2.0])
         _range = ax.get_ylim()[1] - ax.get_ylim()[0]
         ax.legend()
@@ -5293,12 +5356,23 @@ class WB:
         ax2.set_ylabel('Shoot structural mass (g)')
 
         if thermal_time:
-            secax = ax2.secondary_xaxis('bottom', functions=(tt_to_days, days_to_tt))
-            # Move it below the primary axis
-            secax.spines['bottom'].set_position(('outward', 35))  # pixels; adjust if needed
-            secax.set_xlabel('Time (days)')
+            # 1) make sure TT=0 is visible; Matplotlib added a negative margin
+            left, right = ax2.get_xlim()
+            if left < 0:
+                left = 0
+                right = max(time_scale)
+                ax2.set_xlim(left, right)
+
+            # 2) NOW create the secondary axis using the *final* TT limits
+            secax2 = ax2.secondary_xaxis('bottom', functions=(tt_to_days, days_to_tt))
+            secax2.spines['bottom'].set_position(('outward', 35))
+            secax2.set_xlabel('Date')
+            secax2.xaxis.set_major_formatter(WB.make_days_formatter(
+                17, 12, 2025, fmt="%d/%m", one_based=False
+            ))
+            # secax2.xaxis.set_major_locator(MaxNLocator(integer=True))
         
-        ax2.set_xlim([min(time_scale), max(time_scale)])
+        # ax2.set_xlim([min(time_scale), max(time_scale)])
         ax2.legend()
 
         suffix = ''
@@ -5318,12 +5392,23 @@ class WB:
         ax3.set_ylabel('Root system structural mass (g)')
 
         if thermal_time:
-            secax = ax3.secondary_xaxis('bottom', functions=(tt_to_days, days_to_tt))
-            # Move it below the primary axis
-            secax.spines['bottom'].set_position(('outward', 35))  # pixels; adjust if needed
-            secax.set_xlabel('Time (days)')
+            # 1) make sure TT=0 is visible; Matplotlib added a negative margin
+            left, right = ax3.get_xlim()
+            if left < 0:
+                left = 0
+                right = max(time_scale)
+                ax3.set_xlim(left, right)
+
+            # 2) NOW create the secondary axis using the *final* TT limits
+            secax3 = ax3.secondary_xaxis('bottom', functions=(tt_to_days, days_to_tt))
+            secax3.spines['bottom'].set_position(('outward', 35))
+            secax3.set_xlabel('Date')
+            secax3.xaxis.set_major_formatter(WB.make_days_formatter(
+                17, 12, 2025, fmt="%d/%m", one_based=False
+            ))
+            # secax2.xaxis.set_major_locator(MaxNLocator(integer=True))
         
-        ax3.set_xlim([min(time_scale), max(time_scale)])
+        # ax3.set_xlim([min(time_scale), max(time_scale)])
         ax3.legend()
 
         suffix = ''
@@ -5492,8 +5577,10 @@ class WB:
         if massic:
             if xshoot is None:
                 x_unit += "/mg"
-            y_unit += "/mg"
-            mass = dataset["living_struct_mass"].sum(dim="vid") * 1000
+            # y_unit += "/mg"
+            y_unit += "/cm2"
+            # mass = dataset["living_struct_mass"].sum(dim="vid") * 1000
+            mass = dataset["root_exchange_surface"].sum(dim="vid") * 10000 # cm2
             if xshoot is None:
                 dsx_all /= mass
             dsy_all /= mass
@@ -5569,7 +5656,7 @@ class WB:
                 current_root_window = current_window.where((current_window["axis_index"]==target_roots[r]).compute(), drop=True)
                 current_root = current_dataset.where((current_dataset["axis_index"]==target_roots[r]).compute(), drop=True)
                 for v in range(len(variables)):
-                    ax[v][r].plot(current_root["distance_from_tip"].values * 100, current_root_window[variables[v]].mean(dim='t').values * conversions[v], label=f"day {time // 24}")
+                    ax[v][r].plot(current_root["distance_from_tip"].values * 100, current_root_window[variables[v]].mean(dim='t').values * conversions[v], label=f"day {time // 24}", c=list(twenty_palette.values())[t%len(twenty_palette)])
                     if xlim is not None:
                         conv_xlim = [100 * i for i in xlim]
                         ax[v][r].set_xlim(conv_xlim)
@@ -5593,12 +5680,12 @@ class WB:
         plt.close()
 
 
-    def make_days_formatter(start_day=17, start_month=12, start_year=1997, fmt="%m/%d"):
+    def make_days_formatter(start_day=17, start_month=12, start_year=2025, fmt="%d/%m", one_based=False):
         start_dt = datetime(start_year, start_month, start_day)
-
         def _fmt(x, pos=None):
+            base = x - 1.0 if one_based else x
             try:
-                d = start_dt + timedelta(days=float(x))
+                d = start_dt + timedelta(days=float(base))
             except Exception:
                 return ""
             return d.strftime(fmt)
