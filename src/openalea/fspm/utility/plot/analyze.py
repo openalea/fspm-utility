@@ -212,6 +212,9 @@ def analyze_data(scenarios, outputs_dirpath, inputs_dirpath, target_folder_key=N
                 fig, _ = plot_csv(csv_dirpath=sums_folder,
                     csv_name="plant_scale_properties.csv", properties=["C_Nm_average", "C_AA_average", "C_xylem_Nm_average", "C_xylem_AA_average", "C_phloem_AA_average"], stacked=True, ignore_firsts=False, xlim=None, logscale=True, 
                     custom_suffix="_N_concentrations", figsize=figsize, title="N concentrations in root segments (mol.gDW-1)")
+                fig, _ = plot_csv(csv_dirpath=sums_folder,
+                    csv_name="plant_scale_properties.csv", properties=["diffusion_AA_phloem", "unloading_AA_phloem", "loading_AA_phloem", "import_AA", "AA_synthesis", "storage_catabolism", "diffusion_AA_soil", "diffusion_AA_xylem", "export_AA", "storage_synthesis", "AA_catabolism", "deficit_AA", "amino_acids_consumption_by_growth"], stacked=True, ignore_firsts=False, xlim=None, ylim=[1e-13, 2e-9], logscale=True, 
+                    custom_suffix="_N_io", figsize=figsize, title="N flows in symplasm (mol.plant-1.s-1)")
                 carbon_flows = True
                 if carbon_flows:
                     log_scale_carbon = True

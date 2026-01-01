@@ -54,13 +54,14 @@ usual_clims = dict(
     # # K=                             dict(bounds=None,           show_as_log=False,   normalize_by="inverse_length"),
     # xylem_Nm=                       dict(bounds=None,           show_as_log=True,   normalize_by=None),
     xylem_pressure_in=             dict(bounds=[-0.05e6, 0.1e6],           show_as_log=False,   normalize_by=None),
+    phloem_pressure_in=             dict(bounds=[-0.05e6, 0.1e6],           show_as_log=False,   normalize_by=None),
     # axial_export_water_up=          dict(bounds=None,           show_as_log=False,   normalize_by=None),
     # endodermis_conductance_factor=          dict(bounds=[0, 1],           show_as_log=False,   normalize_by=None),
     # exodermis_conductance_factor=          dict(bounds=[0, 1],           show_as_log=False,   normalize_by=None),
     # xylem_differentiation_factor=          dict(bounds=[0, 1],           show_as_log=False,   normalize_by=None),
     # apoplastic_Nm_soil_xylem=          dict(bounds=None,           show_as_log=False,   normalize_by="length"),
     # axis_type=          dict(bounds=None,           show_as_log=False,   normalize_by=None),
-    diffusion_AA_soil=          dict(bounds=[1e-15, 5e-13],           show_as_log=True,   normalize_by="length"), # prev 
+    diffusion_AA_soil=          dict(bounds=[1e-15, 1e-9],           show_as_log=True,   normalize_by="length"), # prev 
     hexose_consumption_by_growth=          dict(bounds=[1e-14, 1e-10],           show_as_log=True,   normalize_by=None),
     # hexose_diffusion_from_phloem=          dict(bounds=[1e-14, 1e-10],           show_as_log=True,   normalize_by=None), # Not for Root-CyNAPS
     # sucrose_loading_in_phloem=          dict(bounds=[1e-14, 1e-10],           show_as_log=True,   normalize_by=None), # Not for Root-CyNAPS
@@ -125,7 +126,7 @@ class Logger:
                     animate_raw_logs=True,
                     on_shoot_logs=False)
     
-    heavy_log = dict(recording_images=False, recording_off_screen=True, auto_camera_position=False,
+    heavy_log = dict(recording_images=True, recording_off_screen=True, auto_camera_position=False,
                      plotted_property=plotted_property_continuous, flow_property=False, show_soil=False, imposed_clim=usual_clims[plotted_property_continuous]["bounds"], log_scale=usual_clims[plotted_property_continuous]["show_as_log"],
                     recording_mtg=True,
                     recording_raw=True,
