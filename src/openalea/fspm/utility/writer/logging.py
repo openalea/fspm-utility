@@ -27,6 +27,7 @@ usual_clims = dict(
     hexose_exudation=               dict(bounds=[3e-14, 3e-12],  show_as_log=True,   normalize_by="length"),
     # raw_C_rhizodeposition=               dict(bounds=[3e-13, 5e-10],  show_as_log=True,   normalize_by="length"), # Not for Root-CyNAPS
     net_mineral_N_uptake=               dict(bounds=[1e-12, 5e-10],  show_as_log=True,   normalize_by="length"),
+    # net_mineral_N_uptake=               dict(bounds=[1e-11, 1.5e-10],  show_as_log=False,   normalize_by="length"), # RC outputs
     # hexose_exudation=               dict(bounds=[1e-14, 1e-10],  show_as_log=True,   normalize_by=None), # Not for Root-CyNAPS
     deficit_AA=               dict(bounds=[1e-13, 1e-9],  show_as_log=True,   normalize_by=None),
     # deficit_hexose_root=               dict(bounds=[1e-14, 1e-10],  show_as_log=True,   normalize_by=None),
@@ -36,13 +37,13 @@ usual_clims = dict(
     C_sucrose_root=               dict(bounds=[1e-6, 1e-3],  show_as_log=True,   normalize_by=None),
     # net_hexose_production_from_phloem=   dict(bounds=None,  show_as_log=False,   normalize_by="length"),
     import_Nm=                      dict(bounds=[1e-12, 5e-10],  show_as_log=True,   normalize_by="length"),
-    # net_N_uptake=                  dict(bounds=[1e-11, 1.5e-10],  show_as_log=False,   normalize_by="length"),
+    net_N_uptake=               dict(bounds=[1e-11, 1.5e-10],  show_as_log=False,   normalize_by="length"), # RC outputs
     # net_mineral_N_uptake=                  dict(bounds=[1e-12, 3.7e-10],  show_as_log=True,   normalize_by="length"),
     # diffusion_Nm_soil=              dict(bounds=None,  show_as_log=True,   normalize_by="length"),
     # diffusion_Nm_xylem=             dict(bounds=None,  show_as_log=False,   normalize_by="length"),
     # export_Nm=                      dict(bounds=[1e-12, 5e-10],  show_as_log=True,   normalize_by="length"),
-    # radial_import_water_xylem=            dict(bounds=[-6e-14, 6e-14],           show_as_log=False,  normalize_by="length"), #[3e-11, 5e-10]log,
-    radial_import_water_xylem=            dict(bounds=[1e-13, 6e-11],           show_as_log=True,  normalize_by="length"), #[3e-11, 5e-10]log, # WB plots
+    radial_import_water_xylem=            dict(bounds=[1e-11, 3e-10],           show_as_log=False,  normalize_by="length"), #[3e-10, 6e-10] RC plots
+    # radial_import_water_xylem=            dict(bounds=[1e-13, 6e-11],           show_as_log=True,  normalize_by="length"), #[3e-11, 5e-10]log, # WB plots
     radial_import_water_phloem=            dict(bounds=[-1e-9, 1e-9],           show_as_log=False,  normalize_by="length"), #[1e-22, 1e-12],
     C_hexose_root=                  dict(bounds=[1e-5, 1e-2],   show_as_log=True,   normalize_by=None), #prev LU
     root_exchange_surface=          dict(bounds=[4e-3, 3.7e-2],           show_as_log=True,   normalize_by="length"), # prev [1e-3, 1e-2]
@@ -61,7 +62,8 @@ usual_clims = dict(
     # xylem_differentiation_factor=          dict(bounds=[0, 1],           show_as_log=False,   normalize_by=None),
     # apoplastic_Nm_soil_xylem=          dict(bounds=None,           show_as_log=False,   normalize_by="length"),
     # axis_type=          dict(bounds=None,           show_as_log=False,   normalize_by=None),
-    diffusion_AA_soil=          dict(bounds=[1e-15, 1e-9],           show_as_log=True,   normalize_by="length"), # prev 
+    # diffusion_AA_soil=          dict(bounds=[1e-15, 1e-9],           show_as_log=True,   normalize_by="length"), # prev 
+    diffusion_AA_soil=          dict(bounds=[1e-12, 2e-11],           show_as_log=False,   normalize_by="length"), # RC outputs
     hexose_consumption_by_growth=          dict(bounds=[1e-14, 1e-10],           show_as_log=True,   normalize_by=None),
     # hexose_diffusion_from_phloem=          dict(bounds=[1e-14, 1e-10],           show_as_log=True,   normalize_by=None), # Not for Root-CyNAPS
     # sucrose_loading_in_phloem=          dict(bounds=[1e-14, 1e-10],           show_as_log=True,   normalize_by=None), # Not for Root-CyNAPS
@@ -69,6 +71,7 @@ usual_clims = dict(
     # maintenance_respiration=          dict(bounds=[1e-14, 1e-10],           show_as_log=True,   normalize_by=None), # Not for Root-CyNAPS
     axial_export_water_up_phloem=          dict(bounds=[-1e-12, 1e-12],           show_as_log=False,   normalize_by=None),
     AA_synthesis=          dict(bounds=[1e-14, 1e-10],           show_as_log=True,   normalize_by=None),
+    soil_temperature=          dict(bounds=[-2, 20],           show_as_log=False,   normalize_by=None),
     # Cv_sucrose_root=          dict(bounds=[1, 5000],           show_as_log=True,   normalize_by=None), # Not for Root-CyNAPS
     # Cv_hexose_root=          dict(bounds=[1, 5000],           show_as_log=True,   normalize_by=None), # Not for Root-CyNAPS
     # amino_acids_consumption_by_growth=          dict(bounds=[1e-14, 1e-10],           show_as_log=True,   normalize_by=None), # Not for Root-CyNAPS
@@ -126,11 +129,11 @@ class Logger:
                     animate_raw_logs=True,
                     on_shoot_logs=False)
     
-    heavy_log = dict(recording_images=True, recording_off_screen=True, auto_camera_position=False,
+    heavy_log = dict(recording_images=False, recording_off_screen=True, auto_camera_position=False,
                      plotted_property=plotted_property_continuous, flow_property=False, show_soil=False, imposed_clim=usual_clims[plotted_property_continuous]["bounds"], log_scale=usual_clims[plotted_property_continuous]["show_as_log"],
                     recording_mtg=True,
                     recording_raw=True,
-                    final_snapshots=True,
+                    final_snapshots=True, root_colormap = 'jet',
                     export_3D_scene=True,
                     recording_sums=True,
                     recording_performance=True,
@@ -437,24 +440,25 @@ class Logger:
                 self.plant_scale_properties.to_csv(
                     os.path.join(self.MTG_properties_summed_dirpath, f"plant_scale_properties_{self.simulation_time_in_hours}.csv"))
                 
-                # convert list of outputs into dataframes
-                for outputs_df_list, outputs_filename, index_columns in (
-                        (self.shoot.axes_all_data_list, f"axes_outputs_{self.simulation_time_in_hours}.csv", ['t', 'plant', 'axis']),
-                        (self.shoot.organs_all_data_list, f"organs_outputs_{self.simulation_time_in_hours}.csv", ['t', 'plant', 'axis', 'organ']),
-                        (
-                        self.shoot.hiddenzones_all_data_list, f"hiddenzones_outputs_{self.simulation_time_in_hours}.csv", ['t', 'plant', 'axis', 'metamer']),
-                        (self.shoot.elements_all_data_list, f"elements_outputs_{self.simulation_time_in_hours}.csv",
-                        ['t', 'plant', 'axis', 'metamer', 'organ', 'element']),
-                        (self.shoot.soils_all_data_list, f"soil_outputs_{self.simulation_time_in_hours}.csv", ['t', 'plant', 'axis'])
-                ):
-                    outputs_filepath = os.path.join(self.shoot_properties_dirpath, outputs_filename)
-                    outputs_df = pd.concat(outputs_df_list, keys=self.shoot.all_simulation_steps, sort=False)
-                    outputs_df.reset_index(0, inplace=True)
-                    outputs_df.rename({'level_0': 't'}, axis=1, inplace=True)
-                    outputs_df = outputs_df.reindex(index_columns + outputs_df.columns.difference(index_columns).tolist(),
-                                                    axis=1, copy=False)
-                    outputs_df.fillna(value=np.nan, inplace=True)  # Convert back None to NaN
-                    outputs_df.to_csv(outputs_filepath)
+                if self.recording_shoot:
+                    # convert list of outputs into dataframes
+                    for outputs_df_list, outputs_filename, index_columns in (
+                            (self.shoot.axes_all_data_list, f"axes_outputs_{self.simulation_time_in_hours}.csv", ['t', 'plant', 'axis']),
+                            (self.shoot.organs_all_data_list, f"organs_outputs_{self.simulation_time_in_hours}.csv", ['t', 'plant', 'axis', 'organ']),
+                            (
+                            self.shoot.hiddenzones_all_data_list, f"hiddenzones_outputs_{self.simulation_time_in_hours}.csv", ['t', 'plant', 'axis', 'metamer']),
+                            (self.shoot.elements_all_data_list, f"elements_outputs_{self.simulation_time_in_hours}.csv",
+                            ['t', 'plant', 'axis', 'metamer', 'organ', 'element']),
+                            (self.shoot.soils_all_data_list, f"soil_outputs_{self.simulation_time_in_hours}.csv", ['t', 'plant', 'axis'])
+                    ):
+                        outputs_filepath = os.path.join(self.shoot_properties_dirpath, outputs_filename)
+                        outputs_df = pd.concat(outputs_df_list, keys=self.shoot.all_simulation_steps, sort=False)
+                        outputs_df.reset_index(0, inplace=True)
+                        outputs_df.rename({'level_0': 't'}, axis=1, inplace=True)
+                        outputs_df = outputs_df.reindex(index_columns + outputs_df.columns.difference(index_columns).tolist(),
+                                                        axis=1, copy=False)
+                        outputs_df.fillna(value=np.nan, inplace=True)  # Convert back None to NaN
+                        outputs_df.to_csv(outputs_filepath)
                 
 
         if self.recording_barcodes:
@@ -602,8 +606,8 @@ class Logger:
             props_dict.update({k: v.to_dict() for k, v in self.props["root"].items() if isinstance(v, ArrayDict) and k in variables})
 
         is_raw_soil = "soil" in self.props.keys()
-        soil_target_variables = ["soil_temperature"]
         if is_raw_soil:
+            soil_target_variables = list(self.props["soil"].keys())
             soil_shape = self.props["soil"]["soil_temperature"].shape
             voxel_number = soil_shape[0] * soil_shape[1] * soil_shape[2]
             voxel_ids = [-(i+1) for i in range(voxel_number)]
@@ -636,7 +640,8 @@ class Logger:
 
         # Dataset variables' attribute metadata
         for k in props_dict.keys():
-            getattr(props_ds, k).attrs.update(variables[k])
+            if k in variables.keys(): # TODO manual exception added for soil where x1, x2, etc needed to avoid redundancy
+                getattr(props_ds, k).attrs.update(variables[k])
 
         return props_ds
 

@@ -250,12 +250,14 @@ def analyze_data(scenarios, outputs_dirpath, inputs_dirpath, target_folder_key=N
             
             fps=5
             dataset = open_and_merge_datasets(scenarios=scenarios, root_outputs_path=outputs_dirpath, target_folder_key=target_folder_key, use_dask=False)
-            shoot_outputs = WB.open_shoot_outputs(scenario=scenarios[0],
-                                                  target_folder_key=target_folder_key,
-                                                  outputs_dirpath=outputs_dirpath, 
-                                                  meteo_data_dirpath=os.path.join("inputs", "meteo_Ljutovac2002.csv"),
-                                                  soil_data_dirpath=os.path.join("inputs", "meteo_Ljutovac2002_soil.csv"))
-                
+            get_shoot = False
+            if get_shoot:
+                shoot_outputs = WB.open_shoot_outputs(scenario=scenarios[0],
+                                                    target_folder_key=target_folder_key,
+                                                    outputs_dirpath=outputs_dirpath, 
+                                                    meteo_data_dirpath=os.path.join("inputs", "meteo_Ljutovac2002.csv"),
+                                                    soil_data_dirpath=os.path.join("inputs", "meteo_Ljutovac2002_soil.csv"))
+                    
             
             #dataset["NAE"] = Indicators.Nitrogen_Aquisition_Efficiency(d=dataset)
             #dataset["Cumulative_NAE"] = Indicators.Cumulative_Nitrogen_Aquisition_Efficiency(d=dataset)
@@ -302,9 +304,9 @@ def analyze_data(scenarios, outputs_dirpath, inputs_dirpath, target_folder_key=N
             dataset["Lengthy_symplasmic_volume"] = Indicators.compute(d=dataset, formula = 'symplasmic_volume / length')
 
             # C
-            dataset["Length_wise_raw_rhizodeposition"] = Indicators.compute(d=dataset, formula = '(((hexose_exudation + mucilage_secretion + cells_release - hexose_uptake_from_soil + phloem_hexose_exudation - hexose_uptake_from_soil)*6) + ((diffusion_AA_soil + apoplastic_AA_soil_xylem - import_AA) * 5)) / length')
-            dataset["Length_wise_raw_rhizodeposition"] = Indicators.compute(d=dataset, formula = '(((hexose_exudation + mucilage_secretion + cells_release - hexose_uptake_from_soil + phloem_hexose_exudation - hexose_uptake_from_soil)*6) + ((diffusion_AA_soil + apoplastic_AA_soil_xylem - import_AA) * 5)) / length')
-            dataset["Raw_rhizodeposition"] = Indicators.compute(d=dataset, formula = '(hexose_exudation + mucilage_secretion + cells_release - hexose_uptake_from_soil + phloem_hexose_exudation - hexose_uptake_from_soil) * 6 + ((diffusion_AA_soil + apoplastic_AA_soil_xylem - import_AA) * 5)')
+            # dataset["Length_wise_raw_rhizodeposition"] = Indicators.compute(d=dataset, formula = '(((hexose_exudation + mucilage_secretion + cells_release - hexose_uptake_from_soil + phloem_hexose_exudation - hexose_uptake_from_soil)*6) + ((diffusion_AA_soil + apoplastic_AA_soil_xylem - import_AA) * 5)) / length')
+            # dataset["Length_wise_raw_rhizodeposition"] = Indicators.compute(d=dataset, formula = '(((hexose_exudation + mucilage_secretion + cells_release - hexose_uptake_from_soil + phloem_hexose_exudation - hexose_uptake_from_soil)*6) + ((diffusion_AA_soil + apoplastic_AA_soil_xylem - import_AA) * 5)) / length')
+            # dataset["Raw_rhizodeposition"] = Indicators.compute(d=dataset, formula = '(hexose_exudation + mucilage_secretion + cells_release - hexose_uptake_from_soil + phloem_hexose_exudation - hexose_uptake_from_soil) * 6 + ((diffusion_AA_soil + apoplastic_AA_soil_xylem - import_AA) * 5)')
 
 
             average_day_temperature = 20
@@ -366,6 +368,8 @@ def analyze_data(scenarios, outputs_dirpath, inputs_dirpath, target_folder_key=N
                     else:
                         final_dataset = scenario_dataset
 
+                    final_dataset = final_dataset.load()
+
                     simple_uptake_per_struct_mass = final_dataset["simple_import_Nm"].sum() / final_dataset["struct_mass"].sum()
 
                     comparision_instructions = {
@@ -383,7 +387,7 @@ def analyze_data(scenarios, outputs_dirpath, inputs_dirpath, target_folder_key=N
 
 
                 # @note CURRENT WHEAT-BRIDGES OUTPUTS FOCUS
-                running = True
+                running = False
                 if running:
                     all_true = False
 
@@ -647,7 +651,6 @@ def analyze_data(scenarios, outputs_dirpath, inputs_dirpath, target_folder_key=N
                                                     custom_suffix="2")
 
 
-
                 ### Fig 1 c related
                 running = False
                 if running:
@@ -666,20 +669,21 @@ def analyze_data(scenarios, outputs_dirpath, inputs_dirpath, target_folder_key=N
                     final_dataset = filter_dataset(scenario_dataset, time=scenario_time)
                     
                     final_dataset = final_dataset[[
-                      color, "distance_from_tip", "thermal_time_since_cells_formation", "axis_index", "struct_mass", "length", "root_order",   # Always
+                      color, "distance_from_tip", "thermal_time_since_cells_formation", "axis_index", "struct_mass", "length", # "root_order",   # Always
                       "Net_mineral_N_uptake", "Net_N_uptake", "Length-wise mineral N uptake", "Length-wise net N uptake", "Length-wise net AA exudation", "Length-wise_gross_N_uptake", "Length-wise N exudation", "Massic net N uptake", "Massic_mineral_N_uptake", "Massic AA_synthesis", "Massic_import_Nm", "Massic_mycorrhizal_mediated_import_Nm", # Specific  
                       "Massic_apoplastic_Nm_soil_xylem", "Net_AA_Exudation", "Nm", "AA", "phloem_AA", "Lengthy_symplasmic_volume",
                       "C_hexose_root", "Nm", "root_exchange_surface", "radial_import_water_xylem", "Massic_export_xylem", "Massic_root_exchange_surface", "Length-wise_radial_import_water", "axial_export_water_up_xylem", "xylem_pressure_in",
-                      "Thermal time since tissue formation", "Length-wise root exchange surface", "axial_N_advection_in_xylem", "xylem_Nm", "Length-wise net N export to xylem", "Length-wise net AA import from phloem", "Length-wise net N export to vessels", "Length_wise_raw_rhizodeposition"
+                      "Thermal time since tissue formation", "Length-wise root exchange surface", "axial_N_advection_in_xylem", "xylem_Nm", "Length-wise net N export to xylem", "Length-wise net AA import from phloem", "Length-wise net N export to vessels", # "Length_wise_raw_rhizodeposition"
                     #   "net_hexose_production_from_phloem", "phloem_exchange_surface", "Lengthy_root_exchange_surface", "Lengthy_symplasmic_volume", "maintenance_respiration", "hexose_consumption_by_growth"
                       ]]
+                    final_dataset = final_dataset.load()
                     print("opened main")
                     seminal_dataset = final_dataset.where(final_dataset["axis_index"].isin(seminal_id), drop=True)
                     nodal_dataset = final_dataset.where(final_dataset["axis_index"].isin(nodal_id), drop=True)
                     lateral_dataset = final_dataset.where(final_dataset["axis_index"].isin(laterals_id), drop=True)
 
-                    first_order_dataset = final_dataset.where(final_dataset["root_order"] == 1, drop=True)
-                    lateral_dataset = final_dataset.where(final_dataset["root_order"] > 1, drop=True)
+                    # first_order_dataset = final_dataset.where(final_dataset["root_order"] == 1, drop=True)
+                    # lateral_dataset = final_dataset.where(final_dataset["root_order"] > 1, drop=True)
 
                     # OPTIONAL MANUAL FILTERING
                     # distance_threshold = 0.06
@@ -704,14 +708,14 @@ def analyze_data(scenarios, outputs_dirpath, inputs_dirpath, target_folder_key=N
                     #     lateral_dataset['Length-wise mineral N uptake'].values[mask.values] -= axis_mean
                     
                     # per_root_type_ds = dict(seminal=seminal_dataset, nodal=nodal_dataset, lateral=lateral_dataset)
-                    # per_root_type_ds = dict(lateral=lateral_dataset, nodal=nodal_dataset, seminal=seminal_dataset)
-                    per_root_type_ds = dict(lateral=lateral_dataset, first_order=first_order_dataset)
+                    per_root_type_ds = dict(lateral=lateral_dataset, nodal=nodal_dataset, seminal=seminal_dataset)
+                    # per_root_type_ds = dict(lateral=lateral_dataset, first_order=first_order_dataset)
                     # first_order_ds = dict(seminal=seminal_dataset, nodal=nodal_dataset)
 
                     print("Producing 2D plots from Xarray...")
                     
-                    WB.scatter_plots(per_root_type_ds, raw_dirpath, name_suffix=f"_{scenario_time}", discrete=True, xlog=False)
-                    # RootCyNAPSFigures.Fig_1_c(per_root_type_ds, raw_dirpath, name_suffix=f"_{scenario_time}", discrete=True, xlog=False)
+                    # WB.scatter_plots(per_root_type_ds, raw_dirpath, name_suffix=f"_{scenario_time}", discrete=True, xlog=False)
+                    RootCyNAPSFigures.Fig_1_c(per_root_type_ds, raw_dirpath, name_suffix=f"_{scenario_time}", discrete=True, xlog=False)
                     # RootCyNAPSFigures.Fig_1_c(per_root_type_ds, raw_dirpath, name_suffix=f"_{scenario_times[scenario]}_log", discrete=True, xlog=True)
                     # RootCyNAPSFigures.Fig_1_c(first_order_ds, raw_dirpath, name_suffix=f"_{scenario_times[scenario]}_order1_log", discrete=True, xlog=True)
 
@@ -769,6 +773,8 @@ def analyze_data(scenarios, outputs_dirpath, inputs_dirpath, target_folder_key=N
                     # sucrose_input = sucrose_input_dict[int(age)]
 
                     concentration = scenario_info[2]
+
+                    final_dataset = final_dataset.load()
 
                     RootCyNAPSFigures.Fig_7_single(d=final_dataset, output_dirpath=raw_dirpath, amino_acid_input_rate=0, 
                                                    modalities=[(concentration, age)])
@@ -849,20 +855,21 @@ def analyze_data(scenarios, outputs_dirpath, inputs_dirpath, target_folder_key=N
         ### Fig 2 & 3 related
         # RootCyNAPSFigures.Fig_3_embedding_2(dataset=dataset, scenarios=scenarios, outputs_dirpath=outputs_dirpath, flow="Net_mineral_N_uptake", name_suffix="_C_per_apex")
         # TODO : second anchor
-        autonomous_figures = False
+        autonomous_figures = True
 
         if autonomous_figures:
+            # @note RC autonomous
             # unique_times = np.arange(10, 61, 5)
             # unique_times = np.arange(10, 61, 1)
-            unique_times = [10, 20, 30, 40, 50, 60]
+            # unique_times = [10, 20, 30, 40, 50, 60]
             # unique_times = [10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60]
-            # unique_times = [10]
+            unique_times = [60]
             # unique_concentrations = np.logspace(0, 4, len(unique_times)) * 5e-3
             # unique_concentrations = np.logspace(0, 4, 11) * 5e-3
-            # unique_concentrations = np.logspace(0, 4, 5) * 5e-3
+            unique_concentrations = np.logspace(0, 4, 5) * 5e-3
             # unique_concentrations = np.logspace(0, 4, 9) * 5e-3
             # unique_concentrations = unique_concentrations[:-1]
-            unique_concentrations = [5e-1]
+            # unique_concentrations = [5e-1]
 
             manual_scenario_times = {}
             scenario_concentrations = {}
@@ -890,9 +897,9 @@ def analyze_data(scenarios, outputs_dirpath, inputs_dirpath, target_folder_key=N
             
             # RootCyNAPSFigures.Fig_5_v0(dataset=dataset, scenarios=scenarios, flow="Net_N_uptake", outputs_dirpath=outputs_dirpath, scenario_ages=manual_scenario_times, name_suffix=f"_ages_{unique_concentrations[0]:2e}")
             # RootCyNAPSFigures.Fig_5_v0(dataset=dataset, scenarios=scenarios, flow="Net_mineral_N_uptake", outputs_dirpath=outputs_dirpath, scenario_ages=manual_scenario_times, name_suffix=f"_ages_{unique_concentrations[0]:2e}")
-            # RootCyNAPSFigures.Fig_5_v0(dataset=subdataset, scenarios=scenarios, flow="Net_N_uptake", outputs_dirpath=outputs_dirpath, scenario_ages=0, scenario_concentrations=scenario_concentrations, name_suffix=f"_concentrations_{unique_times[0]}")
+            RootCyNAPSFigures.Fig_5_v0(dataset=subdataset, scenarios=scenarios, flow="Net_N_uptake", outputs_dirpath=outputs_dirpath, scenario_ages=23, scenario_concentrations=scenario_concentrations, name_suffix=f"_concentrations_{unique_times[0]}")
             # RootCyNAPSFigures.Fig_5_v0(dataset=subdataset, scenarios=scenarios, flow="Net_mineral_N_uptake", outputs_dirpath=outputs_dirpath, scenario_ages=0, scenario_concentrations=scenario_concentrations, name_suffix=f"_concentrations_{unique_times[0]}")
-            RootCyNAPSFigures.Fig_5_v1(dataset=subdataset, scenarios=scenarios, flow="Net_N_uptake", outputs_dirpath=outputs_dirpath, scenario_ages=manual_scenario_times, name_suffix=f"_concentrations_{unique_times[0]}")
+            # RootCyNAPSFigures.Fig_5_v1(dataset=subdataset, scenarios=scenarios, flow="Net_N_uptake", outputs_dirpath=outputs_dirpath, scenario_ages=manual_scenario_times, name_suffix=f"_concentrations_{unique_times[0]}")
             
             # RootCyNAPSFigures.Fig_3_lists_embedding_2(dataset=subdataset, scenarios=scenarios, outputs_dirpath=outputs_dirpath, flow="Net_mineral_N_uptake", name_suffix="_high")
             # RootCyNAPSFigures.Fig_3_embedding_2(dataset=dataset, scenarios=scenarios, outputs_dirpath=outputs_dirpath, flow="Net_AA_Exudation") 
@@ -5711,9 +5718,11 @@ class RootCyNAPSFigures:
         # ylim = None
         # ylim = [-4, 13] # net N uptake
         # ylim = [-0.5, 14] # gross N uptake
-        ylim = [-1.7, 5.5] # N diffusive loss
+        # ylim = [-1.7, 7] # Net uptake
+        # ylim = [-0.2, 7] # Gross uptake
+        ylim = [-2, 7] # N exudation
         figsize = (6.4, 4.8)
-        # figsize = (6.4, 3.0)
+        # figsize = (6.4, 3.0) # For stacked plots
 
         if not massic:
             if scatter:
@@ -5727,7 +5736,7 @@ class RootCyNAPSFigures:
                 fig, ax = XarrayPlotting.scatter_xarray(scenario_datasets, outputs_dirpath=outputs_path, x="distance_from_tip", y="Length-wise net N uptake", c=c, 
                                                 discrete=discrete, s=s, xlog=xlog, name_suffix=name_suffix, to_xunit="cm", xlim=xlim, to_yunit="nmol/(cm.h)", ylim=ylim, figsize=figsize, show_correlation=correlations)
                 fig, ax = XarrayPlotting.scatter_xarray(scenario_datasets, outputs_dirpath=outputs_path, x="distance_from_tip", y="Massic net N uptake", c=c, 
-                                                discrete=discrete, s=s, xlog=xlog, name_suffix=name_suffix, to_xunit="cm", xlim=xlim, to_yunit="µmol/(g.h)", ylim=None, figsize=figsize, show_correlation=correlations)
+                                                discrete=discrete, s=s, xlog=xlog, name_suffix=name_suffix, to_xunit="cm", xlim=xlim, to_yunit="µmol/(g.h)", ylim=[-20, 60], figsize=figsize, show_correlation=correlations)
                 fig, ax = XarrayPlotting.scatter_xarray(scenario_datasets, outputs_dirpath=outputs_path, x="distance_from_tip", y="Length-wise mineral N uptake", c=c, 
                                                 discrete=discrete, s=s, xlog=xlog, name_suffix=name_suffix, to_xunit="cm", xlim=xlim, ylim=ylim, figsize=figsize, show_correlation=correlations)
                 fig, ax = XarrayPlotting.scatter_xarray(scenario_datasets, outputs_dirpath=outputs_path, x="distance_from_tip", y="Length-wise net AA exudation", c=c, 
@@ -5741,7 +5750,7 @@ class RootCyNAPSFigures:
                 
                 # Fig_S3_unified
                 fig, ax = XarrayPlotting.scatter_xarray(scenario_datasets, outputs_dirpath=outputs_path, x="AA", y="Length-wise net N uptake", c=c, 
-                                                discrete=discrete, s=s, xlog=xlog, name_suffix=name_suffix, to_xunit="mmol/g", xlim=None, to_yunit="nmol/(cm.h)", ylim=ylim, figsize=figsize, show_correlation=correlations)
+                                                discrete=discrete, s=s, xlog=xlog, name_suffix=name_suffix, to_xunit="mmol/g", xlim=[-0.1, 1.3], to_yunit="nmol/(cm.h)", ylim=ylim, figsize=figsize, show_correlation=correlations)
                 
                 fig, ax = XarrayPlotting.scatter_xarray(scenario_datasets, outputs_dirpath=outputs_path, x="Length-wise net AA exudation", y="Length-wise net N uptake", c=c, 
                                                 discrete=discrete, s=s, xlog=xlog, name_suffix=name_suffix, to_xunit="nmol/(cm.h)", xlim=None, to_yunit="nmol/(cm.h)", ylim=ylim, figsize=figsize, show_correlation=correlations)
@@ -5765,11 +5774,11 @@ class RootCyNAPSFigures:
                                                 discrete=discrete, s=s, xlog=xlog, name_suffix=name_suffix, to_xunit="nmol/(cm.h)", xlim=None, to_yunit="nmol/(cm.h)", ylim=ylim, figsize=figsize, show_correlation=correlations)
                 
                 fig, ax = XarrayPlotting.scatter_xarray(scenario_datasets, outputs_dirpath=outputs_path, x="Length-wise net N export to vessels", y="Length-wise net N uptake", c=c, 
-                                                discrete=discrete, s=s, xlog=xlog, name_suffix=name_suffix, to_xunit="nmol/(cm.h)", xlim=None, to_yunit="nmol/(cm.h)", ylim=ylim, figsize=figsize, show_correlation=correlations)
+                                                discrete=discrete, s=s, xlog=xlog, name_suffix=name_suffix, to_xunit="nmol/(cm.h)", xlim=[-0.5, 17], to_yunit="nmol/(cm.h)", ylim=ylim, figsize=figsize, show_correlation=correlations)
 
                 # Fig S3B
                 fig, ax = XarrayPlotting.scatter_xarray(scenario_datasets, outputs_dirpath=outputs_path, x="AA", y="Length-wise_gross_N_uptake", c=c, 
-                                                discrete=discrete, s=s, xlog=xlog, name_suffix=name_suffix, to_xunit="mmol/g", xlim=None, to_yunit="nmol/(cm.h)", ylim=ylim, figsize=figsize, show_correlation=correlations)
+                                                discrete=discrete, s=s, xlog=xlog, name_suffix=name_suffix, to_xunit="mmol/g", xlim=[-0.1, 1.3], to_yunit="nmol/(cm.h)", ylim=ylim, figsize=figsize, show_correlation=correlations)
                 
                 fig, ax = XarrayPlotting.scatter_xarray(scenario_datasets, outputs_dirpath=outputs_path, x="Length-wise net AA exudation", y="Length-wise_gross_N_uptake", c=c, 
                                                 discrete=discrete, s=s, xlog=xlog, name_suffix=name_suffix, to_xunit="nmol/(cm.h)", xlim=None, to_yunit="nmol/(cm.h)", ylim=ylim, figsize=figsize, show_correlation=correlations)
@@ -5797,7 +5806,7 @@ class RootCyNAPSFigures:
 
                 # Fig_S3C
                 fig, ax = XarrayPlotting.scatter_xarray(scenario_datasets, outputs_dirpath=outputs_path, x="AA", y="Length-wise N exudation", c=c, 
-                                                discrete=discrete, s=s, xlog=xlog, name_suffix=name_suffix, to_xunit="mmol/g", xlim=None, to_yunit="nmol/(cm.h)", ylim=ylim, figsize=figsize, show_correlation=correlations)
+                                                discrete=discrete, s=s, xlog=xlog, name_suffix=name_suffix, to_xunit="mmol/g", xlim=[-0.1, 1.3], to_yunit="nmol/(cm.h)", ylim=ylim, figsize=figsize, show_correlation=correlations)
                 
                 fig, ax = XarrayPlotting.scatter_xarray(scenario_datasets, outputs_dirpath=outputs_path, x="Length-wise net AA exudation", y="Length-wise N exudation", c=c, 
                                                 discrete=discrete, s=s, xlog=xlog, name_suffix=name_suffix, to_xunit="nmol/(cm.h)", xlim=None, to_yunit="nmol/(cm.h)", ylim=ylim, figsize=figsize, show_correlation=correlations)
@@ -6648,10 +6657,10 @@ class RootCyNAPSFigures:
 
             
             if isinstance(scenario_ages, dict):
-                scenario_dataset = filter_dataset(dataset, scenario=combined_scenario, time=24)
+                scenario_dataset = filter_dataset(dataset, scenario=combined_scenario, time=23)
                 # scenario_dataset = filter_dataset(dataset, scenario=combined_scenario, time=(scenario_ages[scenario] + 1) * 24)
             elif isinstance(scenario_ages, int):
-                scenario_dataset = filter_dataset(dataset, scenario=combined_scenario, time=(scenario_ages + 1) * 24)
+                scenario_dataset = filter_dataset(dataset, scenario=combined_scenario, time=scenario_ages)
             else:
                 raise ValueError
 
@@ -6803,12 +6812,19 @@ class RootCyNAPSFigures:
         Nm_diffusion_to_soil = float(d.diffusion_Nm_soil.sum()) * conversion_factor
         AA_exudation_to_soil = float(d.diffusion_AA_soil.sum() + d.apoplastic_AA_soil_xylem.sum()) * 1.4 * conversion_factor
         AA_reuptake = float(d.import_AA.sum()) * 1.4 * conversion_factor
-        Nm_to_shoot = float(d.Nm_root_to_shoot_xylem.sum()) * 1e6 # Align from mol.h-1
-        AA_to_shoot = float(d.AA_root_to_shoot_xylem.sum()) * 1.4 * 1e6 # Align from mol.h-1
+        Nm_to_shoot = float(d.Nm_root_to_shoot_xylem.sum()) * conversion_factor
+        AA_to_shoot = float(d.AA_root_to_shoot_xylem.sum()) * 1.4 * conversion_factor
         total_structural_mass = float(d.struct_mass.sum())
         
         # amino_acid_input = amino_acid_input_rate * 1.4 * conversion_factor
-        amino_acid_input = - float(d.AA_root_to_shoot_phloem.sum()) * 1.4 * 1e6 # Align from mol.h-1
+        print("debug prints")
+        print(d.AA_root_to_shoot_phloem.values)
+
+        aa_consumption_by_growth = (d.hexose_consumption_by_growth.sum() * 6 * 12 / 0.44) * (0.015 / 14) / 1.4
+        print(aa_consumption_by_growth)
+
+
+        amino_acid_input = - float(d.AA_root_to_shoot_phloem.sum()) * 1.4 * conversion_factor / 20
         
         # General section
         input_processes = ['Active N uptake', 'Water-advected N uptake', 'Mineral N diffusive loss', 'Amino acid diffusive loss', 'Amino acid active reuptake']
@@ -7000,7 +7016,7 @@ class RootCyNAPSFigures:
             else:
                 ymax = halfway
             
-            ymax = 25
+            ymax = 32
             if show_legend:
                 ax.set_ylim(- ymax / 5, ymax)
             else:
