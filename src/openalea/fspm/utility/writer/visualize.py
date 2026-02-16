@@ -833,54 +833,61 @@ class VertexPicker:
         return ((x1-x2)**2 + (y1-y2)**2 + (z1-z2)**2)**0.5
     
 
-def export_scene_to_gltf(output_path, plotter, clim, colormap="jet", parallel_compression=True, log_scale=True):
+def export_scene_to_gltf(output_path, plotter, off_screen, clim, colormap="jet", parallel_compression=True, log_scale=True):
     """
     Scene exporter to 3D GLTF to make animations
     WARNING : Doesn't support transparent soil yet as we limit to one multiblock only to avoid duplicated orthogonal bug that has been noticed in export
     """
-    export_plotter = pv.Plotter()
-    plotted_multiblocks = 0
 
-    # Iterate over each actor in the original plotter and convert to PolyData
-    for actor in plotter.renderer.actors.values():
-        if hasattr(actor, 'mapper') and actor.mapper is not None:
-            data = actor.mapper.dataset
-        
-            # Check if the data is already PolyData
-            if isinstance(data, pv.PolyData):
-                # We suppose this is leaves in this case
-                polydata = data
-                # Add the PolyData with colors to the export plotter
-                export_plotter.add_mesh(polydata, color="lightgreen", specular=None)
+    export_plotter = pv.Plotter(off_screen=off_screen)
 
-            elif isinstance(data, pv.MultiBlock):
-                if plotted_multiblocks < 1:
-                    for i in range(data.n_blocks):
-                        block = data[i]
-                        
-                        # Check if the block is not empty
-                        if block is not None and block.n_points > 0:
-                            # Convert non-PolyData blocks to PolyData by extracting the surface
-                            if isinstance(block, pv.PolyData):
-                                polydata = block
+    try:
+        plotted_multiblocks = 0
 
-                            # Add the PolyData with colors to the export plotter
-                            export_plotter.add_mesh(polydata, cmap=colormap, clim=clim, specular=None, log_scale=log_scale)
-                            plotted_multiblocks += 1
+        # Iterate over each actor in the original plotter and convert to PolyData
+        for actor in plotter.renderer.actors.values():
+            if hasattr(actor, 'mapper') and actor.mapper is not None:
+                data = actor.mapper.dataset
+            
+                # Check if the data is already PolyData
+                if isinstance(data, pv.PolyData):
+                    # We suppose this is leaves in this case
+                    polydata = data
+                    # Add the PolyData with colors to the export plotter
+                    export_plotter.add_mesh(polydata, color="lightgreen", specular=None)
 
-            else:
-                # Convert non-PolyData to PolyData by extracting the surface
-                polydata = data.extract_surface()
-                
-                # If face colors are available as cell data, transfer them
-                # if 'face_colors' in data.cell_data:  # Replace 'face_colors' with the actual name
-                #     polydata.cell_data[self.plotted_property + ".m-1"] = data.cell_data[self.plotted_property + ".m-1"]
-                
-                # Add the PolyData with colors to the export plotter
-                export_plotter.add_mesh(polydata)
-        
-    # Now export the scene with converted PolyData meshes to GLTF
-    export_plotter.export_gltf(output_path)
+                elif isinstance(data, pv.MultiBlock):
+                    if plotted_multiblocks < 1:
+                        for i in range(data.n_blocks):
+                            block = data[i]
+                            
+                            # Check if the block is not empty
+                            if block is not None and block.n_points > 0:
+                                # Convert non-PolyData blocks to PolyData by extracting the surface
+                                if isinstance(block, pv.PolyData):
+                                    polydata = block
+
+                                # Add the PolyData with colors to the export plotter
+                                export_plotter.add_mesh(polydata, cmap=colormap, clim=clim, specular=None, log_scale=log_scale)
+                                plotted_multiblocks += 1
+
+                else:
+                    # Convert non-PolyData to PolyData by extracting the surface
+                    polydata = data.extract_surface()
+                    
+                    # If face colors are available as cell data, transfer them
+                    # if 'face_colors' in data.cell_data:  # Replace 'face_colors' with the actual name
+                    #     polydata.cell_data[self.plotted_property + ".m-1"] = data.cell_data[self.plotted_property + ".m-1"]
+                    
+                    # Add the PolyData with colors to the export plotter
+                    export_plotter.add_mesh(polydata)
+            
+        # Now export the scene with converted PolyData meshes to GLTF
+        export_plotter.render()
+        export_plotter.export_gltf(output_path)
+    
+    finally:
+        export_plotter.close()
     
     # if parallel_compression:
     #     # To ensure we don't wait for compression
@@ -976,7 +983,12 @@ def standalone_mtg_to_gltf(root=None, soil=None, shoot=None, plotted_property="C
     plotter = pv.Plotter(off_screen=recording_off_screen, window_size=sizes["portrait"], lighting="three lights")
     plotter.set_background(background_color)
 
-    plotter.show(interactive_update=True)
+    if not recording_off_screen:
+        # interactive visualization only when you *actually* have a display
+        plotter.show(auto_close=False)
+    else:
+        # offscreen: force a render once so movie writer / exporters have a context
+        plotter.render()
 
     if auto_camera_position:
         plotter.reset_camera()

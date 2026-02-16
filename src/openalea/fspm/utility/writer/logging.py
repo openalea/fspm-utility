@@ -133,7 +133,7 @@ class Logger:
                      plotted_property=plotted_property_continuous, flow_property=False, show_soil=False, imposed_clim=usual_clims[plotted_property_continuous]["bounds"], log_scale=usual_clims[plotted_property_continuous]["show_as_log"],
                     recording_mtg=True,
                     recording_raw=True,
-                    final_snapshots=True, root_colormap = 'Wistia',
+                    final_snapshots=True, root_colormap = 'jet',
                     export_3D_scene=True,
                     recording_sums=True,
                     recording_performance=True,
@@ -359,14 +359,20 @@ class Logger:
                     "small_height": [960, 1280]}
         
         if self.recording_off_screen:
-            pv.start_xvfb()
-
-        self.plotter = pv.Plotter(off_screen=not self.echo, window_size=sizes["portrait"], lighting="three lights")
+            # pv.start_xvfb()
+            pv.OFF_SCREEN = True
+        print("passed", self.recording_off_screen)
+        self.plotter = pv.Plotter(off_screen=self.recording_off_screen, window_size=sizes["portrait"], lighting="three lights")
         self.plotter.set_background(background_color)
 
         framerate = 10
         self.plotter.open_movie(os.path.join(self.root_images_dirpath, "root_movie.mp4"), framerate=framerate, quality=10)
-        self.plotter.show(interactive_update=True)
+        if not self.recording_off_screen:
+            # interactive visualization only when you *actually* have a display
+            self.plotter.show(auto_close=False)
+        else:
+            # offscreen: force a render once so movie writer / exporters have a context
+            self.plotter.render()
 
         # NOTE : Not necessary since voxels provide the scale information :
         # First plot a 1 cm scale bar
@@ -770,13 +776,13 @@ class Logger:
 
         scene_screenshots = True
         
-        self.plotter.update()
+        self.plotter.render()
         if not scene_screenshots:
             self.plotter.screenshot(os.path.join(self.outputs_dirpath, f"root_images/snapshot_{self.simulation_time_in_hours}.png"),
                                     transparent_background=True, scale=5)
         else:
             export_scene_to_gltf(output_path=os.path.join(self.root_images_dirpath, f"{custom_name}{self.simulation_time_in_hours}.gltf"),
-                                        plotter=self.plotter, clim=self.clim, parallel_compression=parallel_compression, colormap=self.root_colormap, log_scale=self.log_scale)
+                                        plotter=self.plotter, off_screen=self.recording_off_screen, clim=self.clim, parallel_compression=parallel_compression, colormap=self.root_colormap, log_scale=self.log_scale)
         
         if recording_video:
             self.plotter.write_frame()
