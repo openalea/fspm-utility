@@ -129,7 +129,7 @@ class Logger:
                     animate_raw_logs=True,
                     on_shoot_logs=False)
     
-    heavy_log = dict(recording_images=False, recording_off_screen=True, auto_camera_position=False,
+    heavy_log = dict(recording_images=True, recording_off_screen=True, auto_camera_position=False,
                      plotted_property=plotted_property_continuous, flow_property=False, show_soil=False, imposed_clim=usual_clims[plotted_property_continuous]["bounds"], log_scale=usual_clims[plotted_property_continuous]["show_as_log"],
                     recording_mtg=True,
                     recording_raw=True,
@@ -317,8 +317,7 @@ class Logger:
         self.logger_output.addHandler(file_handler)
 
         self.logger_output.info(f"Launching {os.path.basename(outputs_dirpath)}...")
-        print("\r")
-
+        print("\r") 
 
         # Evaluating realistic maximum size for process to write on disk
         total = psutil.virtual_memory().total
@@ -361,7 +360,7 @@ class Logger:
         if self.recording_off_screen:
             # pv.start_xvfb()
             pv.OFF_SCREEN = True
-        print("passed", self.recording_off_screen)
+        
         self.plotter = pv.Plotter(off_screen=self.recording_off_screen, window_size=sizes["portrait"], lighting="three lights")
         self.plotter.set_background(background_color)
 
@@ -479,7 +478,7 @@ class Logger:
                     normalize_by = "length"
                 else:
                     normalize_by = None
-                self.recording_images_with_pyvista(normalize_by=normalize_by)
+                self.recording_images_with_pyvista(normalize_by=normalize_by, recording_video=False)
 
         self.simulation_time_in_hours += self.time_step_in_hours
         self.previous_step_start_time = self.current_step_start_time
@@ -659,7 +658,7 @@ class Logger:
             elif data_type =="shoot":
                 export[data_type] = shoot_plantgl_to_mesh(data)
         with open(os.path.join(self.MTG_files_dirpath, f'data_{self.simulation_time_in_hours}.pckl'), "wb") as f:
-                pickle.dump(export, f)
+            pickle.dump(export, f)
 
     def index_mtg_axes(self, g):
         axis_index = g.property("axis_index")           
@@ -695,8 +694,9 @@ class Logger:
             processed_vids += axis
 
 
-    def recording_images_with_pyvista(self, custom_name="", parallel_compression=True, recording_video=True, normalize_by=None):
-
+    def recording_images_with_pyvista(self, custom_name="", parallel_compression=True, recording_video=False, normalize_by=None):
+        
+        
         # This is required since the dictionnary is not emptied when using plotter.remove_actor. However this is not a problem to the use of the remove_actor in the renderer for next time_step.
         self.plotter.renderer.actors.clear()
 
@@ -785,6 +785,7 @@ class Logger:
                                         plotter=self.plotter, off_screen=self.recording_off_screen, clim=self.clim, parallel_compression=parallel_compression, colormap=self.root_colormap, log_scale=self.log_scale)
         
         if recording_video:
+            self.logger_output.info("WARNING, video capture has been depreciated with current logger implementation, please debug")
             self.plotter.write_frame()
 
         
@@ -1009,7 +1010,7 @@ class Logger:
                 self.plotter.show(interactive_update=False)
 
         if self.final_snapshots:
-
+            
             if not self.recording_mtg:
                 self.logger_output.info("Saving the final state of the MTG...")
                 self.recording_mtg_files()
@@ -1028,7 +1029,6 @@ class Logger:
                     props = g.properties()
                     vertices = [vid for vid in g.vertices(scale=g.max_scale()) if props["struct_mass"][vid] > 0]
                     self.logger_output.info("Saving a final snapshot...")
-                    # try:
                     if not self.static_mtg:
                         self.log_mtg_coordinates()
                     self.init_images_plotter()

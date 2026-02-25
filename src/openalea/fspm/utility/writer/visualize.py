@@ -885,6 +885,9 @@ def export_scene_to_gltf(output_path, plotter, off_screen, clim, colormap="jet",
         # Now export the scene with converted PolyData meshes to GLTF
         export_plotter.render()
         export_plotter.export_gltf(output_path)
+
+    except Exception as e:
+        print(e)
     
     finally:
         export_plotter.close()
