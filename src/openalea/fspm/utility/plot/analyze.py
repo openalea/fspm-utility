@@ -250,7 +250,7 @@ def analyze_data(scenarios, outputs_dirpath, inputs_dirpath, target_folder_key=N
             
             fps=5
             dataset = open_and_merge_datasets(scenarios=scenarios, root_outputs_path=outputs_dirpath, target_folder_key=target_folder_key, use_dask=False)
-            get_shoot = False
+            get_shoot = True
             if get_shoot:
                 shoot_outputs = WB.open_shoot_outputs(scenario=scenarios[0],
                                                     target_folder_key=target_folder_key,
@@ -387,7 +387,7 @@ def analyze_data(scenarios, outputs_dirpath, inputs_dirpath, target_folder_key=N
 
 
                 # @note CURRENT WHEAT-BRIDGES OUTPUTS FOCUS
-                running = False
+                running = True
                 if running:
                     all_true = False
 
@@ -398,10 +398,10 @@ def analyze_data(scenarios, outputs_dirpath, inputs_dirpath, target_folder_key=N
 
 
                     # Plant scale C balance related
-                    running = False
+                    running = True
                     if running or all_true:
                         print("Starting balance plots summary")
-                        if False:
+                        if True:
                             # WB.plant_C_balance(shoot_outputs=shoot_outputs, dataset=scenario_dataset, outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"))
                             WB.plant_C_balance_summary(shoot_outputs=shoot_outputs, dataset=scenario_dataset, outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"), p_input=False)
                             WB.plant_C_balance_summary(shoot_outputs=shoot_outputs, dataset=scenario_dataset, outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"), p_input=True)
@@ -409,7 +409,7 @@ def analyze_data(scenarios, outputs_dirpath, inputs_dirpath, target_folder_key=N
                             # WB.plant_C_balance_io(shoot_outputs=shoot_outputs, dataset=scenario_dataset, outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"))
                             # WB.root_C_balance_io(shoot_outputs=shoot_outputs, dataset=scenario_dataset, outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"))
                             # WB.root_C_balance_io(shoot_outputs=shoot_outputs, dataset=scenario_dataset, outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"), percentage=False)
-                            # WB.root_C_balance_full(shoot_outputs=shoot_outputs, dataset=scenario_dataset, outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"), percentage=False)
+                            WB.root_C_balance_full(shoot_outputs=shoot_outputs, dataset=scenario_dataset, outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"), percentage=False)
                             # WB.plant_C_balance(shoot_outputs=shoot_outputs, dataset=scenario_dataset, outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"), massic=True)
                         
                         if False:
@@ -438,7 +438,7 @@ def analyze_data(scenarios, outputs_dirpath, inputs_dirpath, target_folder_key=N
                         print("Finished balance plots summary")
 
                     # Total correlation plots over time
-                    running = True
+                    running = False
                     if running or all_true:
                         print("Starting correlation plots over time")
                         # WB.XY_totals_all_times(dataset=scenario_dataset, x="Net_mineral_N_uptake", y="Raw_rhizodeposition", to_xunit="µmol/day", to_yunit="µmol/day", outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"))
@@ -978,7 +978,7 @@ def analyze_data(scenarios, outputs_dirpath, inputs_dirpath, target_folder_key=N
                                     newsimu_dirpath=os.path.join(outputs_dirpath, scenario, "MTG_properties/shoot_properties"),
                                     meteo_data_dirpath=os.path.join(inputs_dirpath, "meteo_Ljutovac2002.csv"))
             else:
-                running = True
+                running = False
 
                 if running:
                     cnwheat_plot_csv(csv_dirpath=os.path.join(outputs_dirpath, scenario, target_folder_key, "MTG_properties/shoot_properties"))
@@ -1017,6 +1017,13 @@ def analyze_data(scenarios, outputs_dirpath, inputs_dirpath, target_folder_key=N
                                               "binned_mstruct": binned_mstruct.values})
 
                     output_df.to_csv(os.path.join(shoot_folder, f"shoot_bins_{target_folder_key}.csv"))
+
+
+                running = True
+
+                if running:
+                    print("Checking shoot balance")
+                    WB.cn_shoot_balance_assertion(output_dirpath=os.path.join(outputs_dirpath, scenario, "MTG_properties/shoot_properties"))
             
             
             print(" [INFO] Finished comparision plots on CN-Wheat outputs...")
@@ -3739,7 +3746,7 @@ class WB:
 
             ratio = 1.
             if not massic:
-                ch = True
+                ch = False
                 if ch:
                     daily_net_labile_hex_C *= 0.1
                     ratio = total_photo / (tot_root_respiration_C + total_rhizodeposition + daily_net_labile_hex_C + daily_net_Labile_aa_C + tot_C_to_struct_root + tot_C_to_struct_shoot + daily_labile_C_shoot + tot_Shoot_respiration)
@@ -4256,6 +4263,7 @@ class WB:
 
         fig.savefig(os.path.join(outputs_dirpath, f"C_balance_root{suffix}.png"), bbox_inches="tight", dpi=720)
 
+
     def root_C_balance_full(shoot_outputs, dataset, outputs_dirpath, thermal_time = True, massic=False, percentage=True):
         average_amino_acids_CN = 5 / 1.4
         conversion = 1e-3 # to mmol
@@ -4307,7 +4315,6 @@ class WB:
             
         else:
             time_scale = days
-
         
         Total_Photosynthesis = df_axe.groupby(['day'])['Tillers_Photosynthesis'].agg('sum').to_numpy() * conversion
 
@@ -5511,6 +5518,11 @@ class WB:
         suffix += custom_suffix
 
         fig.savefig(os.path.join(outputs_dirpath, f"shoot_root_CN_alloc{suffix}.png"), dpi=720, bbox_inches="tight")
+
+
+    def cn_shoot_balance_assertion(output_dirpath):
+        postprocessing_dirpath = os.path.join(output_dirpath, "postprocessing")
+        return
 
 
     def XY_totals_all_times(dataset, x, y, to_xunit, to_yunit, outputs_dirpath, massic=False, daily_average=True):
