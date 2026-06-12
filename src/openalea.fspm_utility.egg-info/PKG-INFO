@@ -1,6 +1,6 @@
 Metadata-Version: 2.4
 Name: openalea.fspm-utility
-Version: 0.1.dev110+geccc16fc1
+Version: 0.1.dev122+g5d7172523
 Summary: FSPM datamanagement toolkit for OpenAlea
 Author-email: Tristan Gérault <tristan.gerault@inrae.fr>, Christophe Pradal <christophe.pradal@fnria.fr>
 License-Expression: CECILL-C

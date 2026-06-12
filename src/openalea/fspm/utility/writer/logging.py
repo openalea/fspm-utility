@@ -957,13 +957,14 @@ class Logger:
                     (self.shoot.soils_all_data_list, "soil_outputs.csv", ['t', 'plant', 'axis'])
             ):
                 outputs_filepath = os.path.join(self.shoot_properties_dirpath, outputs_filename)
-                outputs_df = pd.concat(outputs_df_list, keys=self.shoot.all_simulation_steps, sort=False)
-                outputs_df.reset_index(0, inplace=True)
-                outputs_df.rename({'level_0': 't'}, axis=1, inplace=True)
-                outputs_df = outputs_df.reindex(index_columns + outputs_df.columns.difference(index_columns).tolist(),
-                                                axis=1, copy=False)
-                outputs_df.fillna(value=np.nan, inplace=True)  # Convert back None to NaN
-                outputs_df.to_csv(outputs_filepath)
+                if len(outputs_df_list) > 0:
+                    outputs_df = pd.concat(outputs_df_list, keys=self.shoot.all_simulation_steps, sort=False)
+                    outputs_df.reset_index(0, inplace=True)
+                    outputs_df.rename({'level_0': 't'}, axis=1, inplace=True)
+                    outputs_df = outputs_df.reindex(index_columns + outputs_df.columns.difference(index_columns).tolist(),
+                                                    axis=1, copy=False)
+                    outputs_df.fillna(value=np.nan, inplace=True)  # Convert back None to NaN
+                    outputs_df.to_csv(outputs_filepath)
 
         
         if self.recording_raw:
@@ -1099,7 +1100,7 @@ class Logger:
                 if self.export_3D_scene:
                     self.logger_output.info("Saving a final snapshot...")
                     export_scene_to_gltf(output_path=os.path.join(self.root_images_dirpath, f"{self.simulation_time_in_hours}.gltf"),
-                                        plotter=self.plotter, clim=self.clim, colormap=self.root_colormap, log_scale=self.log_scale)
+                                        plotter=self.plotter, off_screen=self.recording_off_screen, clim=self.clim, colormap=self.root_colormap, log_scale=self.log_scale)
 
         
         if self.recording_barcodes and not self.compare_to_ref_barcode:
