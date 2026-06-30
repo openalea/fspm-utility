@@ -1038,7 +1038,7 @@ def make_double_sided(mesh):
     # Create a copy of the mesh with inverted normals
     mesh_copy = mesh.copy()
     mesh_copy.compute_normals(cell_normals=False, inplace=True)
-    mesh_copy.flip_normals()
+    mesh_copy = mesh_copy.flip_faces()
 
     # Combine the original mesh with the copied and flipped mesh
     double_sided_mesh = mesh + mesh_copy
