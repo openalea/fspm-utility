@@ -404,12 +404,12 @@ def analyze_data(scenarios, outputs_dirpath, inputs_dirpath, target_folder_key=N
                         if True:
                             # WB.plant_C_balance(shoot_outputs=shoot_outputs, dataset=scenario_dataset, outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"))
                             WB.plant_C_balance_summary(shoot_outputs=shoot_outputs, dataset=scenario_dataset, outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"), p_input=False)
-                            WB.plant_C_balance_summary(shoot_outputs=shoot_outputs, dataset=scenario_dataset, outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"), p_input=True)
+                            # WB.plant_C_balance_summary(shoot_outputs=shoot_outputs, dataset=scenario_dataset, outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"), p_input=True)
                             # WB.plant_C_balance_summary(shoot_outputs=shoot_outputs, dataset=scenario_dataset, outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"), p_input=False)
                             # WB.plant_C_balance_io(shoot_outputs=shoot_outputs, dataset=scenario_dataset, outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"))
                             # WB.root_C_balance_io(shoot_outputs=shoot_outputs, dataset=scenario_dataset, outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"))
                             # WB.root_C_balance_io(shoot_outputs=shoot_outputs, dataset=scenario_dataset, outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"), percentage=False)
-                            WB.root_C_balance_full(shoot_outputs=shoot_outputs, dataset=scenario_dataset, outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"), percentage=False)
+                            # WB.root_C_balance_full(shoot_outputs=shoot_outputs, dataset=scenario_dataset, outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"), percentage=False)
                             # WB.plant_C_balance(shoot_outputs=shoot_outputs, dataset=scenario_dataset, outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"), massic=True)
                         
                         if False:
@@ -978,16 +978,16 @@ def analyze_data(scenarios, outputs_dirpath, inputs_dirpath, target_folder_key=N
                                     newsimu_dirpath=os.path.join(outputs_dirpath, scenario, "MTG_properties/shoot_properties"),
                                     meteo_data_dirpath=os.path.join(inputs_dirpath, "meteo_Ljutovac2002.csv"))
             else:
-                running = False
+                running = True
 
                 if running:
                     cnwheat_plot_csv(csv_dirpath=os.path.join(outputs_dirpath, scenario, target_folder_key, "MTG_properties/shoot_properties"))
                     print(" [INFO] Finished  CN-Wheat plots")
 
                     print(" [INFO] Starting comparision plots on CN-Wheat outputs...")
-                    compare_shoot_outputs(reference_dirpath=os.path.join(inputs_dirpath, "postprocessing"),
-                                        newsimu_dirpath=os.path.join(outputs_dirpath, scenario, target_folder_key, "MTG_properties/shoot_properties"),
-                                        meteo_data_dirpath=os.path.join(inputs_dirpath, "meteo_Ljutovac2002.csv"))
+                    # compare_shoot_outputs(reference_dirpath=os.path.join(inputs_dirpath, "postprocessing"),
+                    #                     newsimu_dirpath=os.path.join(outputs_dirpath, scenario, target_folder_key, "MTG_properties/shoot_properties"),
+                    #                     meteo_data_dirpath=os.path.join(inputs_dirpath, "meteo_Ljutovac2002.csv"))
                 
                 running = False
 
@@ -1023,7 +1023,16 @@ def analyze_data(scenarios, outputs_dirpath, inputs_dirpath, target_folder_key=N
 
                 if running:
                     print("Checking shoot balance")
-                    WB.cn_shoot_balance_assertion(output_dirpath=os.path.join(outputs_dirpath, scenario, "MTG_properties/shoot_properties"))
+                    shoot_outputs = WB.open_shoot_outputs(
+                        scenario=scenario,
+                        target_folder_key=target_folder_key,
+                        outputs_dirpath=outputs_dirpath,
+                        meteo_data_dirpath=os.path.join("inputs", "meteo_Ljutovac2002.csv"),
+                        soil_data_dirpath=os.path.join(
+                            "inputs", "meteo_Ljutovac2002_soil.csv"
+                        ),
+                    )
+                    WB.cn_shoot_balance_assertion(shoot_outputs=shoot_outputs, outputs_dirpath=os.path.join(outputs_dirpath, scenario, "MTG_properties/shoot_properties"))
             
             
             print(" [INFO] Finished comparision plots on CN-Wheat outputs...")
@@ -1511,7 +1520,7 @@ def cnwheat_plot_csv(csv_dirpath):
 
     os.mkdir(plot_path)
 
-    from fspmwheat import cnwheat_facade
+    from openalea.fspmwheat import cnwheat_facade
 
     # --- Generate graphs from postprocessing files
     plt.ioff()
@@ -1553,7 +1562,7 @@ def cnwheat_plot_csv(csv_dirpath):
         graphs_dirpath=plot_path)
 
     # --- Additional graphs
-    from cnwheat import tools as cnwheat_tools
+    from openalea.cnwheat import tools as cnwheat_tools
     colors = ['blue', 'darkorange', 'green', 'red', 'darkviolet', 'gold', 'magenta', 'brown', 'darkcyan', 'grey',
               'lime']
     colors = colors + colors
@@ -3587,7 +3596,7 @@ class WB:
                 shoot_respi = tot_Shoot_respiration
             ))
 
-    def plant_C_balance_summary(shoot_outputs, dataset, outputs_dirpath, thermal_time = True, massic=False, balance=True, p_input=True):
+    def plant_C_balance_summary(shoot_outputs, outputs_dirpath, thermal_time = True, massic=False, balance=True, p_input=True):
         average_amino_acids_CN = 5 / 1.4
         conversion = 1e-3 # to mmol
 
@@ -3666,199 +3675,16 @@ class WB:
         df_elt['sum_respi_tillers'] = df_elt['sum_respi'] * df_elt['nb_replications']
         Shoot_respiration = df_elt.groupby(['day'])['sum_respi_tillers'].agg('sum').to_numpy() * conversion
 
-        dataset['day'] = (np.floor(dataset['t'] / 24)).astype('int64')
-        dataset = dataset.set_coords('day')
-        net_hexose_exudation_C = Indicators.compute(d=dataset, formula="hexose_exudation - hexose_uptake_from_soil + phloem_hexose_exudation - phloem_hexose_uptake_from_soil").sum(dim="vid") * 1e6 * 3600 * 6
-        net_AA_exudation_C = Indicators.compute(d=dataset, formula="diffusion_AA_soil + apoplastic_AA_soil_xylem - import_AA").sum(dim="vid") * 1e6 * 3600 * average_amino_acids_CN
-        cells_release_C = dataset["cells_release"].sum(dim="vid") * 1e6 * 3600 * 6
-        mucilage_secretion_C = dataset["mucilage_secretion"].sum(dim="vid") * 1e6 * 3600 * 6
-        growth_respiration_C = dataset["resp_growth"].sum(dim="vid") * 1e6 # already per hour
-        maintenance_respiration_C = dataset["maintenance_respiration"].sum(dim="vid") * 1e6 * 3600
-        N_metabolic_respiration_C = dataset["N_metabolic_respiration"].sum(dim="vid") * 1e6 * 3600
-        root_struct_mass_produced_C = dataset["struct_mass_produced"].sum(dim="vid") * 1e6 * 0.44 / 12.01
-        Labile_hex_C = Indicators.compute(d=dataset, formula="living_struct_mass*(6*(C_hexose_root + C_hexose_reserve) + 12*C_sucrose_root)").sum(dim="vid") * 1e6
-        Labile_aa_C = Indicators.compute(d=dataset, formula="living_struct_mass*5*(AA + phloem_AA + xylem_AA)").sum(dim="vid") * 1e6
-        Labile_hex_C_deficit = Indicators.compute(d=dataset, formula=" - 6*3600*deficit_hexose_root").sum(dim="vid") * 1e6
-        Labile_aa_C_deficit = Indicators.compute(d=dataset, formula="- 5*3600*deficit_AA").sum(dim="vid") * 1e6
-
-
-        # Daily sum
-        net_hexose_exudation_C = net_hexose_exudation_C.groupby('day').sum().values * conversion # applied to numpy
-        net_AA_exudation_C = net_AA_exudation_C.groupby('day').sum().values * conversion
-        cells_release_C = cells_release_C.groupby('day').sum().values * conversion
-        mucilage_secretion_C = mucilage_secretion_C.groupby('day').sum().values * conversion
-        growth_respiration_C = growth_respiration_C.groupby('day').sum().values * conversion
-        maintenance_respiration_C = maintenance_respiration_C.groupby('day').sum().values * conversion
-        N_metabolic_respiration_C = N_metabolic_respiration_C.groupby('day').sum().values * conversion
-        root_struct_mass_produced_C = root_struct_mass_produced_C.groupby('day').sum().values * conversion
-        daily_Labile_hex_C = (Labile_hex_C).groupby('day').mean().values * conversion
-        daily_Labile_aa_C = (Labile_aa_C).groupby('day').mean().values * conversion
-        daily_deficit_Labile_hex_C = Labile_hex_C_deficit.groupby('day').sum().values * conversion
-        daily_deficit_Labile_aa_C = Labile_aa_C_deficit.groupby('day').sum().values * conversion
-        daily_net_labile_hex_C = daily_Labile_hex_C - daily_deficit_Labile_hex_C
-        daily_net_Labile_aa_C = daily_Labile_aa_C - daily_deficit_Labile_aa_C
-
-        fig, ax = plt.subplots(figsize=(6.4, 4.8))
-        ax.stackplot(time_scale, net_hexose_exudation_C + cells_release_C + mucilage_secretion_C, net_AA_exudation_C, growth_respiration_C + maintenance_respiration_C + N_metabolic_respiration_C, Shoot_respiration, labels=[
-            'Hexose, mucilage, cells rhizodeposition',
-            'Net amino acids exudation',
-            'root respiration',
-            'shoot total respiration'])
-        ax.plot(time_scale, Total_Photosynthesis, c='red', label='Raw photosynthesis')
-        ax.plot(time_scale, Unloading_Sucrose_tot_C + Unloading_Amino_Acids_tot_C, c='black', label='Raw C allocation to roots')
-        ax.plot(time_scale, Unloading_Sucrose_tot_C + Unloading_Amino_Acids_tot_C - Export_Amino_Acids_C, c='green', label='Net C allocation to roots')
-        ax.legend()
-        ax.set_xlabel('Thermal time (°C.day)' if thermal_time else 'Time (days)')
-        if not massic:
-            ax.set_ylabel('Process flow (mmol C per day)')
-        else:
-            ax.set_ylabel('Process flow (mmol C/g/day)')
-
-        if thermal_time:
-            secax = ax.secondary_xaxis('bottom', functions=(tt_to_days, days_to_tt))
-            # Move it below the primary axis
-            secax.spines['bottom'].set_position(('outward', 35))  # pixels; adjust if needed
-            secax.set_xlabel('Time (days)')
-
-        suffix = ''
-        if thermal_time:
-            suffix += "_thermal"
-        if massic:
-            suffix += "_massic"
-
-        fig.savefig(os.path.join(outputs_dirpath, f"C_balance{suffix}.png"), bbox_inches="tight", dpi=720)
 
         if balance:
             if not massic:
                 total_photo = Total_Photosynthesis.cumsum()
                 tot_Shoot_respiration = Shoot_respiration.cumsum()
-                total_rhizodeposition = (net_hexose_exudation_C + cells_release_C + mucilage_secretion_C + net_AA_exudation_C).cumsum()
-                tot_root_respiration_C = (growth_respiration_C + maintenance_respiration_C + N_metabolic_respiration_C).cumsum()
-                tot_C_to_struct_root = root_struct_mass_produced_C.cumsum()
                 tot_C_to_struct_shoot = daily_shoot_struct_mass_produced_C.cumsum()
             else:
                 total_photo = Total_Photosynthesis
                 tot_Shoot_respiration = Shoot_respiration
-                total_rhizodeposition = (net_hexose_exudation_C + cells_release_C + mucilage_secretion_C + net_AA_exudation_C)
-                tot_root_respiration_C = (growth_respiration_C + maintenance_respiration_C + N_metabolic_respiration_C)
-                tot_C_to_struct_root = root_struct_mass_produced_C
                 tot_C_to_struct_shoot = daily_shoot_struct_mass_produced_C
-
-            ratio = 1.
-            if not massic:
-                ch = False
-                if ch:
-                    daily_net_labile_hex_C *= 0.1
-                    ratio = total_photo / (tot_root_respiration_C + total_rhizodeposition + daily_net_labile_hex_C + daily_net_Labile_aa_C + tot_C_to_struct_root + tot_C_to_struct_shoot + daily_labile_C_shoot + tot_Shoot_respiration)
-
-            p_conv = 1
-            if p_input:
-                p_conv /= total_photo
-                p_conv *= 100
-
-            fig2, ax2 = plt.subplots(figsize=(6.4, 4.8))
-
-            if not massic:
-                ax2.stackplot(time_scale, 
-                            tot_root_respiration_C * ratio * p_conv, 
-                            total_rhizodeposition * ratio * p_conv, 
-                            daily_net_labile_hex_C * ratio * p_conv,
-                            daily_net_Labile_aa_C * ratio * p_conv,
-                            tot_C_to_struct_root * ratio * p_conv, 
-                            tot_C_to_struct_shoot * ratio * p_conv, 
-                            daily_labile_C_shoot * ratio * p_conv,
-                            tot_Shoot_respiration * ratio * p_conv,  
-                            labels=[
-                    "C allocated to root respiration",
-                    "C allocated to rhizodeposition",
-                    "C in root labile hexoses",
-                    "C in root labile amino acids",
-                    "C allocated to root structural mass",
-                    "C allocated to shoot structural mass",
-                    "C in shoot labile pools",
-                    "C allocated to shoot respiration",
-                ]               , colors=[
-                    twenty_palette["blue"],
-                    twenty_palette["orange"],
-                    twenty_palette["green"],
-                    twenty_palette["red"],
-                    twenty_palette["purple"],
-                    twenty_palette["brown"],
-                    twenty_palette["kaki"],
-                    twenty_palette["grey"]
-                ])
-                if not p_input:
-                    ax2.plot(time_scale, total_photo, c='black', label="C from photosynthesis")
-            
-            else:
-                ax2.stackplot(time_scale, 
-                            tot_root_respiration_C * ratio, 
-                            total_rhizodeposition * ratio,
-                            tot_C_to_struct_root * ratio, 
-                            tot_C_to_struct_shoot * ratio,
-                            tot_Shoot_respiration * ratio,  
-                            labels=[
-                    "C allocated to root respiration",
-                    "C allocated to rhizodeposition",
-                    "C allocated to root structural mass",
-                    "C allocated to shoot structural mass",
-                    "C allocated to shoot respiration",
-                ]               , colors=[
-                    twenty_palette["blue"],
-                    twenty_palette["orange"],
-                    twenty_palette["purple"],
-                    twenty_palette["brown"],
-                    twenty_palette["grey"]
-                ])
-                # ax2.plot(time_scale, total_photo, c='black', label="C from photosynthesis")
-
-            if True:
-                print("Final_proportions C")
-                print("root respi", 100 * (tot_root_respiration_C * ratio)[-1] / total_photo[-1])
-                print("root rhizodep", 100 * (total_rhizodeposition * ratio)[-1] / total_photo[-1])
-                print("root lab hex", 100 * (daily_net_labile_hex_C * ratio)[-1] / total_photo[-1])
-                print("root lab aa", 100 * (daily_net_Labile_aa_C * ratio)[-1] / total_photo[-1])
-                print("root struct", 100 * (tot_C_to_struct_root * ratio)[-1] / total_photo[-1])
-                print("shoot struct", 100 * (tot_C_to_struct_shoot * ratio)[-1] / total_photo[-1])
-                print("shoot labile C", 100 * (daily_labile_C_shoot * ratio)[-1] / total_photo[-1])
-                print("shoot respi", 100 * (tot_Shoot_respiration * ratio)[-1] / total_photo[-1])
-
-            # Revert order
-            handles, labels = ax2.get_legend_handles_labels()
-            if p_input:
-                ax2.legend(handles[::-1], labels[::-1], bbox_to_anchor=(0.5, 1.4), loc='upper center', ncol=2)
-            else:
-                ax2.legend(handles[::-1], labels[::-1])
-
-            ax2.set_xlabel('Thermal time (°C.day)' if thermal_time else 'Time (days)')
-            ax2.set_ylabel('Process cumulative flow (mmol C)')
-
-            if thermal_time:
-                # 1) make sure TT=0 is visible; Matplotlib added a negative margin
-                left, right = ax2.get_xlim()
-                if left < 0:
-                    left = 0
-                    right = max(time_scale)
-                    ax2.set_xlim(left, right)
-
-                # 2) NOW create the secondary axis using the *final* TT limits
-                secax2 = ax2.secondary_xaxis('bottom', functions=(tt_to_days, days_to_tt))
-                secax2.spines['bottom'].set_position(('outward', 35))
-                secax2.set_xlabel('Date')
-                secax2.xaxis.set_major_formatter(WB.make_days_formatter(
-                    17, 12, 2025, fmt="%d/%m", one_based=False
-                ))
-                # secax2.xaxis.set_major_locator(MaxNLocator(integer=True))
-
-            suffix +='_cummulated'
-            
-            if massic:
-                suffix += '_massic'
-            
-            if p_input:
-                suffix += '_input_perc'
-
-            fig2.savefig(os.path.join(outputs_dirpath, f"C_balance{suffix}.png"), bbox_inches="tight", dpi=720)
 
 
     def plant_C_balance_io(shoot_outputs, dataset, outputs_dirpath, thermal_time = True, massic=False, percentage=True):
@@ -5482,7 +5308,7 @@ class WB:
                 return np.interp(tt, tt_u, days_u)
 
             def days_to_tt(days):
-                days = np.asarray(days)
+                days = np.asarray(days) 
                 return np.interp(days, days_u, tt_u)
             
         else:
@@ -5520,9 +5346,120 @@ class WB:
         fig.savefig(os.path.join(outputs_dirpath, f"shoot_root_CN_alloc{suffix}.png"), dpi=720, bbox_inches="tight")
 
 
-    def cn_shoot_balance_assertion(output_dirpath):
-        postprocessing_dirpath = os.path.join(output_dirpath, "postprocessing")
-        return
+    def cn_shoot_balance_assertion(shoot_outputs, outputs_dirpath, thermal_time = True, massic=False, balance=True, p_input=True):
+        
+        dt_in_hour = 1.
+
+        # Copy-paste ecophysiological constants from CN-Wheat model.py
+        # Hypothesis, not re-parametrized
+        C_MOLAR_MASS = 12  #: Molar mass of carbon (g mol-1)
+        NB_C_TRIOSEP = 3  #: Number of C in 1 mol of trioseP
+        NB_C_HEXOSES = 6  #: Number of C in 1 mol of hexoses (glucose, fructose)
+        NB_C_SUCROSE = 12  #: Number of C in 1 mol of sucrose
+        HEXOSE_MOLAR_MASS_C_RATIO = 0.42  #: Contribution of C in hexose mass
+        TRIOSESP_MOLAR_MASS_C_RATIO = 0.21  #: Contribution of C in triosesP mass
+        RATIO_C_mstruct = 0.44  #: Mean contribution of carbon to structural dry mass (g C g-1 mstruct)
+
+        AMINO_ACIDS_C_RATIO = 4.15  #: Mean number of mol of C in 1 mol of the major amino acids of plants (Glu, Gln, Ser, Asp, Ala, Gly)
+        AMINO_ACIDS_N_RATIO = 1.25  #: Mean number of mol of N in 1 mol of the major amino acids of plants (Glu, Gln, Ser, Asp, Ala, Gly)
+        PROTEINS_MOLAR_MASS_N_RATIO = 0.151  #: Mean contribution of N in protein mass (Penning De Vries 1989)
+        AMINO_ACIDS_MOLAR_MASS_N_RATIO = 0.135  #: Mean contribution of N in amino acids mass of the major amino acids of plants (Glu, Gln, Ser, Asp, Ala, Gly)
+        NITRATES_MOLAR_MASS_N_RATIO = 0.23  #: Contribution of N in amino acids mass
+        N_MOLAR_MASS = 14  #: Molar mass of nitrogen (g mol-1)
+        AMINO_ACIDS_MOLAR_MASS_C_RATIO = 0.38  #: (Penning De Vries 1989)
+        PROTEINS_MOLAR_MASS_C_RATIO = 0.38  #: As for AA
+
+        df_org = shoot_outputs["organs"]
+        df_axe = shoot_outputs["axes"]
+        df_elt = shoot_outputs["elements"]
+        df_hz = shoot_outputs["hz"]
+
+        df_roots = df_org[df_org['organ'] == 'roots'].copy()
+        df_phloem = df_org[df_org['organ'] == 'phloem'].copy()
+
+        # Boundary rates section
+        #
+        Unloading_Sucrose_C = (df_roots['Unloading_Sucrose'] * df_roots['mstruct']).to_numpy() # micromol C per hour
+        Unloading_Amino_Acids_C = ((df_roots['Unloading_Amino_Acids'] * df_roots['mstruct']).to_numpy() / AMINO_ACIDS_N_RATIO) * AMINO_ACIDS_C_RATIO # micromol C per hour 
+        Export_Amino_Acids_C = ((df_roots['Export_Amino_Acids']).to_numpy() / AMINO_ACIDS_N_RATIO) * AMINO_ACIDS_C_RATIO # micromol C per hour 
+        
+        df_hz['C_consumption_mstruct'] = df_hz.sucrose_consumption_mstruct.fillna(0) + df_hz.AA_consumption_mstruct.fillna(0) * AMINO_ACIDS_C_RATIO / AMINO_ACIDS_N_RATIO
+        df_hz['C_consumption_mstruct_tillers'] = df_hz['C_consumption_mstruct'] * df_hz['nb_replications']
+        C_consumption_mstruct_shoot = df_hz.groupby(['t'])['C_consumption_mstruct_tillers'].agg("sum")
+
+        Total_Photosynthesis_C = df_axe['Tillers_Photosynthesis'].to_numpy() # micromol C per hour
+
+        df_elt['sum_respi_tillers'] = df_elt['sum_respi'] * df_elt['nb_replications']
+        df_hz['sum_respi_tillers'] = (df_hz['Respi_growth'] + df_hz['R_residual']) * df_hz['nb_replications']
+        respi_elements = df_elt.groupby(['t'])['sum_respi_tillers'].agg('sum').to_numpy()
+        respi_hiddenzones = df_hz.groupby(['t'])['sum_respi_tillers'].agg('sum').to_numpy()
+
+        # Bellow attempt was always O, worth reinjecting if RMSE explodes at later stages
+        # df_elt['protein_remob_loss_tillers'] = df_elt['Protein_remob_loss'].fillna(0) * df_elt['nb_replications']
+        # protein_remob_loss_C = df_elt.groupby(['t'])['protein_remob_loss_tillers'].agg('sum').to_numpy() / AMINO_ACIDS_N_RATIO * AMINO_ACIDS_C_RATIO
+  
+        Shoot_respiration_C = respi_elements + respi_hiddenzones # micromol C per hour
+
+        Shoot_C_boundary_rate = (Total_Photosynthesis_C 
+            - Shoot_respiration_C 
+            - C_consumption_mstruct_shoot 
+            - Unloading_Sucrose_C
+            - Unloading_Amino_Acids_C
+            + Export_Amino_Acids_C)
+        
+
+        # Amount of C section 
+        
+        # Elements
+        df_elt['sucrose_tillers'] = df_elt['sucrose'] * df_elt['nb_replications']
+        sucrose_C = df_elt.groupby(['t'])['sucrose_tillers'].agg('sum').to_numpy() # micromol C
+        df_elt['starch_tillers'] = df_elt['starch'] * df_elt['nb_replications']
+        starch_C = df_elt.groupby(['t'])['starch_tillers'].agg('sum').to_numpy() # micromol C
+        df_elt['triosesP_tillers'] = df_elt['triosesP'] * df_elt['nb_replications']
+        triosesP_C = df_elt.groupby(['t'])['triosesP_tillers'].agg('sum').to_numpy() # micromol C
+        df_elt['proteins_tillers'] = df_elt['proteins'] * df_elt['nb_replications']
+        proteins_N = df_elt.groupby(['t'])['proteins_tillers'].agg('sum').to_numpy() # micromol N
+        proteins_C = (proteins_N / AMINO_ACIDS_N_RATIO) * AMINO_ACIDS_C_RATIO # micromol C - Hypothesis: from model declaration, it seems that all amino acids C is transfered to proteins along with N 
+        df_elt['fructan_tillers'] = df_elt['fructan'] * df_elt['nb_replications']
+        fructan_C = df_elt.groupby(['t'])['fructan_tillers'].agg('sum').to_numpy() # micromol C
+        df_elt['amino_acids_tillers'] = df_elt['amino_acids'] * df_elt['nb_replications']
+        amino_acids_N = df_elt.groupby(['t'])['amino_acids_tillers'].agg('sum').to_numpy() # micromol N
+        amino_acids_C = (amino_acids_N / AMINO_ACIDS_N_RATIO) * AMINO_ACIDS_C_RATIO # micromol C
+        # Hypothesis, cytokinins are not accounted for in the C balance
+        
+        total_elements_C_content = sucrose_C + starch_C + triosesP_C + proteins_C + fructan_C + amino_acids_C
+
+        # Hiddenzones
+        df_hz['sucrose_tillers'] = df_hz['sucrose'] * df_hz['nb_replications']
+        hiddenzones_sucrose_C = df_hz.groupby(['t'])['sucrose_tillers'].agg('sum').to_numpy() # micromol C
+        df_hz['fructan_tillers'] = df_hz['fructan'] * df_hz['nb_replications']
+        hiddenzones_fructan_C = df_hz.groupby(['t'])['fructan_tillers'].agg('sum').to_numpy() # micromol C
+        df_hz['amino_acids_tillers'] = df_hz['amino_acids'] * df_hz['nb_replications']
+        hiddenzones_amino_acids_C = (df_hz.groupby(['t'])['amino_acids_tillers'].agg('sum').to_numpy() / AMINO_ACIDS_N_RATIO) * AMINO_ACIDS_C_RATIO # micromol C
+        df_hz['proteins_tillers'] = df_hz['proteins'] * df_hz['nb_replications']
+        hiddenzones_proteins_C = (df_hz.groupby(['t'])['proteins_tillers'].agg('sum').to_numpy() / AMINO_ACIDS_N_RATIO) * AMINO_ACIDS_C_RATIO # micromol C
+
+        total_hiddenzones_C_content = hiddenzones_sucrose_C + hiddenzones_fructan_C + hiddenzones_amino_acids_C + hiddenzones_proteins_C
+
+        # Phloem
+        phloem_sucrose_C = df_phloem['sucrose'].to_numpy() # micromol C
+        phloem_amino_acids_N = df_phloem['amino_acids'].to_numpy() # micromol N
+        phloem_amino_acids_C = (phloem_amino_acids_N / AMINO_ACIDS_N_RATIO) * AMINO_ACIDS_C_RATIO # micromol C
+        
+        total_phloem_C_content = phloem_sucrose_C + phloem_amino_acids_C
+
+        total_shoot_C_content = total_elements_C_content + total_hiddenzones_C_content + total_phloem_C_content 
+        Shoot_C_actual_derivative = total_shoot_C_content[1:] - total_shoot_C_content[:-1] # micromol C per time step (hardcoded hour for CN-Wheat) 
+        
+        # NOTE: CN-Wheat does not write flows at first time step, so first step flows are to be excluded ant the first content variation should be matched to rates at t=1        
+        initialization_offset = 1 # Offset to avoid harsh variations of the first time-step
+        residual = Shoot_C_actual_derivative[initialization_offset:] - Shoot_C_boundary_rate[1+initialization_offset:] * dt_in_hour
+        RMSE = np.sqrt(np.sum(residual**2))
+        percentage = 100 * RMSE / total_shoot_C_content[-1]
+        print(residual)
+        print(percentage)
+
+        assert percentage < 5., "ERROR, shoot model is significantly not conservative!"
 
 
     def XY_totals_all_times(dataset, x, y, to_xunit, to_yunit, outputs_dirpath, massic=False, daily_average=True):
