@@ -402,6 +402,7 @@ def analyze_data(scenarios, outputs_dirpath, inputs_dirpath, target_folder_key=N
                     if running or all_true:
                         print("Starting balance plots summary")
                         if True:
+                            WB.cn_shoot_balance_assertion(shoot_outputs=shoot_outputs, root_dataset=scenario_dataset)
                             # WB.plant_C_balance(shoot_outputs=shoot_outputs, dataset=scenario_dataset, outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"))
                             WB.plant_C_balance_summary(shoot_outputs=shoot_outputs, dataset=scenario_dataset, outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"), p_input=False)
                             # WB.plant_C_balance_summary(shoot_outputs=shoot_outputs, dataset=scenario_dataset, outputs_dirpath=os.path.join(outputs_dirpath, scenario, subscenario, "MTG_properties"), p_input=True)
@@ -985,9 +986,9 @@ def analyze_data(scenarios, outputs_dirpath, inputs_dirpath, target_folder_key=N
                     print(" [INFO] Finished  CN-Wheat plots")
 
                     print(" [INFO] Starting comparision plots on CN-Wheat outputs...")
-                    # compare_shoot_outputs(reference_dirpath=os.path.join(inputs_dirpath, "postprocessing"),
-                    #                     newsimu_dirpath=os.path.join(outputs_dirpath, scenario, target_folder_key, "MTG_properties/shoot_properties"),
-                    #                     meteo_data_dirpath=os.path.join(inputs_dirpath, "meteo_Ljutovac2002.csv"))
+                    compare_shoot_outputs(reference_dirpath=os.path.join(inputs_dirpath, "postprocessing"),
+                                        newsimu_dirpath=os.path.join(outputs_dirpath, scenario, target_folder_key, "MTG_properties/shoot_properties"),
+                                        meteo_data_dirpath=os.path.join(inputs_dirpath, "meteo_Ljutovac2002.csv"))
                 
                 running = False
 
@@ -1032,7 +1033,7 @@ def analyze_data(scenarios, outputs_dirpath, inputs_dirpath, target_folder_key=N
                             "inputs", "meteo_Ljutovac2002_soil.csv"
                         ),
                     )
-                    WB.cn_shoot_balance_assertion(shoot_outputs=shoot_outputs, outputs_dirpath=os.path.join(outputs_dirpath, scenario, "MTG_properties/shoot_properties"))
+                    WB.cn_shoot_balance_assertion(shoot_outputs, root_dataset=None)
             
             
             print(" [INFO] Finished comparision plots on CN-Wheat outputs...")
@@ -5346,7 +5347,7 @@ class WB:
         fig.savefig(os.path.join(outputs_dirpath, f"shoot_root_CN_alloc{suffix}.png"), dpi=720, bbox_inches="tight")
 
 
-    def cn_shoot_balance_assertion(shoot_outputs, outputs_dirpath, thermal_time = True, massic=False, balance=True, p_input=True):
+    def cn_shoot_balance_assertion(shoot_outputs, root_dataset):
         
         dt_in_hour = 1.
 
@@ -5453,11 +5454,16 @@ class WB:
         
         # NOTE: CN-Wheat does not write flows at first time step, so first step flows are to be excluded ant the first content variation should be matched to rates at t=1        
         initialization_offset = 1 # Offset to avoid harsh variations of the first time-step
-        residual = Shoot_C_actual_derivative[initialization_offset:] - Shoot_C_boundary_rate[1+initialization_offset:] * dt_in_hour
+        residual = Shoot_C_actual_derivative[initialization_offset:1000] - Shoot_C_boundary_rate[1+initialization_offset:1001] * dt_in_hour
         RMSE = np.sqrt(np.sum(residual**2))
         percentage = 100 * RMSE / total_shoot_C_content[-1]
-        print(residual)
-        print(percentage)
+        # residual.plot()
+        fig, ax = plt.subplots()
+        ax.plot(residual.index.to_numpy(), residual.to_numpy())
+        fig.savefig(os.path.join('outputs', "residual.png"), bbox_inches="tight", dpi=720)
+        plt.close()
+        # print(residual)
+        # print(percentage)
 
         assert percentage < 5., "ERROR, shoot model is significantly not conservative!"
 

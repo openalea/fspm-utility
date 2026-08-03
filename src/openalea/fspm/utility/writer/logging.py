@@ -30,7 +30,7 @@ usual_clims = dict(
     # net_mineral_N_uptake=               dict(bounds=[1e-11, 1.5e-10],  show_as_log=False,   normalize_by="length"), # RC outputs
     # hexose_exudation=               dict(bounds=[1e-14, 1e-10],  show_as_log=True,   normalize_by=None), # Not for Root-CyNAPS
     deficit_AA=               dict(bounds=[1e-13, 1e-9],  show_as_log=True,   normalize_by=None),
-    # deficit_hexose_root=               dict(bounds=[1e-14, 1e-10],  show_as_log=True,   normalize_by=None),
+    deficit_hexose_root=               dict(bounds=[1e-14, 1e-10],  show_as_log=True,   normalize_by=None),
     AA=               dict(bounds=[1e-5, 1e-3],  show_as_log=True,   normalize_by=None),
     xylem_AA=               dict(bounds=[1e-5, 1e-3],  show_as_log=True,   normalize_by=None),
     phloem_AA=               dict(bounds=[1e-6, 1e-4],  show_as_log=True,   normalize_by=None),
@@ -76,7 +76,7 @@ usual_clims = dict(
     # Cv_hexose_root=          dict(bounds=[1, 5000],           show_as_log=True,   normalize_by=None), # Not for Root-CyNAPS
     # amino_acids_consumption_by_growth=          dict(bounds=[1e-14, 1e-10],           show_as_log=True,   normalize_by=None), # Not for Root-CyNAPS
 )
-plotted_property_continuous = "hexose_exudation"
+plotted_property_continuous = "deficit_hexose_root"
 
 xarray_focus_variables = []
 xarray_exclude_variables = ["adventitious_to_emerge", "xylem_vessel_radii", "phloem_vessel_radii"] # Cannot be included as they are lists
