@@ -5454,7 +5454,7 @@ class WB:
         
         # NOTE: CN-Wheat does not write flows at first time step, so first step flows are to be excluded ant the first content variation should be matched to rates at t=1        
         initialization_offset = 1 # Offset to avoid harsh variations of the first time-step
-        residual = Shoot_C_actual_derivative[initialization_offset:1000] - Shoot_C_boundary_rate[1+initialization_offset:1001] * dt_in_hour
+        residual = Shoot_C_actual_derivative[initialization_offset:] - Shoot_C_boundary_rate[1+initialization_offset:] * dt_in_hour
         RMSE = np.sqrt(np.sum(residual**2))
         percentage = 100 * RMSE / total_shoot_C_content[-1]
         # residual.plot()
@@ -5462,8 +5462,8 @@ class WB:
         ax.plot(residual.index.to_numpy(), residual.to_numpy())
         fig.savefig(os.path.join('outputs', "residual.png"), bbox_inches="tight", dpi=720)
         plt.close()
-        # print(residual)
-        # print(percentage)
+        print(residual)
+        print(percentage)
 
         assert percentage < 5., "ERROR, shoot model is significantly not conservative!"
 
