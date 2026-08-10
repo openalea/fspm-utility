@@ -441,7 +441,7 @@ class Logger:
                 prefix = "[ RUNNING]"
             else:
                 prefix = "[RUNNING ]"
-            self.log =  f"   {prefix} {self.simulation_time_in_hours:04d} hours | step took {self.current_step_start_time - self.previous_step_start_time:04.1f} s | {suffix}"
+            self.log =  f"   \033[1m\033[32m{prefix} {self.simulation_time_in_hours:04d} hours | step took {self.current_step_start_time - self.previous_step_start_time:04.1f}s | {suffix}\033[0m"
             self.logger_output.info(self.log)
 
         if self.recording_sums:
