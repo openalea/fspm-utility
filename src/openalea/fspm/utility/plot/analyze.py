@@ -47,7 +47,7 @@ from openalea.fspm.utility.writer.visualize import plot_mtg, plot_xr, custom_col
 from openalea.fspm.utility.writer.logging import usual_clims
 import openalea.plantgl.all as pgl
 
-from openalea.fspm.utility.plot.workflow.cnwheat_comparisions import compare_shoot_outputs
+from openalea.fspm.utility.plot.workflow import cnwgrass_postrun
 
 
 
@@ -971,22 +971,23 @@ def analyze_data(scenarios, outputs_dirpath, inputs_dirpath, target_folder_key=N
         for scenario in scenarios:
             print(" [INFO] Starting producing CN-Wheat plots...")
             if target_folder_key is None:
-                cnwheat_plot_csv(csv_dirpath=os.path.join(outputs_dirpath, scenario, "MTG_properties/shoot_properties"))
+                cnwgrass_postrun.cnwheat_plot_csv(csv_dirpath=os.path.join(outputs_dirpath, scenario, "MTG_properties/shoot_properties"))
                 print(" [INFO] Finished  CN-Wheat plots")
 
                 print(" [INFO] Starting comparision plots on CN-Wheat outputs...")
-                compare_shoot_outputs(reference_dirpath=os.path.join(inputs_dirpath, "postprocessing"),
+                cnwgrass_postrun.compare_shoot_outputs(reference_dirpath=os.path.join(inputs_dirpath, "postprocessing"),
                                     newsimu_dirpath=os.path.join(outputs_dirpath, scenario, "MTG_properties/shoot_properties"),
                                     meteo_data_dirpath=os.path.join(inputs_dirpath, "meteo_Ljutovac2002.csv"))
             else:
                 running = True
 
                 if running:
-                    cnwheat_plot_csv(csv_dirpath=os.path.join(outputs_dirpath, scenario, target_folder_key, "MTG_properties/shoot_properties"))
-                    print(" [INFO] Finished  CN-Wheat plots")
+                    csv_dirpath=os.path.join(outputs_dirpath, scenario, target_folder_key, "MTG_properties/shoot_properties")
+                    cnwgrass_postrun.cnwgrass_postprocessing(csv_dirpath=csv_dirpath)
+                    cnwgrass_postrun.cnwgrass_plots(csv_dirpath=csv_dirpath, inputs_dirpath=inputs_dirpath)
 
                     print(" [INFO] Starting comparision plots on CN-Wheat outputs...")
-                    compare_shoot_outputs(reference_dirpath=os.path.join(inputs_dirpath, "postprocessing"),
+                    cnwgrass_postrun.compare_cnwgrass_outputs(reference_dirpath=os.path.join(inputs_dirpath, "postprocessing"),
                                         newsimu_dirpath=os.path.join(outputs_dirpath, scenario, target_folder_key, "MTG_properties/shoot_properties"),
                                         meteo_data_dirpath=os.path.join(inputs_dirpath, "meteo_Ljutovac2002.csv"))
                 
@@ -1621,8 +1622,6 @@ def cnwheat_plot_csv(csv_dirpath):
 
     cnwheat_tools.plot_cnwheat_ouputs(pd.DataFrame(LAI_dict), 't', 'LAI', x_label='Time (Hour)', y_label='LAI',
                                       plot_filepath=os.path.join(plot_path, 'LAI.PNG'), explicit_label=False)
-
-    
 
 
 # Define function for string formatting of scientific notation
@@ -5462,8 +5461,8 @@ class WB:
         ax.plot(residual.index.to_numpy(), residual.to_numpy())
         fig.savefig(os.path.join('outputs', "residual.png"), bbox_inches="tight", dpi=720)
         plt.close()
-        print(residual)
-        print(percentage)
+        # print(residual)
+        # print(percentage)
 
         assert percentage < 5., "ERROR, shoot model is significantly not conservative!"
 

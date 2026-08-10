@@ -2,6 +2,7 @@ import os
 import shutil
 import sys
 import time
+import warnings
 import pickle
 import timeit
 import xarray as xr
@@ -965,6 +966,17 @@ class Logger:
                                                     axis=1, copy=False)
                     outputs_df.fillna(value=np.nan, inplace=True)  # Convert back None to NaN
                     outputs_df.to_csv(outputs_filepath)
+                    precision = 8 # TODO pass as argument for the logger and all data structures?
+                    try:
+                        outputs_df.to_csv(outputs_filepath, na_rep='NA', index=False, float_format='%.{}f'.format(precision))
+                    except IOError as err:
+                        path, filename = os.path.split(outputs_filepath)
+                        filename = os.path.splitext(filename)[0]
+                        newfilename = 'ACTUAL_{}.csv'.format(filename)
+                        newpath = os.path.join(path, newfilename)
+                        df.to_csv(newpath, na_rep='NA', index=False, float_format='%.{}f'.format(precision))
+                        warnings.warn('[{}] {}'.format(err.errno, err.strerror))
+                        warnings.warn('File will be saved at {}'.format(newpath))
 
         
         if self.recording_raw:

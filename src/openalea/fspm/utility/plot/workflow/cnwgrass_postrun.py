@@ -1,12 +1,281 @@
 import os
+import shutil
 import pandas as pd
 import matplotlib
 matplotlib.use('Agg')
 from matplotlib.backends.backend_pdf import PdfPages
 import matplotlib.pyplot as plt
 
-#delta_t_simuls = 1509
+from openalea.cnwgrass.integration import cnmetabolism_facade
+from openalea.cnwgrass.integration import hydraulics_facade
+from openalea.cnwgrass.morphogenesis.parameters import Parameters as MorphogenesisParameters
+from openalea.cnwgrass.integration import tools as integration_tools
+
 delta_t_simuls = 0
+
+
+AXES_INDEX_COLUMNS = ['t', 'plant', 'axis']
+ELEMENTS_INDEX_COLUMNS = ['t', 'plant', 'axis', 'metamer', 'organ', 'element']
+HIDDENZONES_INDEX_COLUMNS = ['t', 'plant', 'axis', 'metamer']
+ORGANS_INDEX_COLUMNS = ['t', 'plant', 'axis', 'organ']
+SOILS_INDEX_COLUMNS = ['t', 'plant', 'axis']
+
+# Name of the CSV files which contain the outputs of the model
+AXES_OUTPUTS_FILENAME = 'axes_outputs.csv'
+ORGANS_OUTPUTS_FILENAME = 'organs_outputs.csv'
+HIDDENZONES_OUTPUTS_FILENAME = 'hiddenzones_outputs.csv'
+ELEMENTS_OUTPUTS_FILENAME = 'elements_outputs.csv'
+SOILS_OUTPUTS_FILENAME = 'soil_outputs.csv'
+
+# Name of the CSV files which contain the postprocessing outputs of the model
+AXES_POSTPROCESSING_FILENAME = 'axes_postprocessing.csv'
+ORGANS_POSTPROCESSING_FILENAME = 'organs_postprocessing.csv'
+HIDDENZONES_POSTPROCESSING_FILENAME = 'hiddenzones_postprocessing.csv'
+ELEMENTS_POSTPROCESSING_FILENAME = 'elements_postprocessing.csv'
+SOILS_POSTPROCESSING_FILENAME = 'soils_postprocessing.csv'
+
+OUTPUTS_PRECISION = 8
+
+
+def cnwgrass_postprocessing(csv_dirpath, hydraulics: bool=True):
+    print("[cnwgrass_postprocessing] CNW-Grass postprocessing...")
+    if not os.path.isdir(csv_dirpath):
+        os.mkdir(csv_dirpath)
+
+    # --- Generate graphs from postprocessing files
+    plt.ioff()
+    delta_t = 3600
+    df_elt = pd.read_csv(os.path.join(csv_dirpath, ELEMENTS_OUTPUTS_FILENAME))
+    df_org = pd.read_csv(os.path.join(csv_dirpath, ORGANS_OUTPUTS_FILENAME))
+    df_hz = pd.read_csv(os.path.join(csv_dirpath, HIDDENZONES_OUTPUTS_FILENAME))
+    df_SAM = pd.read_csv(os.path.join(csv_dirpath, AXES_OUTPUTS_FILENAME))
+    df_soil = pd.read_csv(os.path.join(csv_dirpath, SOILS_OUTPUTS_FILENAME))
+
+    postprocessing = cnmetabolism_facade.CNMetabolismFacade.postprocessing(
+                                axes_outputs_df=df_SAM,
+                                hiddenzone_outputs_df=df_hz,
+                                organs_outputs_df=df_org,
+                                elements_outputs_df=df_elt,
+                                soils_outputs_df=df_soil,
+                                delta_t=delta_t)
+
+    if hydraulics:
+        turgor_postprocessing = hydraulics_facade.hydraulicsFacade.postprocessing(axes_outputs_df=df_SAM,
+                                                                                hiddenzone_outputs_df=df_hz,
+                                                                                elements_outputs_df=df_elt,
+                                                                                organs_outputs_df=df_org,
+                                                                                soils_outputs_df=df_soil,
+                                                                                delta_t=delta_t)
+
+        # Merge with cnmetabolism postprocessing
+        mapping_scales = [('axes', AXES_INDEX_COLUMNS),
+            ('elements', ELEMENTS_INDEX_COLUMNS),
+            ('hiddenzones', HIDDENZONES_INDEX_COLUMNS),
+            ('organs', ORGANS_INDEX_COLUMNS),
+            ('soils', SOILS_INDEX_COLUMNS)]
+
+        for scale, index_cols in mapping_scales:
+            df_cnmetabolism = postprocessing.get(scale)
+            df_turgor = turgor_postprocessing.get(scale)
+
+            turgor_exclusive_cols = index_cols + [col for col in df_turgor.columns if col not in df_cnmetabolism.columns]
+            df_turgor_filtered = df_turgor[turgor_exclusive_cols]
+
+            # Left merge
+            postprocessing[scale] = pd.merge(df_cnmetabolism, df_turgor_filtered, on=index_cols, how='left')
+    
+
+    save_postprocessing = True
+    if save_postprocessing:
+        postprocessing_dirpath = os.path.join(csv_dirpath, "postprocessing")
+        if os.path.isdir(postprocessing_dirpath):
+            shutil.rmtree(postprocessing_dirpath)
+        os.mkdir(postprocessing_dirpath)
+
+        for postprocessing_file_basename, postprocessing_filename, index_columns in (('axes', AXES_POSTPROCESSING_FILENAME, AXES_INDEX_COLUMNS),
+                                                                                     ('hiddenzones', HIDDENZONES_POSTPROCESSING_FILENAME, HIDDENZONES_INDEX_COLUMNS),
+                                                                                     ('organs', ORGANS_POSTPROCESSING_FILENAME, ORGANS_INDEX_COLUMNS),
+                                                                                     ('elements', ELEMENTS_POSTPROCESSING_FILENAME, ELEMENTS_INDEX_COLUMNS),
+                                                                                     ('soils', SOILS_POSTPROCESSING_FILENAME, SOILS_INDEX_COLUMNS)):
+            postprocessing_filepath = os.path.join(postprocessing_dirpath, postprocessing_filename)
+            postprocessing_df = postprocessing[postprocessing_file_basename]
+            postprocessing_df.rename({'level_0': 't'}, axis=1, inplace=True)
+            postprocessing_df = postprocessing_df.reindex(index_columns + postprocessing_df.columns.difference(index_columns).tolist(), axis=1, copy=False)
+            postprocessing_df.to_csv(postprocessing_filepath, na_rep='NA', index=False, float_format='%.{}f'.format(OUTPUTS_PRECISION))
+    
+    print("[cnwgrass_postprocessing] CNW-Grass postprocessing: DONE")
+
+def cnwgrass_plots(csv_dirpath, plant_density = 250, inputs_dirpath: str = 'inputs', hydraulics: bool=True):
+    print("[cnwgrass_plots] Opening CSV files...")
+    postprocessing_dirpath = os.path.join(csv_dirpath, "postprocessing")
+
+    postprocessing = {}
+
+    for postprocessing_filename in (AXES_POSTPROCESSING_FILENAME,
+                                    ORGANS_POSTPROCESSING_FILENAME,
+                                    HIDDENZONES_POSTPROCESSING_FILENAME,
+                                    ELEMENTS_POSTPROCESSING_FILENAME,
+                                    SOILS_POSTPROCESSING_FILENAME):
+        postprocessing_filepath = os.path.join(postprocessing_dirpath, postprocessing_filename)
+        postprocessing_df = pd.read_csv(postprocessing_filepath)
+        postprocessing_file_basename = postprocessing_filename.split('_')[0]
+        postprocessing[postprocessing_file_basename] = postprocessing_df
+
+    outputs_df_dict = {}
+
+    for outputs_filename in (AXES_OUTPUTS_FILENAME,
+                                ORGANS_OUTPUTS_FILENAME,
+                                HIDDENZONES_OUTPUTS_FILENAME,
+                                ELEMENTS_OUTPUTS_FILENAME,
+                                SOILS_OUTPUTS_FILENAME):
+        outputs_filepath = os.path.join(csv_dirpath, outputs_filename)
+        outputs_df = pd.read_csv(outputs_filepath, dtype={'is_over': str, 'is_growing': str})
+        outputs_file_basename = outputs_filename.split('.')[0]
+        outputs_df_dict[outputs_file_basename] = outputs_df
+
+        # Assert states_filepaths were not opened during simulation run meaning that other filenames were saved
+        tmp_filename = 'ACTUAL_{}.csv'.format(outputs_file_basename)
+        tmp_path = os.path.join(csv_dirpath, tmp_filename)
+        assert not os.path.isfile(tmp_path), \
+            "File {} was saved because {} was opened during simulation run. Rename it before running postprocessing".format(
+                tmp_filename, outputs_file_basename)
+
+    plot_path = os.path.join(csv_dirpath, "plots")
+
+    if os.path.isdir(plot_path):
+        shutil.rmtree(plot_path)
+    os.mkdir(plot_path)
+
+    meteo = pd.read_csv(os.path.join(inputs_dirpath, "meteo_Ljutovac2002.csv"), index_col='t')
+
+    print("[cnwgrass_plots] Opening CSV files: DONE")
+    print("[cnwgrass_plots] Producing graphs...")
+
+    # --- Generate graphs from postprocessing files
+    plt.ioff()
+
+    cnmetabolism_facade.CNMetabolismFacade.graphs(axes_postprocessing_df=postprocessing['axes'],
+                                                    hiddenzones_postprocessing_df=postprocessing['hiddenzones'],
+                                                    organs_postprocessing_df=postprocessing['organs'],
+                                                    elements_postprocessing_df=postprocessing['elements'],
+                                                    soils_postprocessing_df=postprocessing['soils'],
+                                                    meteo_data=meteo, graphs_dirpath=plot_path)
+
+    if hydraulics:
+        hydraulics_facade.hydraulicsFacade.graphs(axes_postprocessing_df=postprocessing['axes'],
+                                                    hiddenzones_postprocessing_df=postprocessing['hiddenzones'],
+                                                    organs_postprocessing_df=postprocessing['organs'],
+                                                    elements_postprocessing_df=postprocessing['elements'],
+                                                    soils_postprocessing_df=postprocessing['soils'],
+                                                    meteo_data=meteo, graphs_dirpath=plot_path)
+    # --- Additional graphs
+    data_obs = pd.read_csv(os.path.join(inputs_dirpath, 'Ljutovac2002.csv'))
+    RERmax_items = MorphogenesisParameters().RERmax.items()
+    integration_tools.additional_graphs(outputs_df_dict['axes_outputs'], outputs_df_dict['hiddenzones_outputs'], outputs_df_dict['elements_outputs'],
+                                        postprocessing['axes'], postprocessing['hiddenzones'], postprocessing['elements'], postprocessing['organs'],
+                                        plant_density, RERmax_items, plot_path, data_obs)
+
+    print("[cnwgrass_plots] Producing graphs: DONE")
+
+
+def compare_cnwgrass_outputs(reference_dirpath, newsimu_dirpath, meteo_data_dirpath):
+    print("[cnwgrass_postprocessing] Comparing CNW-Grass outputs...")
+
+    meteo_data = pd.read_csv(meteo_data_dirpath, index_col='t')
+
+    initial_date = pd.to_datetime("17/12/1998", dayfirst=True)
+    
+    # Conversion step from hours 
+    meteo_data['Date'] = pd.to_datetime(meteo_data.index.values*1e9*3600 + int(initial_date.timestamp())*1e9)
+    meteo_data['Date'] = meteo_data["Date"].dt.strftime('%d/%m/%Y')
+
+    # New simulation Path
+    graphs_dirpath = os.path.join(newsimu_dirpath, 'plots')
+    newsimu_postprocessing_dirpath = os.path.join(newsimu_dirpath, "postprocessing")
+
+    # Path reference
+    refs_graphs_dirpath = os.path.join(reference_dirpath, 'plots')
+    reference_postprocessing_dirpath = reference_dirpath
+
+    # Axes
+    df_current_axes = pd.read_csv(os.path.join(newsimu_postprocessing_dirpath, 'axes_postprocessing.csv'))
+    df_current_axes = df_current_axes[df_current_axes['axis'] == 'MS']
+    df_ref_axes = pd.read_csv(os.path.join(reference_postprocessing_dirpath, 'axes_postprocessing.csv'))
+    df_ref_axes = df_ref_axes[df_ref_axes['axis'] == 'MS']
+    df_ref_axes['t'] = df_ref_axes['t'] + delta_t_simuls
+
+    # SAMs
+    # df_marion_SAMS = pd.read_csv(os.path.join(dirpath_marion, 'outputs', 'SAM_states.csv'))
+    # df_marion_SAMS = df_marion_SAMS[df_marion_SAMS['axis'] == 'MS']
+    # df_marion_SAMS['t'] = df_marion_SAMS['t'] + delta_t_simuls
+
+    # Organs
+    df_current_organs = pd.read_csv(os.path.join(newsimu_postprocessing_dirpath, 'organs_postprocessing.csv'))
+    df_current_organs = df_current_organs[df_current_organs['axis'] == 'MS']
+    df_ref_organs = pd.read_csv(os.path.join(reference_postprocessing_dirpath, 'organs_postprocessing.csv'))
+    df_ref_organs = df_ref_organs[df_ref_organs['axis'] == 'MS']
+    df_ref_organs['t'] = df_ref_organs['t'] + delta_t_simuls
+
+    # Elements
+    df_current_elements = pd.read_csv(os.path.join(newsimu_postprocessing_dirpath, 'elements_postprocessing.csv'))
+    df_current_elements = df_current_elements[df_current_elements['axis'] == 'MS']
+    df_ref_elements = pd.read_csv(os.path.join(reference_postprocessing_dirpath, 'elements_postprocessing.csv'))
+    df_ref_elements = df_ref_elements[df_ref_elements['axis'] == 'MS']
+    df_ref_elements['t'] = df_ref_elements['t'] + delta_t_simuls
+
+    # HZ
+    df_current_hz = pd.read_csv(os.path.join(newsimu_postprocessing_dirpath, 'hiddenzones_postprocessing.csv'))
+    df_current_hz = df_current_hz[df_current_hz['axis'] == 'MS']
+    df_ref_hz = pd.read_csv(os.path.join(reference_postprocessing_dirpath, 'hiddenzones_postprocessing.csv'))
+    df_ref_hz = df_ref_hz[df_ref_hz['axis'] == 'MS']
+    df_ref_hz['t'] = df_ref_hz['t'] + delta_t_simuls
+
+    # C_allocation(dirpath=newsimu_dirpath, df_org=df_current_organs, df_org_ref=df_ref_organs, 
+    #              df_axe=df_current_axes, df_axe_ref=df_current_axes, df_elt=df_current_elements, df_elt_ref=df_ref_elements)
+    
+
+    tmin = df_current_axes.t.min()
+    tmax = df_current_axes.t.max()
+
+    # dry_mass(None, df_current_axes, df_ref_axes, df_current_organs, df_ref_organs, meteo_data, tmin, tmax, dirpath=newsimu_dirpath)
+    
+    # plot graphs_dirpath
+    with PdfPages(os.path.join(newsimu_dirpath, 'Comparison_Marion.pdf')) as pdf:
+
+        print("Trying to create output pdf")
+        # phloem
+        phloem(pdf, df_current_organs, df_ref_organs, meteo_data, tmin, tmax)
+
+        # Photosynthesis
+        photosynthesis(pdf, df_current_axes, df_ref_axes)
+
+        # roots
+        roots(pdf, df_current_organs, df_ref_organs, meteo_data, tmin, tmax)
+
+        # dry mass & shoot : root
+        dry_mass(pdf, df_current_axes, df_ref_axes, df_current_organs, df_ref_organs, meteo_data, tmin, tmax, dirpath=newsimu_dirpath)
+
+        # N mass
+        N_mass(pdf, df_current_axes, df_ref_axes, df_current_organs, df_ref_organs, meteo_data, tmin, tmax)
+
+        # Surfaces
+        surface(pdf, df_current_elements, df_ref_elements, meteo_data, tmin, tmax)
+        include_images(pdf, graphs_dirpath, refs_graphs_dirpath)
+
+        # Leaf length & mstruct
+        leaf_length_mstruct_area(pdf, df_current_hz, df_ref_hz, df_current_elements, df_ref_elements, meteo_data, tmin, tmax)
+
+        # Leaf emergence date
+        leaf_emergence(pdf, df_current_hz, df_ref_hz, meteo_data)
+
+        C_allocation(pdf=pdf, dirpath=newsimu_dirpath, df_org=df_current_organs, df_org_ref=df_ref_organs, 
+                 df_axe=df_current_axes, df_axe_ref=df_ref_axes, df_elt=df_current_elements, df_elt_ref=df_ref_elements)
+        
+        # Plastochron
+        # plastochrone(df_current_axes, df_marion_SAMS)
+
+    print("[cnwgrass_postprocessing] Comparing CNW-Grass outputs: DONE")
+
 
 
 def phloem(pdf, df_current_organs, df_ref_organs, meteo_data, tmin, tmax):
@@ -454,102 +723,6 @@ def plastochrone(pdf, df_current_axes, df_marion_SAMS):
     plt.tight_layout()
     pdf.savefig()  # saves the current figure into a pdf page
     plt.close()
-
-
-def compare_shoot_outputs(reference_dirpath, newsimu_dirpath, meteo_data_dirpath):
-
-    meteo_data = pd.read_csv(meteo_data_dirpath, index_col='t')
-
-    initial_date = pd.to_datetime("17/12/1998", dayfirst=True)
-    
-    # Conversion step from hours 
-    meteo_data['Date'] = pd.to_datetime(meteo_data.index.values*1e9*3600 + int(initial_date.timestamp())*1e9)
-    meteo_data['Date'] = meteo_data["Date"].dt.strftime('%d/%m/%Y')
-
-    # New simulation Path
-    graphs_dirpath = os.path.join(newsimu_dirpath, 'plots')
-    newsimu_postprocessing_dirpath = os.path.join(newsimu_dirpath, "postprocessing")
-
-    # Path reference
-    refs_graphs_dirpath = os.path.join(reference_dirpath, 'plots')
-    reference_postprocessing_dirpath = reference_dirpath
-
-    # Axes
-    df_current_axes = pd.read_csv(os.path.join(newsimu_postprocessing_dirpath, 'axes_postprocessing.csv'))
-    df_current_axes = df_current_axes[df_current_axes['axis'] == 'MS']
-    df_ref_axes = pd.read_csv(os.path.join(reference_postprocessing_dirpath, 'axes_postprocessing.csv'))
-    df_ref_axes = df_ref_axes[df_ref_axes['axis'] == 'MS']
-    df_ref_axes['t'] = df_ref_axes['t'] + delta_t_simuls
-
-    # SAMs
-    # df_marion_SAMS = pd.read_csv(os.path.join(dirpath_marion, 'outputs', 'SAM_states.csv'))
-    # df_marion_SAMS = df_marion_SAMS[df_marion_SAMS['axis'] == 'MS']
-    # df_marion_SAMS['t'] = df_marion_SAMS['t'] + delta_t_simuls
-
-    # Organs
-    df_current_organs = pd.read_csv(os.path.join(newsimu_postprocessing_dirpath, 'organs_postprocessing.csv'))
-    df_current_organs = df_current_organs[df_current_organs['axis'] == 'MS']
-    df_ref_organs = pd.read_csv(os.path.join(reference_postprocessing_dirpath, 'organs_postprocessing.csv'))
-    df_ref_organs = df_ref_organs[df_ref_organs['axis'] == 'MS']
-    df_ref_organs['t'] = df_ref_organs['t'] + delta_t_simuls
-
-    # Elements
-    df_current_elements = pd.read_csv(os.path.join(newsimu_postprocessing_dirpath, 'elements_postprocessing.csv'))
-    df_current_elements = df_current_elements[df_current_elements['axis'] == 'MS']
-    df_ref_elements = pd.read_csv(os.path.join(reference_postprocessing_dirpath, 'elements_postprocessing.csv'))
-    df_ref_elements = df_ref_elements[df_ref_elements['axis'] == 'MS']
-    df_ref_elements['t'] = df_ref_elements['t'] + delta_t_simuls
-
-    # HZ
-    df_current_hz = pd.read_csv(os.path.join(newsimu_postprocessing_dirpath, 'hiddenzones_postprocessing.csv'))
-    df_current_hz = df_current_hz[df_current_hz['axis'] == 'MS']
-    df_ref_hz = pd.read_csv(os.path.join(reference_postprocessing_dirpath, 'hiddenzones_postprocessing.csv'))
-    df_ref_hz = df_ref_hz[df_ref_hz['axis'] == 'MS']
-    df_ref_hz['t'] = df_ref_hz['t'] + delta_t_simuls
-
-    # C_allocation(dirpath=newsimu_dirpath, df_org=df_current_organs, df_org_ref=df_ref_organs, 
-    #              df_axe=df_current_axes, df_axe_ref=df_current_axes, df_elt=df_current_elements, df_elt_ref=df_ref_elements)
-    
-
-    tmin = df_current_axes.t.min()
-    tmax = df_current_axes.t.max()
-
-    # dry_mass(None, df_current_axes, df_ref_axes, df_current_organs, df_ref_organs, meteo_data, tmin, tmax, dirpath=newsimu_dirpath)
-    
-    # plot graphs_dirpath
-    with PdfPages(os.path.join(newsimu_dirpath, 'Comparison_Marion.pdf')) as pdf:
-
-        print("Trying to create output pdf")
-        # phloem
-        phloem(pdf, df_current_organs, df_ref_organs, meteo_data, tmin, tmax)
-
-        # Photosynthesis
-        photosynthesis(pdf, df_current_axes, df_ref_axes)
-
-        # roots
-        roots(pdf, df_current_organs, df_ref_organs, meteo_data, tmin, tmax)
-
-        # dry mass & shoot : root
-        dry_mass(pdf, df_current_axes, df_ref_axes, df_current_organs, df_ref_organs, meteo_data, tmin, tmax, dirpath=newsimu_dirpath)
-
-        # N mass
-        N_mass(pdf, df_current_axes, df_ref_axes, df_current_organs, df_ref_organs, meteo_data, tmin, tmax)
-
-        # Surfaces
-        surface(pdf, df_current_elements, df_ref_elements, meteo_data, tmin, tmax)
-        include_images(pdf, graphs_dirpath, refs_graphs_dirpath)
-
-        # Leaf length & mstruct
-        leaf_length_mstruct_area(pdf, df_current_hz, df_ref_hz, df_current_elements, df_ref_elements, meteo_data, tmin, tmax)
-
-        # Leaf emergence date
-        leaf_emergence(pdf, df_current_hz, df_ref_hz, meteo_data)
-
-        C_allocation(pdf=pdf, dirpath=newsimu_dirpath, df_org=df_current_organs, df_org_ref=df_ref_organs, 
-                 df_axe=df_current_axes, df_axe_ref=df_ref_axes, df_elt=df_current_elements, df_elt_ref=df_ref_elements)
-        
-        # Plastochron
-        # plastochrone(df_current_axes, df_marion_SAMS)
 
 def C_allocation(dirpath, df_org, df_org_ref, df_axe, df_axe_ref, df_elt, df_elt_ref, pdf=None):
     # 4) Total C production vs. Root C allcoation
