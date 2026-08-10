@@ -302,6 +302,7 @@ class Logger:
         logging_level = logging.DEBUG
         self.logger_output = logging.getLogger("Simulation_Logger")
         self.logger_output.setLevel(logging_level)
+        self.logger_output.propagate = False
         
         # Create a console handler (prints to stdout)
         console_handler = OverwriteHandler()
@@ -432,9 +433,15 @@ class Logger:
             suffix = max(self.props["root"]["struct_mass"].keys())
             self.index_mtg_axes(self.data_structures["root"])
             self.log_mtg_coordinates()
+        elif not self.static_mtg and 'soil' in self.data_structures:
+            suffix = f"Total root length: {self.props["soil"]["length"].sum():.3f}m"
 
         if self.simulation_time_in_hours > 0:
-            self.log =  f"   [RUNNING] {self.simulation_time_in_hours} hours | step took {round(self.current_step_start_time - self.previous_step_start_time, 1)} s | {suffix}"
+            if self.simulation_time_in_hours % 2 == 0:
+                prefix = "[ RUNNING]"
+            else:
+                prefix = "[RUNNING ]"
+            self.log =  f"   {prefix} {self.simulation_time_in_hours:04d} hours | step took {self.current_step_start_time - self.previous_step_start_time:04.1f} s | {suffix}"
             self.logger_output.info(self.log)
 
         if self.recording_sums:
