@@ -188,6 +188,7 @@ class Logger:
         self.components = components
         self.fields = {f.name: f.metadata for model in self.components for f in fields(model) if f.metadata["variable_type"] == "state_variable"}
         self.outputs_dirpath = outputs_dirpath + " *"
+        self.simulation_name = os.path.basename(os.path.dirname(outputs_dirpath))
         self.output_variables = output_variables
         self.scenario = scenario
         self.summable_output_variables = []
@@ -437,11 +438,12 @@ class Logger:
             suffix = f"Total root length: {self.props["soil"]["length"].sum():.3f}m"
 
         if self.simulation_time_in_hours > 0:
+            run_info = 'RUNNING ' + self.simulation_name 
             if self.simulation_time_in_hours % 2 == 0:
-                prefix = "[ RUNNING]"
+                run_info = ' ' + run_info
             else:
-                prefix = "[RUNNING ]"
-            self.log =  f"   \033[1m\033[32m{prefix} {self.simulation_time_in_hours:4d} hours | step took {self.current_step_start_time - self.previous_step_start_time:4.1f}s | {suffix}\033[0m"
+                run_info = run_info + ' '
+            self.log =  f"   \033[1m\033[32m[{run_info}] {self.simulation_time_in_hours:4d} hours | step took {self.current_step_start_time - self.previous_step_start_time:4.1f}s | {suffix}\033[0m"
             self.logger_output.info(self.log)
 
         if self.recording_sums:
