@@ -56,6 +56,7 @@ usual_clims = dict(
     # # K=                             dict(bounds=None,           show_as_log=False,   normalize_by="inverse_length"),
     # xylem_Nm=                       dict(bounds=None,           show_as_log=True,   normalize_by=None),
     xylem_pressure_in=             dict(bounds=[-0.05e6, 0.1e6],           show_as_log=False,   normalize_by=None),
+    xylem_pressure_out=             dict(bounds=[-0.04e6, -0.001e-6],           show_as_log=False,   normalize_by=None),
     phloem_pressure_in=             dict(bounds=[-0.05e6, 0.1e6],           show_as_log=False,   normalize_by=None),
     # axial_export_water_up=          dict(bounds=None,           show_as_log=False,   normalize_by=None),
     # endodermis_conductance_factor=          dict(bounds=[0, 1],           show_as_log=False,   normalize_by=None),
@@ -77,7 +78,7 @@ usual_clims = dict(
     # Cv_hexose_root=          dict(bounds=[1, 5000],           show_as_log=True,   normalize_by=None), # Not for Root-CyNAPS
     # amino_acids_consumption_by_growth=          dict(bounds=[1e-14, 1e-10],           show_as_log=True,   normalize_by=None), # Not for Root-CyNAPS
 )
-plotted_property_continuous = "deficit_hexose_root"
+plotted_property_continuous = "xylem_pressure_out"
 
 xarray_focus_variables = []
 xarray_exclude_variables = ["adventitious_to_emerge", "xylem_vessel_radii", "phloem_vessel_radii"] # Cannot be included as they are lists
